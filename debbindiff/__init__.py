@@ -20,7 +20,7 @@
 import logging
 from distutils.spawn import find_executable
 
-VERSION = "26"
+VERSION = "26~bpo8+1"
 
 logger = logging.getLogger("debbindiff")
 logger.setLevel(logging.WARNING)
