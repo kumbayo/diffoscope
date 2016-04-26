@@ -1,3 +1,10 @@
+diffoscope (52~bpo8+1) jessie-backports; urgency=medium
+
+  * Rebuild for jessie-backports.
+  * Add myself to uploaders.
+
+ -- Mattia Rizzolo <mattia@debian.org>  Tue, 26 Apr 2016 10:43:26 +0000
+
 diffoscope (52) unstable; urgency=medium
 
   [ Mattia Rizzolo ]
