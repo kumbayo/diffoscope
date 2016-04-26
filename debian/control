@@ -3,8 +3,9 @@ Section: devel
 Priority: optional
 Maintainer: Reproducible builds folks <reproducible-builds@lists.alioth.debian.org>
 Uploaders:
+ Holger Levsen <holger@debian.org>,
+ Mattia Rizzolo <mattia@debian.org>,
  Reiner Herrmann <reiner@reiner-h.de>,
- Holger Levsen <holger@debian.org>
 Build-Depends: binutils-multiarch,
                debhelper (>= 9),
                dh-python,
