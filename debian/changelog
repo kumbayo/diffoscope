@@ -1,3 +1,9 @@
+diffoscope (56~bpo8+1) jessie-backports; urgency=medium
+
+  * Rebuild for jessie-backports.
+
+ -- Mattia Rizzolo <mattia@debian.org>  Mon, 01 Aug 2016 20:31:58 +0000
+
 diffoscope (56) unstable; urgency=medium
 
   [ Jérémy Bobbio ]
