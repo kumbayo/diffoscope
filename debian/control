@@ -13,7 +13,7 @@ Build-Depends:
  caca-utils,
  colord,
  debhelper (>= 9),
- default-jdk-headless,
+ default-jdk,
  dh-python,
  enjarify,
  fp-utils,
