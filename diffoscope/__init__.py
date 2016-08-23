@@ -24,7 +24,7 @@ import os
 import shutil
 import tempfile
 
-VERSION = "59"
+VERSION = "59~bpo8+1"
 
 logger = logging.getLogger("diffoscope")
 logger.setLevel(logging.WARNING)

@@ -1,3 +1,12 @@
+diffoscope (59~bpo8+1) jessie-backports; urgency=medium
+
+  * Build depend on default-jdk instead of default-jdk-headless,
+    not available in jessie-backports.
+  * Remove options not recognized by jessie's pybuild.
+  * Rebuild for jessie-backports.
+
+ -- Mattia Rizzolo <mattia@debian.org>  Sun, 21 Aug 2016 17:01:29 +0000
+
 diffoscope (59) unstable; urgency=medium
 
   [ Chris Lamb ]
