@@ -1,3 +1,13 @@
+diffoscope (60~bpo8+1) jessie-backports; urgency=medium
+
+  * Rebuild for jessie-backports.
+  * Backport from the master branch:
+    + d/rules: makes possible to do a backport without changing the version
+      "upstream".
+  * Skip some tests that fails in jessie-backports.
+
+ -- Mattia Rizzolo <mattia@debian.org>  Sat, 17 Sep 2016 13:24:00 +0000
+
 diffoscope (60) unstable; urgency=medium
 
   [ Chris Lamb ]
