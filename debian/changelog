@@ -1,3 +1,10 @@
+diffoscope (62~bpo8+1) jessie-backports; urgency=medium
+
+  * Rebuild for jessie-backports.
+  * debian/rules: disable tests for the backports.  See #842834
+
+ -- Mattia Rizzolo <mattia@debian.org>  Mon, 07 Nov 2016 16:07:26 +0000
+
 diffoscope (62) unstable; urgency=medium
 
   [ Chris Lamb ]
