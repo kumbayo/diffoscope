@@ -9,7 +9,6 @@ Uploaders:
  Reiner Herrmann <reiner@reiner-h.de>,
  Ximin Luo <infinity0@debian.org>,
 Build-Depends:
- apktool <!nocheck>,
  bash-completion,
  binutils-multiarch <!nocheck>,
  caca-utils <!nocheck>,
@@ -34,7 +33,6 @@ Build-Depends:
  pdftk <!nocheck>,
  poppler-utils <!nocheck>,
  python-argcomplete,
- python-jsbeautifier <!nocheck>,
  python3-all,
  python3-debian <!nocheck>,
  python3-docutils,
