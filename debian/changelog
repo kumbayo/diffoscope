@@ -1,3 +1,13 @@
+diffoscope (66~bpo8+1) jessie-backports; urgency=medium
+
+  * Rebuild for jessie-backports.
+  * d/control: drop build-deps on python-jsbeautifier and apktool, not
+    available in jessie-backports.
+  * d/rules: skip test_openssh_pub_key tests, as openssh in jessie has an
+    incompatible output.
+
+ -- Mattia Rizzolo <mattia@debian.org>  Wed, 04 Jan 2017 17:57:47 +0100
+
 diffoscope (66) unstable; urgency=medium
 
   [ Chris Lamb ]
