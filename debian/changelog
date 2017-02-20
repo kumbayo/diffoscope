@@ -1,3 +1,20 @@
+diffoscope (77~bpo8+1) jessie-backports; urgency=medium
+
+  [ Mattia Rizzolo ]
+  * Rebuild for jessie-backports.
+  * d/control: drop build-deps on apktool, not available in jessie-backports.
+
+  [ Brett Smith ]
+  * comparators.json: Catch bad JSON errors on Python pre-3.5.  Closes: #855233
+    json.JSONDecodeError was introduced in Python 3.5.  Earlier versions raised
+    ValueError, which is the base class of JSONDecodeError.  Catch that instead.
+
+  [ Chris Lamb ]
+  * tests: Move normalize_zeros to more generic `utils.data` module.
+  * Fix tests that call xxd fail on jessie due to output change. Closes: #855239
+
+ -- Mattia Rizzolo <mattia@debian.org>  Mon, 20 Feb 2017 19:45:26 +0100
+
 diffoscope (77) unstable; urgency=medium
 
   [ Chris Lamb ]
