@@ -117,8 +117,13 @@ def differences(rom1, rom2):
 
 @skip_unless_tools_exist('cbfstool')
 def test_listing(differences):
-    expected_diff = get_data('cbfs_listing_expected_diff')
-    assert differences[0].unified_diff == expected_diff
+    # Newer versions of cbfstool do not create the "legacy" header by default
+    # and thus is missing from the diff.
+
+    assert differences[0].unified_diff in (
+        get_data('cbfs_listing_expected_diff'),
+        get_data('cbfs_listing_no_legacy_header_expected_diff'),
+    )
 
 
 @skip_unless_tools_exist('cbfstool')
