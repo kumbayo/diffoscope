@@ -33,51 +33,93 @@ from utils.nonexisting import assert_non_existing
 TEST_FILE1_PATH = data('text_ascii1')
 TEST_FILE2_PATH = data('text_ascii2')
 
+
 @pytest.fixture
 def rom1(tmpdir):
     path = str(tmpdir.join('coreboot1'))
-    subprocess.check_call(['cbfstool', path, 'create', '-m', 'x86', '-s', '32768'], shell=False)
-    subprocess.check_call(['cbfstool', path, 'add', '-f', TEST_FILE1_PATH, '-n', 'text', '-t', 'raw'], shell=False)
+
+    subprocess.check_call((
+        'cbfstool',
+        path,
+        'create',
+        '-m', 'x86',
+        '-s', '32768',
+    ), shell=False)
+
+    subprocess.check_call((
+        'cbfstool',
+        path,
+        'add',
+        '-f', TEST_FILE1_PATH,
+        '-n', 'text',
+        '-t', 'raw'
+    ), shell=False)
+
     return specialize(FilesystemFile(path))
+
 
 @pytest.fixture
 def rom2(tmpdir):
-    path = str(tmpdir.join('coreboot2.rom'))
     size = 32768
-    subprocess.check_call(['cbfstool', path, 'create', '-m', 'x86', '-s', '%s' % size], shell=False)
-    subprocess.check_call(['cbfstool', path, 'add', '-f', TEST_FILE2_PATH, '-n', 'text', '-t', 'raw'], shell=False)
+    path = str(tmpdir.join('coreboot2.rom'))
+
+    subprocess.check_call((
+        'cbfstool',
+        path,
+        'create',
+        '-m', 'x86',
+        '-s', '%s' % size,
+    ), shell=False)
+
+    subprocess.check_call((
+        'cbfstool',
+        path,
+        'add',
+        '-f', TEST_FILE2_PATH,
+        '-n', 'text',
+        '-t', 'raw',
+    ), shell=False)
+
     # Remove the last 4 bytes to exercice the full header search
     buf = bytearray(size)
     with open(path, 'rb') as f:
         f.readinto(buf)
+
     with open(path, 'wb') as f:
         size = struct.unpack_from('!I', buf, offset=len(buf) - 4 - 32 + 8)[0]
         struct.pack_into('!I', buf, len(buf) - 4 - 32 + 8, size - 4)
         f.write(buf[:-4])
+
     return specialize(FilesystemFile(path))
+
 
 @skip_unless_tools_exist('cbfstool')
 def test_identification_using_offset(rom1):
     assert isinstance(rom1, CbfsFile)
 
+
 @skip_unless_tools_exist('cbfstool')
 def test_identification_without_offset(rom2):
     assert isinstance(rom2, CbfsFile)
+
 
 @skip_unless_tools_exist('cbfstool')
 def test_no_differences(rom1):
     difference = rom1.compare(rom1)
     assert difference is None
 
+
 @pytest.fixture
 def differences(rom1, rom2):
     difference = rom1.compare(rom2)
     return difference.details
 
+
 @skip_unless_tools_exist('cbfstool')
 def test_listing(differences):
     expected_diff = get_data('cbfs_listing_expected_diff')
     assert differences[0].unified_diff == expected_diff
+
 
 @skip_unless_tools_exist('cbfstool')
 def test_content(differences):
@@ -85,6 +127,7 @@ def test_content(differences):
     assert differences[1].source2 == 'text'
     expected_diff = get_data('text_ascii_expected_diff')
     assert differences[1].unified_diff == expected_diff
+
 
 @skip_unless_tools_exist('cbfstool')
 def test_compare_non_existing(monkeypatch, rom1):
