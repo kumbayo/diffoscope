@@ -80,7 +80,7 @@ def rom2(tmpdir):
         '-t', 'raw',
     ), shell=False)
 
-    # Remove the last 4 bytes to exercice the full header search
+    # Remove the last 4 bytes to exercise the full header search
     buf = bytearray(size)
     with open(path, 'rb') as f:
         f.readinto(buf)
