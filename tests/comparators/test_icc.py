@@ -43,6 +43,10 @@ def differences(icc1, icc2):
 
 @skip_unless_tools_exist('cd-iccdump')
 def test_diff(differences):
+    if 'ne_SU' in differences[0].unified_diff:
+        pytest.skip("Endian-specific differences detected; see "
+            "<https://bugs.debian.org/847595>")
+
     expected_diff = get_data('icc_expected_diff')
     assert differences[0].unified_diff == expected_diff
 
