@@ -116,8 +116,10 @@ class ApkContainer(Archive):
         comment = None
         diff_manifests = None
         if my_android_manifest and other_android_manifest:
+            source = 'AndroidManifest.xml (decoded)'
             diff_manifests = compare_files(my_android_manifest,
-                                           other_android_manifest)
+                                           other_android_manifest,
+                                           source=source)
             if diff_manifests is None:
                 comment = 'No difference found for decoded AndroidManifest.xml'
         else:
@@ -126,8 +128,10 @@ class ApkContainer(Archive):
         if diff_manifests:
             return diff_manifests
 
+        source = 'AndroidManifest.xml (original / undecoded)'
         diff_manifests = compare_files(self.get_original_android_manifest(),
-                                       other.get_original_android_manifest())
+                                       other.get_original_android_manifest(),
+                                       source=source)
         if diff_manifests is not None:
             diff_manifests.add_comment(comment)
         return diff_manifests

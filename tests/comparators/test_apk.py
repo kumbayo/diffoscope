@@ -57,8 +57,8 @@ def test_zipinfo(differences):
 
 @skip_unless_tools_exist('apktool', 'zipinfo')
 def test_android_manifest(differences):
-    assert differences[1].source1 == 'AndroidManifest.xml'
-    assert differences[1].source2 == 'AndroidManifest.xml'
+    assert differences[1].source1 == 'AndroidManifest.xml (decoded)'
+    assert differences[1].source2 == 'AndroidManifest.xml (decoded)'
     expected_diff = get_data('apk_manifest_expected_diff')
     assert differences[1].unified_diff == expected_diff
 
@@ -73,10 +73,16 @@ def test_skip_undecoded_android_manifest(differences):
                    for difference in differences)
     assert not any(difference.source2 == 'original/AndroidManifest.xml'
                    for difference in differences)
+    undecoded_manifest = 'AndroidManifest.xml (original / undecoded)'
+    assert not any(difference.source1 == undecoded_manifest
+                   for difference in differences)
+    assert not any(difference.source2 == undecoded_manifest
+                   for difference in differences)
 
 @skip_unless_tools_exist('apktool', 'zipinfo')
 def test_no_android_manifest(differences2):
-    assert differences2[1].source1 == 'original/AndroidManifest.xml'
-    assert differences2[1].source2 == '/dev/null'
+    undecoded_manifest = 'AndroidManifest.xml (original / undecoded)'
+    assert differences2[1].source1 == undecoded_manifest
+    assert differences2[1].source2 == undecoded_manifest
     assert differences2[1].comment == 'No decoded AndroidManifest.xml ' \
                                       'found for one of the APK files.'

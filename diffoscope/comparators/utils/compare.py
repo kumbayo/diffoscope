@@ -107,9 +107,11 @@ def bail_if_non_existing(*paths):
 
 def compare_binary_files(file1, file2, source=None):
     try:
+        if source is None:
+            source = [file1.name, file2.name]
         return Difference.from_command(
             Xxd, file1.path, file2.path,
-            source=[file1.name, file2.name], has_internal_linenos=True)
+            source=source, has_internal_linenos=True)
     except RequiredToolNotFound:
         hexdump1 = hexdump_fallback(file1.path)
         hexdump2 = hexdump_fallback(file2.path)
