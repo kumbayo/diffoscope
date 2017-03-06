@@ -28,7 +28,9 @@ from diffoscope.difference import Difference
 
 from .utils.file import File
 from .utils.archive import Archive
+from .utils.compare import compare_files
 from .zip import Zipinfo, ZipinfoVerbose
+from .missing_file import MissingFile
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +47,8 @@ class ApkContainer(Archive):
             get_temporary_directory().name,
             os.path.basename(self.source.name),
         )
+        self._andmanifest = None
+        self._andmanifest_orig = None
 
         logger.debug("Extracting %s to %s", self.source.name, self._unpacked)
 
@@ -72,11 +76,29 @@ class ApkContainer(Archive):
                     continue
 
                 relpath = abspath[len(self._unpacked)+1:]
+
+                if filename == 'AndroidManifest.xml':
+                    containing_dir = root[len(self._unpacked)+1:]
+                    if containing_dir == 'original':
+                        self._andmanifest_orig = relpath
+                    if containing_dir == '':
+                        self._andmanifest = relpath
+                    continue
+
                 current_dir.append(relpath)
 
             self._members.extend(current_dir)
 
         return self
+
+    def get_android_manifest(self):
+        return self.get_member(self._andmanifest) \
+            if self._andmanifest else None
+
+    def get_original_android_manifest(self):
+        if self._andmanifest_orig:
+            return self.get_member(self._andmanifest_orig)
+        return MissingFile('/dev/null', self._andmanifest_orig)
 
     def close_archive(self):
         pass
@@ -87,6 +109,37 @@ class ApkContainer(Archive):
     def extract(self, member_name, dest_dir):
         src_path = os.path.join(self._unpacked, member_name)
         return src_path
+
+    def compare_manifests(self, other):
+        my_android_manifest = self.get_android_manifest()
+        other_android_manifest = other.get_android_manifest()
+        comment = None
+        diff_manifests = None
+        if my_android_manifest and other_android_manifest:
+            diff_manifests = compare_files(my_android_manifest,
+                                           other_android_manifest)
+            if diff_manifests is None:
+                comment = 'No difference found for decoded AndroidManifest.xml'
+        else:
+            comment = 'No decoded AndroidManifest.xml found ' + \
+                      'for one of the APK files.'
+        if diff_manifests:
+            return diff_manifests
+
+        diff_manifests = compare_files(self.get_original_android_manifest(),
+                                       other.get_original_android_manifest())
+        if diff_manifests is not None:
+            diff_manifests.add_comment(comment)
+        return diff_manifests
+
+    def compare(self, other, source=None):
+        differences = []
+        try:
+            differences.append(self.compare_manifests(other))
+        except AttributeError:  # no apk-specific methods, e.g. MissingArchive
+            pass
+        differences.extend(super().compare(other, source=source))
+        return differences
 
 class ApkFile(File):
     RE_FILE_TYPE = re.compile(r'^(Java|Zip) archive data.*\b')

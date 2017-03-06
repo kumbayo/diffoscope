@@ -27,6 +27,7 @@ from utils.nonexisting import assert_non_existing
 
 apk1 = load_fixture('test1.apk')
 apk2 = load_fixture('test2.apk')
+apk3 = load_fixture('test3.apk')
 
 def test_identification(apk1):
     assert isinstance(apk1, ApkFile)
@@ -38,6 +39,10 @@ def test_no_differences(apk1):
 @pytest.fixture
 def differences(apk1, apk2):
     return apk1.compare(apk2).details
+
+@pytest.fixture
+def differences2(apk1, apk3):
+    return apk1.compare(apk3).details
 
 @skip_unless_tools_exist('apktool', 'zipinfo')
 def test_compare_non_existing(monkeypatch, apk1):
@@ -52,12 +57,26 @@ def test_zipinfo(differences):
 
 @skip_unless_tools_exist('apktool', 'zipinfo')
 def test_android_manifest(differences):
-    assert differences[2].source1 == 'AndroidManifest.xml'
-    assert differences[2].source2 == 'AndroidManifest.xml'
+    assert differences[1].source1 == 'AndroidManifest.xml'
+    assert differences[1].source2 == 'AndroidManifest.xml'
     expected_diff = get_data('apk_manifest_expected_diff')
-    assert differences[2].unified_diff == expected_diff
+    assert differences[1].unified_diff == expected_diff
 
 @skip_unless_tools_exist('apktool', 'zipinfo')
 def test_apk_metadata_source(differences):
-    assert differences[1].source1 == 'APK metadata'
-    assert differences[1].source2 == 'APK metadata'
+    assert differences[2].source1 == 'APK metadata'
+    assert differences[2].source2 == 'APK metadata'
+
+@skip_unless_tools_exist('apktool', 'zipinfo')
+def test_skip_undecoded_android_manifest(differences):
+    assert not any(difference.source1 == 'original/AndroidManifest.xml'
+                   for difference in differences)
+    assert not any(difference.source2 == 'original/AndroidManifest.xml'
+                   for difference in differences)
+
+@skip_unless_tools_exist('apktool', 'zipinfo')
+def test_no_android_manifest(differences2):
+    assert differences2[1].source1 == 'original/AndroidManifest.xml'
+    assert differences2[1].source2 == '/dev/null'
+    assert differences2[1].comment == 'No decoded AndroidManifest.xml ' \
+                                      'found for one of the APK files.'
