@@ -77,6 +77,7 @@ class ComparatorManager(object):
         ('cbfs.CbfsFile',),
         ('git.GitIndexFile',),
         ('openssh.PublicKeyFile',),
+        ('gif.GifFile',),
     )
 
     _singleton = {}

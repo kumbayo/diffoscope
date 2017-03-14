@@ -60,6 +60,9 @@ EXTERNAL_TOOLS = {
         'debian': 'acl',
         'arch': 'acl',
     },
+    'gifbuild': {
+        'debian': 'giflib-tools',
+    },
     'ghc': {
         'debian': 'ghc',
         'arch': 'ghc',
