@@ -43,7 +43,8 @@ class Otool(Command):
 
     def filter(self, line):
         try:
-            # Strip the filename itself, it's in the first line on its own, terminated by a colon
+            # Strip the filename itself, it's in the first line on its own,
+            # terminated by a colon
             if line and line.decode('utf-8').strip() == self._path + ':':
                 return b""
             return line
