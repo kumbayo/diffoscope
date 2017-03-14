@@ -40,10 +40,18 @@ class ProgressManager(object):
         self.observers = []
 
     def setup(self, parsed_args):
-        # Show progress bar if user explicitly asked for it, otherwise show if
-        # STDOUT is a tty.
-        if parsed_args.progress or \
-                (parsed_args.progress is None and sys.stdout.isatty()):
+        def show_progressbar():
+            # Show progress bar if user explicitly asked for it
+            if parsed_args.progress:
+                return True
+
+            # ... otherwise show it if STDOUT is a tty
+            if parsed_args.progress is None:
+                return sys.stdout.isatty()
+
+            return False
+
+        if show_progressbar():
             try:
                 self.register(ProgressBar())
             except ImportError:
