@@ -45,9 +45,9 @@ class ProgressManager(object):
             if parsed_args.progress:
                 return True
 
-            # ... otherwise show it if STDOUT is a tty
+            # ... otherwise show it if STDOUT is a tty and debug is not set
             if parsed_args.progress is None:
-                return sys.stdout.isatty()
+                return sys.stdout.isatty() and not parsed_args.debug
 
             return False
 
