@@ -44,7 +44,11 @@ class SquashfsSuperblock(Command):
 
     def filter(self, line):
         # strip filename
-        return re.sub(r'^(Found a valid .*) on .*', '\\1', line.decode('utf-8')).encode('utf-8')
+        return re.sub(
+            r'^(Found a valid .*) on .*',
+            '\\1',
+            line.decode('utf-8'),
+        ).encode('utf-8')
 
 
 class SquashfsListing(Command):
@@ -122,7 +126,9 @@ class SquashfsDirectory(Directory, SquashfsMember):
 class SquashfsSymlink(Symlink, SquashfsMember):
     # Example line:
     # lrwxrwxrwx user/group   6 2015-06-24 14:47 squashfs-root/link -> broken
-    LINE_RE = re.compile(r'^\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+(?P<member_name>.*)\s+->\s+(?P<destination>.*)$')
+    LINE_RE = re.compile(
+        r'^\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+(?P<member_name>.*)\s+->\s+(?P<destination>.*)$',
+    )
 
     @staticmethod
     def parse(line):
@@ -146,31 +152,41 @@ class SquashfsSymlink(Symlink, SquashfsMember):
 class SquashfsDevice(Device, SquashfsMember):
     # Example line:
     # crw-r--r-- root/root  1,  3 2015-06-24 14:47 squashfs-root/null
-    LINE_RE = re.compile(r'^(?P<kind>c|b)\S+\s+\S+\s+(?P<major>\d+),\s*(?P<minor>\d+)\s+\S+\s+\S+\s+(?P<member_name>.*)$')
+    LINE_RE = re.compile(
+        r'^(?P<kind>c|b)\S+\s+\S+\s+(?P<major>\d+),\s*(?P<minor>\d+)\s+\S+\s+\S+\s+(?P<member_name>.*)$',
+    )
 
-    KIND_MAP = { 'c': stat.S_IFCHR,
-                 'b': stat.S_IFBLK,
-               }
+    KIND_MAP = {
+        'c': stat.S_IFCHR,
+        'b': stat.S_IFBLK,
+    }
 
     @staticmethod
     def parse(line):
         m = SquashfsDevice.LINE_RE.match(line)
         if not m:
             raise SquashfsInvalidLineFormat("invalid line format")
+
         d = m.groupdict()
         try:
             d['mode'] = SquashfsDevice.KIND_MAP[d['kind']]
             del d['kind']
         except KeyError:
             raise SquashfsInvalidLineFormat("unknown device kind %s" % d['kind'])
+
         try:
             d['major'] = int(d['major'])
         except ValueError:
-            raise SquashfsInvalidLineFormat("unable to parse major number %s" % d['major'])
+            raise SquashfsInvalidLineFormat(
+                "unable to parse major number %s" % d['major'],
+            )
+
         try:
             d['minor'] = int(d['minor'])
         except ValueError:
-            raise SquashfsInvalidLineFormat("unable to parse minor number %s" % d['minor'])
+            raise SquashfsInvalidLineFormat(
+                "unable to parse minor number %s" % d['minor'],
+            )
         return d
 
     def __init__(self, archive, member_name, mode, major, minor):
@@ -187,12 +203,12 @@ class SquashfsDevice(Device, SquashfsMember):
 
 
 SQUASHFS_LS_MAPPING = {
-        'd': SquashfsDirectory,
-        'l': SquashfsSymlink,
-        'c': SquashfsDevice,
-        'b': SquashfsDevice,
-        '-': SquashfsRegularFile
-    }
+    'd': SquashfsDirectory,
+    'l': SquashfsSymlink,
+    'c': SquashfsDevice,
+    'b': SquashfsDevice,
+    '-': SquashfsRegularFile
+}
 
 
 class SquashfsContainer(Archive):
@@ -203,22 +219,27 @@ class SquashfsContainer(Archive):
         cmd = ['unsquashfs', '-d', '', '-lls', path]
         output = subprocess.check_output(cmd, shell=False).decode('utf-8')
         header = True
+
         for line in output.rstrip('\n').split('\n'):
             if header:
                 if line == '':
                     header = False
                 continue
+
             if len(line) > 0 and line[0] in SQUASHFS_LS_MAPPING:
                 try:
                     cls = SQUASHFS_LS_MAPPING[line[0]]
                     yield cls, cls.parse(line)
                 except SquashfsInvalidLineFormat:
-                    logger.warning('Invalid squashfs entry: %s', line)
+                    logger.warning("Invalid squashfs entry: %s", line)
             else:
-                logger.warning('Unknown squashfs entry: %s', line)
+                logger.warning("Unknown squashfs entry: %s", line)
 
     def open_archive(self):
-        return collections.OrderedDict([(kwargs['member_name'], (cls, kwargs)) for cls, kwargs in self.entries(self.source.path)])
+        return collections.OrderedDict([
+            (kwargs['member_name'], (cls, kwargs))
+            for cls, kwargs in self.entries(self.source.path)
+        ])
 
     def close_archive(self):
         pass
@@ -245,5 +266,7 @@ class SquashfsFile(File):
     RE_FILE_TYPE = re.compile(r'^Squashfs filesystem\b')
 
     def compare_details(self, other, source=None):
-        return [Difference.from_command(SquashfsSuperblock, self.path, other.path),
-                Difference.from_command(SquashfsListing, self.path, other.path)]
+        return [
+            Difference.from_command(SquashfsSuperblock, self.path, other.path),
+            Difference.from_command(SquashfsListing, self.path, other.path),
+        ]
