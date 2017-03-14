@@ -50,5 +50,5 @@ class GifFile(File):
             Gifbuild,
             self.path,
             other.path,
-            source='gifbuild'),
-        ]
+            source='gifbuild',
+       )]
