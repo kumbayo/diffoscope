@@ -69,7 +69,7 @@ class ISO9660Listing(Command):
 
 class Iso9660File(File):
     CONTAINER_CLASS = LibarchiveContainer
-    RE_FILE_TYPE = re.compile(r'\bISO 9660\b')
+    RE_FILE_TYPE = re.compile(r'\b(ISO 9660|DOS/MBR boot sector)\b')
 
     def compare_details(self, other, source=None):
         differences = []
