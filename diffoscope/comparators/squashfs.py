@@ -18,14 +18,17 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
+import os
 import re
 import stat
 import logging
+import functools
 import subprocess
 import collections
 
 from diffoscope.tools import tool_required
 from diffoscope.difference import Difference
+from diffoscope.tempfiles import get_temporary_directory
 
 from .utils.file import File
 from .device import Device
@@ -70,6 +73,12 @@ class SquashfsMember(ArchiveMember):
 
     def is_device(self):
         return False
+
+    @property
+    def path(self):
+        # Use our extracted version and also avoid creating a temporary
+        # directory per-file in ArchiveMember.path.
+        return os.path.join(self.container._temp_dir, self._name)
 
 
 class SquashfsRegularFile(SquashfsMember):
@@ -202,63 +211,85 @@ class SquashfsDevice(Device, SquashfsMember):
         return True
 
 
-SQUASHFS_LS_MAPPING = {
-    'd': SquashfsDirectory,
-    'l': SquashfsSymlink,
-    'c': SquashfsDevice,
-    'b': SquashfsDevice,
-    '-': SquashfsRegularFile
-}
-
-
 class SquashfsContainer(Archive):
-    @tool_required('unsquashfs')
-    def entries(self, path):
-        # We pass `-d ''` in order to get a listing with the names we actually
-        # need to use when extracting files
-        cmd = ['unsquashfs', '-d', '', '-lls', path]
-        output = subprocess.check_output(cmd, shell=False).decode('utf-8')
-        header = True
-
-        for line in output.rstrip('\n').split('\n'):
-            if header:
-                if line == '':
-                    header = False
-                continue
-
-            if len(line) > 0 and line[0] in SQUASHFS_LS_MAPPING:
-                try:
-                    cls = SQUASHFS_LS_MAPPING[line[0]]
-                    yield cls, cls.parse(line)
-                except SquashfsInvalidLineFormat:
-                    logger.warning("Invalid squashfs entry: %s", line)
-            else:
-                logger.warning("Unknown squashfs entry: %s", line)
+    MEMBER_CLASS = {
+        'd': SquashfsDirectory,
+        'l': SquashfsSymlink,
+        'c': SquashfsDevice,
+        'b': SquashfsDevice,
+        '-': SquashfsRegularFile
+    }
 
     def open_archive(self):
-        return collections.OrderedDict([
-            (kwargs['member_name'], (cls, kwargs))
-            for cls, kwargs in self.entries(self.source.path)
-        ])
+        return True
 
     def close_archive(self):
         pass
 
-    def get_member_names(self):
-        return self.archive.keys()
-
-    @tool_required('unsquashfs')
-    def extract(self, member_name, dest_dir):
-        if '..' in member_name.split('/'):
-            raise ValueError("relative path in squashfs")
-        cmd = ['unsquashfs', '-n', '-f', '-d', dest_dir, self.source.path, member_name]
-        logger.debug("unsquashfs %s into %s", member_name, dest_dir)
-        subprocess.check_call(cmd, shell=False, stdout=subprocess.PIPE)
-        return '%s%s' % (dest_dir, member_name)
-
     def get_member(self, member_name):
-        cls, kwargs = self.archive[member_name]
-        return cls(self, **kwargs)
+        self.ensure_unpacked()
+        cls, kwargs = self._members[member_name]
+        return cls(self, member_name, **kwargs)
+
+    def extract(self, member_name, destdir):
+        # Ignore destdir argument and use our unpacked path
+        self.ensure_unpacked()
+        return member_name
+
+    def get_member_names(self):
+        self.ensure_unpacked()
+        return self._members.keys()
+
+    def ensure_unpacked(self):
+        if hasattr(self, '_members'):
+            return
+
+        self._members = collections.OrderedDict()
+        self._temp_dir = get_temporary_directory().name
+
+        logger.debug("Extracting %s to %s", self.source.path, self._temp_dir)
+
+        output = subprocess.check_output((
+            'unsquashfs',
+            '-n',
+            '-f',
+            '-no',
+            '-li',
+            '-d', '.',
+            self.source.path,
+        ), stderr=subprocess.PIPE, cwd=self._temp_dir)
+
+        output = iter(output.decode('utf-8').rstrip('\n').split('\n'))
+
+        # Skip headers
+        for _ in iter(functools.partial(next, output), ''):
+            pass
+
+        for line in output:
+            if not line:
+                continue
+
+            try:
+                cls = self.MEMBER_CLASS[line[0]]
+            except KeyError:
+                logger.debug("Unknown squashfs entry: %s", line)
+                continue
+
+            try:
+                kwargs = cls.parse(line)
+            except SquashfsInvalidLineFormat:
+                continue
+
+            # Pop to avoid duplicate member name twice and strip the leading
+            # "./" for aesthetics
+            member_name = kwargs.pop('member_name')[2:]
+
+            self._members[member_name] = (cls, kwargs)
+
+        logger.debug(
+            "Extracted %d entries from %s to %s",
+            len(self._members), self.source.path, self._temp_dir,
+        )
 
 
 class SquashfsFile(File):
