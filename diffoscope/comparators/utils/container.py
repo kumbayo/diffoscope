@@ -113,7 +113,8 @@ class Container(object, metaclass=abc.ABCMeta):
 
             my_members = my_reminders
             for my_name, other_name, score in perform_fuzzy_matching(my_members, other_members):
-                comment = 'Files similar despite different names (difference score: %d)' % score
+                comment = "Files similar despite different names" \
+                    " (difference score: {})".format(score)
                 p.step(2, msg=my_name)
                 yield my_members.pop(my_name), other_members.pop(other_name), comment
 
