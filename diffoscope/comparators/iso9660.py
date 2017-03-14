@@ -30,10 +30,13 @@ from .utils.libarchive import LibarchiveContainer
 
 @tool_required('isoinfo')
 def get_iso9660_names(path):
-    # We always use RockRidge for names. Let's see if this proves
-    # problematic later
-    cmd = ['isoinfo', '-R', '-f', '-i', path]
-    return subprocess.check_output(cmd, shell=False).strip().split('\n')
+    return subprocess.check_output((
+        'isoinfo',
+        '-R',  # Always use RockRidge for names
+        '-f',
+        '-i',
+        path,
+    ), shell=False).strip().split('\n')
 
 
 class ISO9660PVD(Command):
@@ -50,17 +53,18 @@ class ISO9660Listing(Command):
     @tool_required('isoinfo')
     def cmdline(self):
         cmd = ['isoinfo', '-l', '-i', self.path]
+
         if self._extension == 'joliet':
             cmd.extend(['-J', '-j', 'iso8859-15'])
         elif self._extension == 'rockridge':
             cmd.extend(['-R'])
+
         return cmd
 
     def filter(self, line):
         if self._extension == 'joliet':
             return line.decode('iso-8859-15').encode('utf-8')
-        else:
-            return line
+        return line
 
 
 class Iso9660File(File):
@@ -69,11 +73,19 @@ class Iso9660File(File):
 
     def compare_details(self, other, source=None):
         differences = []
-        differences.append(Difference.from_command(ISO9660PVD, self.path, other.path))
-        differences.append(Difference.from_command(ISO9660Listing, self.path, other.path))
-        for extension in ('joliet', 'rockridge'):
+
+        for klass in (ISO9660PVD, ISO9660Listing):
+            differences.append(Difference.from_command(
+                klass, self.path, other.path,
+            ))
+
+        for x in ('joliet', 'rockridge'):
             try:
-                differences.append(Difference.from_command(ISO9660Listing, self.path, other.path, command_args=(extension,)))
+                differences.append(Difference.from_command(
+                    ISO9660Listing, self.path, other.path, command_args=(x,),
+                ))
             except subprocess.CalledProcessError:
-                pass # probably no joliet or rockridge data
+                # Probably no joliet or rockridge data
+                pass
+
         return differences
