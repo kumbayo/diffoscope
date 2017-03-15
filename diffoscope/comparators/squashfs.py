@@ -80,6 +80,11 @@ class SquashfsMember(ArchiveMember):
         # directory per-file in ArchiveMember.path.
         return os.path.join(self.container._temp_dir, self._name)
 
+    @property
+    def name(self):
+        # Don't include the leading "." in the output  (eg. "./etc/shadow")
+        return self._name[1:]
+
 
 class SquashfsRegularFile(SquashfsMember):
     # Example line:
@@ -280,9 +285,8 @@ class SquashfsContainer(Archive):
             except SquashfsInvalidLineFormat:
                 continue
 
-            # Pop to avoid duplicate member name twice and strip the leading
-            # "./" for aesthetics
-            member_name = kwargs.pop('member_name')[2:]
+            # Pop to avoid duplicating member name in the key and the value
+            member_name = kwargs.pop('member_name')
 
             self._members[member_name] = (cls, kwargs)
 

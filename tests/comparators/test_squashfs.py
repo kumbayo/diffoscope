@@ -68,8 +68,8 @@ def test_symlink(differences):
 
 @skip_unless_tools_exist('unsquashfs')
 def test_compressed_files(differences):
-    assert differences[3].source1 == 'text'
-    assert differences[3].source2 == 'text'
+    assert differences[3].source1 == '/text'
+    assert differences[3].source2 == '/text'
     expected_diff = get_data('text_ascii_expected_diff')
     assert differences[3].unified_diff == expected_diff
 
