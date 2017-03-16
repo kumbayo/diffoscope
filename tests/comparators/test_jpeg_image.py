@@ -37,6 +37,8 @@ def identify_version():
     out = subprocess.check_output(['identify', '-version'])
     # First line is expected to look like
     # "Version: ImageMagick 6.9.6-6 Q16 x86_64 20161125 ..."
+    if not out.startswith(b"Version: ImageMagick "):
+        return '0.0.0'
     return out.decode('utf-8').splitlines()[0].split()[2].strip()
 
 def test_identification(image1):
