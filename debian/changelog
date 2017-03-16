@@ -1,3 +1,25 @@
+diffoscope (79) experimental; urgency=medium
+
+  [ Chris Lamb ]
+  * Extract SquashFS images in one go rather than per-file, speeding up (eg.)
+    Tails ISO comparison by ~10x.
+  * Support newer versions of cbfstool to avoid test failures.
+    (Closes: #856446)
+  * Skip icc test that varies on endian if the Debian-specific patch is not
+    present. (Closes: #856447)
+  * Compare GIF images using gifbuild. (Closes: #857610)
+  * Also interpret "DOS/MBR boot sector" files as ISO images as they may have
+    been processed by isohybrid.
+  * Progress bar:
+    - Hide bar if we are running with --debug mode.
+    - Update prior to working on an item so the displayed filename is correct.
+
+  [ Maria Glukhova ]
+  * Improve AndroidManifest.xml comparison for APK files.
+    - Indicate the AndroidManifest.xml type. (Closes: #850758)
+
+ -- Chris Lamb <lamby@debian.org>  Thu, 16 Mar 2017 09:38:16 +0100
+
 diffoscope (78) unstable; urgency=medium
 
   [ Brett Smith ]
