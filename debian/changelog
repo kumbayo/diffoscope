@@ -1,3 +1,13 @@
+diffoscope (80) experimental; urgency=medium
+
+  * Ensure that we really are using ImageMagick and not, for example, the
+    GraphicsMagick compatibility layer installed by
+    graphicsmagick-imagemagick-compat. (Closes: #857940)
+  * Factor out the unicode decoding of the identify -version output.
+  * travis.yml: Don't build tags.
+
+ -- Chris Lamb <lamby@debian.org>  Thu, 16 Mar 2017 17:06:45 +0100
+
 diffoscope (79) experimental; urgency=medium
 
   [ Chris Lamb ]
