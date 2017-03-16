@@ -34,12 +34,12 @@ image1_meta = load_fixture('test1_meta.jpg')
 image2_meta = load_fixture('test2_meta.jpg')
 
 def identify_version():
-    out = subprocess.check_output(['identify', '-version'])
+    out = subprocess.check_output(['identify', '-version']).decode('utf-8')
     # First line is expected to look like
     # "Version: ImageMagick 6.9.6-6 Q16 x86_64 20161125 ..."
-    if not out.startswith(b"Version: ImageMagick "):
+    if not out.startswith("Version: ImageMagick "):
         return '0.0.0'
-    return out.decode('utf-8').splitlines()[0].split()[2].strip()
+    return out.splitlines()[0].split()[2].strip()
 
 def test_identification(image1):
     assert isinstance(image1, JPEGImageFile)
