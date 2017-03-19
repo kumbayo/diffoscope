@@ -72,7 +72,7 @@ class Archive(Container, metaclass=abc.ABCMeta):
         return ArchiveMember(self, member_name)
 
     def get_compressed_content_name(self, expected_extension):
-        basename = os.path.basename(self.source.path)
+        basename = os.path.basename(self.source.name)
 
         if not basename.endswith(expected_extension):
             return "%s-content" % basename
