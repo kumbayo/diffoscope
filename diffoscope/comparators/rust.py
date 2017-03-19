@@ -26,7 +26,6 @@ import collections
 from diffoscope.difference import Difference
 
 from .utils.archive import Archive
-from .utils.filenames import get_compressed_content_name
 
 RLIB_BYTECODE_OBJECT_V1_DATASIZE_OFFSET = 15
 RLIB_BYTECODE_OBJECT_V1_DATA_OFFSET = 23
@@ -46,7 +45,7 @@ class RustObjectContainer(Archive):
         return collections.OrderedDict({'deflate-content': self.get_member(self.get_member_names()[0])})
 
     def get_member_names(self):
-        return [get_compressed_content_name(self, '.deflate')]
+        return [self.get_compressed_content_name('.deflate')]
 
     def extract(self, member_name, dest_dir):
         dest_path = os.path.join(dest_dir, member_name)
