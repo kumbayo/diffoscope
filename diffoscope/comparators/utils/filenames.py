@@ -22,8 +22,8 @@ import os
 
 def get_compressed_content_name(path, expected_extension):
     basename = os.path.basename(path)
-    if basename.endswith(expected_extension):
-        name = basename[:-len(expected_extension)]
-    else:
-        name = "%s-content" % basename
-    return name
+
+    if not basename.endswith(expected_extension):
+        return "%s-content" % basename
+
+    return basename[:-len(expected_extension)]
