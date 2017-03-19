@@ -45,7 +45,7 @@ class GzipContainer(Archive):
         return collections.OrderedDict({'gzip-content': self.get_member(self.get_member_names()[0])})
 
     def get_member_names(self):
-        return [get_compressed_content_name(self.source.path, '.gz')]
+        return [get_compressed_content_name(self, '.gz')]
 
     @tool_required('gzip')
     def extract(self, member_name, dest_dir):

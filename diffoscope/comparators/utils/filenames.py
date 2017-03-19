@@ -20,8 +20,8 @@
 import os
 
 
-def get_compressed_content_name(path, expected_extension):
-    basename = os.path.basename(path)
+def get_compressed_content_name(archive, expected_extension):
+    basename = os.path.basename(archive.source.path)
 
     if not basename.endswith(expected_extension):
         return "%s-content" % basename

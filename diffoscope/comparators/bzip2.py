@@ -43,7 +43,7 @@ class Bzip2Container(Archive):
         return collections.OrderedDict({'bzip2-content': self.get_member(self.get_member_names()[0])})
 
     def get_member_names(self):
-        return [get_compressed_content_name(self.source.path, '.bz2')]
+        return [get_compressed_content_name(self, '.bz2')]
 
     @tool_required('bzip2')
     def extract(self, member_name, dest_dir):

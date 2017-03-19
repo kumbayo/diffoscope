@@ -43,7 +43,7 @@ class XzContainer(Archive):
         return collections.OrderedDict({'xz-content': self.get_member(self.get_member_names()[0])})
 
     def get_member_names(self):
-        return [get_compressed_content_name(self.source.path, '.xz')]
+        return [get_compressed_content_name(self, '.xz')]
 
     @tool_required('xz')
     def extract(self, member_name, dest_dir):

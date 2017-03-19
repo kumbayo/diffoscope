@@ -46,7 +46,7 @@ class RustObjectContainer(Archive):
         return collections.OrderedDict({'deflate-content': self.get_member(self.get_member_names()[0])})
 
     def get_member_names(self):
-        return [get_compressed_content_name(self.source.path, '.deflate')]
+        return [get_compressed_content_name(self, '.deflate')]
 
     def extract(self, member_name, dest_dir):
         dest_path = os.path.join(dest_dir, member_name)

@@ -47,7 +47,7 @@ class DexContainer(Archive):
         return collections.OrderedDict({'dex-content': self.get_member(self.get_member_names()[0])})
 
     def get_member_names(self):
-        return [get_compressed_content_name(self.source.path, '.dex') + '.jar']
+        return [get_compressed_content_name(self, '.dex') + '.jar']
 
     @tool_required('enjarify')
     def extract(self, member_name, dest_dir):
