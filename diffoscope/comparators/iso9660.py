@@ -69,7 +69,19 @@ class ISO9660Listing(Command):
 
 class Iso9660File(File):
     CONTAINER_CLASS = LibarchiveContainer
-    RE_FILE_TYPE = re.compile(r'\b(ISO 9660|DOS/MBR boot sector)\b')
+    RE_FILE_TYPE = re.compile(r'\bISO 9660\b')
+
+    @classmethod
+    def recognizes(cls, file):
+        if file.magic_file_type and cls.RE_FILE_TYPE.search(file.magic_file_type):
+            return True
+        else:
+            # sometimes CDs put things like MBRs at the front, which is an expected
+            # part of the ISO9660 standard, but file(1)/libmagic doesn't detect this
+            # see https://en.wikipedia.org/wiki/ISO_9660#Specifications for detais
+            with open(file.path, "rb") as fp:
+                fp.seek(32769)
+                return fp.read(5) == b'CD001'
 
     def compare_details(self, other, source=None):
         differences = []
