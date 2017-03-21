@@ -73,15 +73,18 @@ class Iso9660File(File):
 
     @classmethod
     def recognizes(cls, file):
-        if file.magic_file_type and cls.RE_FILE_TYPE.search(file.magic_file_type):
+        if file.magic_file_type and \
+                cls.RE_FILE_TYPE.search(file.magic_file_type):
             return True
-        else:
-            # sometimes CDs put things like MBRs at the front, which is an expected
-            # part of the ISO9660 standard, but file(1)/libmagic doesn't detect this
-            # see https://en.wikipedia.org/wiki/ISO_9660#Specifications for detais
-            with open(file.path, "rb") as fp:
-                fp.seek(32769)
-                return fp.read(5) == b'CD001'
+
+        # Sometimes CDs put things like MBRs at the front which is an expected
+        # part of the ISO9660 standard, but file(1)/libmagic doesn't detect
+        # this. <https://en.wikipedia.org/wiki/ISO_9660#Specifications>.
+        with open(file.path, 'rb') as f:
+            f.seek(32769)
+            return f.read(5) == b'CD001'
+
+        return False
 
     def compare_details(self, other, source=None):
         differences = []
