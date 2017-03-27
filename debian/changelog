@@ -1,3 +1,16 @@
+diffoscope (81) experimental; urgency=medium
+
+  [ Chris Lamb ]
+  * Correct meaningless "1234-content" metadata when introspecting files
+    within archives. This was a regression since #854723 due to the use of
+    auto-incrementing on-disk filenames. (Closes: #858223)
+  * Refactor get_compressed_content_name.
+
+  [ Ximin Luo ]
+  * Improve ISO9660/DOS/MBR check.
+
+ -- Chris Lamb <lamby@debian.org>  Mon, 27 Mar 2017 16:21:17 +0100
+
 diffoscope (80) experimental; urgency=medium
 
   * Ensure that we really are using ImageMagick and not, for example, the
