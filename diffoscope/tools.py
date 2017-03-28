@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
+import os
 import collections
 import platform
 import functools
@@ -36,6 +37,15 @@ OS_NAMES = collections.OrderedDict([
     ('debian', 'Debian'),
     ('FreeBSD', 'FreeBSD'),
 ])
+
+# Ensure tests and the runtime environment can locate binaries in /usr/sbin
+# (eg. tcpdump). We must modify the path before the @tool_required decorator is
+# applied.
+pathlist = os.environ['PATH'].split(os.pathsep)
+for x in ('/sbin', '/usr/sbin', '/usr/local/sbin'):
+    if x not in pathlist:
+        pathlist.append(x)
+os.environ['PATH'] = os.pathsep.join(pathlist)
 
 
 def tool_required(command):
