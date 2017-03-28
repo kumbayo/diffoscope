@@ -52,20 +52,20 @@ def tool_required(command):
     """
     Decorator that checks if the specified tool is installed
     """
+    from .exc import RequiredToolNotFound
+
     if not hasattr(tool_required, 'all'):
         tool_required.all = set()
     tool_required.all.add(command)
-    def wrapper(original_function):
-        if find_executable(command):
-            @functools.wraps(original_function)
-            def tool_check(*args, **kwargs):
-                with profile('command', command):
-                    return original_function(*args, **kwargs)
-        else:
-            @functools.wraps(original_function)
-            def tool_check(*args, **kwargs):
-                from .exc import RequiredToolNotFound
+
+    def wrapper(fn):
+        @functools.wraps(fn)
+        def tool_check(*args, **kwargs):
+            if not find_executable(command):
                 raise RequiredToolNotFound(command)
+
+            with profile('command', command):
+                return fn(*args, **kwargs)
         return tool_check
     return wrapper
 
