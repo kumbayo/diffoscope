@@ -24,7 +24,7 @@ from diffoscope.progress import ProgressManager
 from diffoscope.comparators import ComparatorManager
 
 
-# Ensure set_locale fixture runs before all tests.
+# Ensure set_locale fixture runs before each test.
 set_locale = pytest.fixture(autouse=True, scope='session')(set_locale)
 
 @pytest.fixture(autouse=True)
