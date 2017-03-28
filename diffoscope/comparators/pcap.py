@@ -33,7 +33,7 @@ class Tcpdump(Command):
             'tcpdump',
             '-X',  # Print data and link level header in hex and ASCII
             '-nn',  # Don't resolve host addresses, etc.
-            '-tttt',  # Print timestamps
+            '-ttttt',  # Print delta from previous line
             '-r', self.path,
         )
 
