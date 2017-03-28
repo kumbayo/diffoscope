@@ -192,6 +192,9 @@ EXTERNAL_TOOLS = {
         'debian': 'tar',
         'arch': 'tar',
     },
+    'tcpdump': {
+        'debian': 'tcpdump',
+    },
     'unsquashfs': {
         'debian': 'squashfs-tools',
         'arch': 'squashfs-tools',

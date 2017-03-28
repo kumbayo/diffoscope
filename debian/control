@@ -53,6 +53,7 @@ Build-Depends:
  sng <!nocheck>,
  sqlite3 <!nocheck>,
  squashfs-tools <!nocheck>,
+ tcpdump <!nocheck>,
  unzip <!nocheck>,
  xxd <!nocheck> | vim-common <!nocheck>,
 Standards-Version: 3.9.8
