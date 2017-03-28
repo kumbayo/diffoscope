@@ -2,7 +2,6 @@
 #
 # diffoscope: in-depth comparison of files, archives, and directories
 #
-# Copyright © 2016 Brett Smith <debbug@brettcsmith.org>
 # Copyright © 2017 Chris Lamb <lamby@debian.org>
 #
 # diffoscope is free software: you can redistribute it and/or modify
@@ -18,25 +17,14 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
-import pytest
+import os
 
-from diffoscope.path import set_path
-from diffoscope.locale import set_locale
-from diffoscope.progress import ProgressManager
-from diffoscope.comparators import ComparatorManager
 
-# Ensure set_path fixture runs before all tests.
-set_path()
+def set_path():
+    pathlist = os.environ['PATH'].split(os.pathsep)
 
-# Ensure set_locale fixture runs before each test.
-set_locale = pytest.fixture(autouse=True, scope='session')(set_locale)
+    for x in ('/sbin', '/usr/sbin', '/usr/local/sbin'):
+        if x not in pathlist:
+            pathlist.append(x)
 
-@pytest.fixture(autouse=True)
-def reload_comparators():
-    # Reload Comparators after every test so we are always in a consistent
-    # state
-    ComparatorManager().reload()
-
-@pytest.fixture(autouse=True)
-def reset_progress():
-    ProgressManager().reset()
+    os.environ['PATH'] = os.pathsep.join(pathlist)

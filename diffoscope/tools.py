@@ -2,7 +2,7 @@
 #
 # diffoscope: in-depth comparison of files, archives, and directories
 #
-# Copyright © 2016 Chris Lamb <lamby@debian.org>
+# Copyright © 2016, 2017 Chris Lamb <lamby@debian.org>
 #
 # diffoscope is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,15 +37,6 @@ OS_NAMES = collections.OrderedDict([
     ('debian', 'Debian'),
     ('FreeBSD', 'FreeBSD'),
 ])
-
-# Ensure tests and the runtime environment can locate binaries in /usr/sbin
-# (eg. tcpdump). We must modify the path before the @tool_required decorator is
-# applied.
-pathlist = os.environ['PATH'].split(os.pathsep)
-for x in ('/sbin', '/usr/sbin', '/usr/local/sbin'):
-    if x not in pathlist:
-        pathlist.append(x)
-os.environ['PATH'] = os.pathsep.join(pathlist)
 
 
 def tool_required(command):

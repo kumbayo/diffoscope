@@ -5,6 +5,7 @@
 # diffoscope: in-depth comparison of files, archives, and directories
 #
 # Copyright © 2014-2015 Jérémy Bobbio <lunar@debian.org>
+# Copyright © 2017 Chris Lamb <lamby@debian.org>
 #
 # diffoscope is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,6 +28,7 @@ import argparse
 import traceback
 
 from . import VERSION
+from .path import set_path
 from .tools import tool_required, OS_NAMES, get_current_os
 from .config import Config
 from .locale import set_locale
@@ -252,6 +254,7 @@ def run_diffoscope(parsed_args):
     Config().fuzzy_threshold = parsed_args.fuzzy_threshold
     Config().new_file = parsed_args.new_file
     Config().excludes = parsed_args.excludes
+    set_path()
     set_locale()
     logger.debug('Starting comparison')
     ProgressManager().setup(parsed_args)
