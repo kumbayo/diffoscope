@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
+import pytest
+
 
 def test_sbin_added_to_path():
     from diffoscope.tools import tool_required
@@ -26,3 +28,15 @@ def test_sbin_added_to_path():
         pass
 
     fn()
+
+
+def test_required_tool_not_found():
+    from diffoscope.exc import RequiredToolNotFound
+    from diffoscope.tools import tool_required
+
+    @tool_required('does-not-exist')
+    def fn():
+        pass
+
+    with pytest.raises(RequiredToolNotFound):
+        fn()
