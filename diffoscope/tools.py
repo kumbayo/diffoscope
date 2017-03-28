@@ -52,6 +52,16 @@ def tool_required(command):
     def wrapper(fn):
         @functools.wraps(fn)
         def tool_check(*args, **kwargs):
+            """
+            Due to the way decorators are executed at import-time we defer the
+            execution of `find_executable` until we actually run the decorated
+            function (instead of prematurely returning a different version of
+            `tool_check`).
+
+            This ensures that any os.environ['PATH'] modifications are
+            performed prior to the `find_executable` tests.
+            """
+
             if not find_executable(command):
                 raise RequiredToolNotFound(command)
 
