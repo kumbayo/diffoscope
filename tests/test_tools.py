@@ -17,13 +17,14 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
+import os
 import pytest
 
 
 def test_sbin_added_to_path():
     from diffoscope.tools import tool_required
 
-    @tool_required('init')
+    @tool_required(os.listdir('/sbin')[0])
     def fn():
         pass
 
