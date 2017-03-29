@@ -136,6 +136,9 @@ EXTERNAL_TOOLS = {
         'debian': 'binutils-multiarch',
         'arch': 'binutils',
     },
+    'pgpdump': {
+        'debian': 'pgpdump',
+    },
     'pdftk': {
         'debian': 'pdftk',
         'FreeBSD': 'pdftk',

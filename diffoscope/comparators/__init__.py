@@ -79,6 +79,7 @@ class ComparatorManager(object):
         ('openssh.PublicKeyFile',),
         ('gif.GifFile',),
         ('pcap.PcapFile',),
+        ('pgp.PgpFile',),
     )
 
     _singleton = {}

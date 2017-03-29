@@ -35,6 +35,7 @@ Build-Depends:
  mono-utils <!nocheck>,
  openssh-client <!nocheck>,
  pdftk <!nocheck>,
+ pgpdump <!nocheck>,
  poppler-utils <!nocheck>,
  python-argcomplete,
  python3-all,
