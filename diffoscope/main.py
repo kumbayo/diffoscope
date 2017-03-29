@@ -221,11 +221,14 @@ class ListToolsAction(argparse.Action):
             current_os = get_current_os()
             os_list = [current_os] if (current_os in OS_NAMES) else iter(OS_NAMES)
         for os in os_list:
+            tools = set()
             print("Available-in-{}-packages: ".format(OS_NAMES[os]), end='')
-            print(', '.join(sorted(filter(None, {
-                EXTERNAL_TOOLS.get(k, {}).get(os, None)
-                for k in tool_required.all
-            }))))
+            for x in tool_required.all:
+                try:
+                    tools.add(EXTERNAL_TOOLS[x][os])
+                except KeyError:
+                    pass
+            print(', '.join(sorted(tools)))
         sys.exit(0)
 
 
