@@ -44,6 +44,9 @@ EXTERNAL_TOOLS = {
         'debian': 'diffutils',
         'arch': 'diffutils',
     },
+    'docx2txt': {
+        'debian': 'docx2txt',
+    },
     'enjarify': {
         'debian': 'enjarify',
         'arch': 'enjarify',
@@ -135,6 +138,9 @@ EXTERNAL_TOOLS = {
     'objdump': {
         'debian': 'binutils-multiarch',
         'arch': 'binutils',
+    },
+    'odt2txt': {
+        'debian': 'odt2txt',
     },
     'pgpdump': {
         'debian': 'pgpdump',

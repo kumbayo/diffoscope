@@ -70,6 +70,8 @@ class ComparatorManager(object):
         ('tar.TarFile',),
         ('xz.XzFile',),
         ('apk.ApkFile',),
+        ('odt.OdtFile',),
+        ('docx.DocxFile',),
         ('zip.ZipFile',),
         ('zip.MozillaZipFile',),
         ('image.JPEGImageFile',),
