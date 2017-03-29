@@ -138,6 +138,7 @@ EXTERNAL_TOOLS = {
     },
     'pgpdump': {
         'debian': 'pgpdump',
+        'arch': 'pgpdump',
     },
     'pdftk': {
         'debian': 'pdftk',
