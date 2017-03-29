@@ -257,7 +257,7 @@ class ListDebianSubstvarsAction(argparse._StoreTrueAction):
         ):
             tools.discard(x)
 
-        print(', '.join(sorted(tools)))
+        print('diffoscope:Recommends={}'.format(', '.join(sorted(tools))))
         sys.exit(0)
 
 def maybe_set_limit(config, parsed_args, key):
