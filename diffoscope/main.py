@@ -188,6 +188,8 @@ def create_parser():
                         'DISTRO can be one of {%(choices)s}. '
                         'If specified, the output will list packages in that '
                         'distribution that satisfy these dependencies.')
+    group4.add_argument('--list-debian-substvars', action=ListDebianSubstvarsAction,
+                        help="List packages needed for Debian in 'substvar' format.")
 
     if not tlsh:
         parser.epilog = 'File renaming detection based on fuzzy-matching is currently disabled. It can be enabled by installing the "tlsh" module available at https://github.com/trendmicro/tlsh'
@@ -231,6 +233,32 @@ class ListToolsAction(argparse.Action):
             print(', '.join(sorted(tools)))
         sys.exit(0)
 
+class ListDebianSubstvarsAction(argparse._StoreTrueAction):
+    def __call__(self, *args, **kwargs):
+        # Ensure all comparators are imported so tool_required.all is
+        # populated.
+        ComparatorManager().reload()
+
+        tools = set()
+        for x in tool_required.all:
+            try:
+                tools.add(EXTERNAL_TOOLS[x]['debian'])
+            except KeyError:
+                pass
+
+        # Exclude "Required" packages
+        for x in (
+            'gzip',
+            'tar',
+            'coreutils',
+            'diffutils',
+            'e2fsprogs',
+            'findutils',
+        ):
+            tools.discard(x)
+
+        print(', '.join(sorted(tools)))
+        sys.exit(0)
 
 def maybe_set_limit(config, parsed_args, key):
     v = getattr(parsed_args, key)
