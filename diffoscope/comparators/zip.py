@@ -51,6 +51,12 @@ class ZipinfoVerbose(Zipinfo):
         return ['zipinfo', '-v', self.path]
 
 
+class BsdtarVerbose(Command):
+    @tool_required('bsdtar')
+    def cmdline(self):
+        return ['bsdtar', '-tvf', self.path]
+
+
 class ZipDirectory(Directory, ArchiveMember):
     def __init__(self, archive, member_name):
         ArchiveMember.__init__(self, archive, member_name)
@@ -104,7 +110,8 @@ class ZipFile(File):
 
     def compare_details(self, other, source=None):
         zipinfo_difference = Difference.from_command(Zipinfo, self.path, other.path) or \
-                             Difference.from_command(ZipinfoVerbose, self.path, other.path)
+                             Difference.from_command(ZipinfoVerbose, self.path, other.path) or \
+                             Difference.from_command(BsdtarVerbose, self.path, other.path)
         return [zipinfo_difference]
 
 
@@ -155,5 +162,6 @@ class MozillaZipFile(File):
 
     def compare_details(self, other, source=None):
         zipinfo_difference = Difference.from_command(MozillaZipinfo, self.path, other.path) or \
-                             Difference.from_command(MozillaZipinfoVerbose, self.path, other.path)
+                             Difference.from_command(MozillaZipinfoVerbose, self.path, other.path) or \
+                             Difference.from_command(BsdtarVerbose, self.path, other.path)
         return [zipinfo_difference]

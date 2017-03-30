@@ -27,6 +27,7 @@ Build-Depends:
  giflib-tools <!nocheck>,
  imagemagick <!nocheck>,
  jsbeautifier <!nocheck>,
+ libarchive-tools <!nocheck>,
  libjs-jquery <!nocheck>,
  libjs-jquery-hotkeys <!nocheck>,
  libjs-jquery-isonscreen <!nocheck>,

@@ -21,6 +21,12 @@ EXTERNAL_TOOLS = {
     'apktool': {
         'debian': 'apktool',
     },
+    'bsdtar': {
+        'debian': 'libarchive-tools',
+        'arch': 'libarchive',
+        'Fedora': 'bsdtar',
+        'FreeBSD': 'libarchive',
+    },
     'bzip2': {
         'debian': 'bzip2',
         'arch': 'bzip2',
