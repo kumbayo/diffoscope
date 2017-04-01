@@ -423,6 +423,24 @@ def output_unified_diff(print_func, css_url, directory, unified_diff, has_intern
         text = "load diff (%s %s%s)" % (spl_current_page, noun, (", truncated" if truncated else ""))
         print_func(templates.UD_TABLE_FOOTER % {"filename": html.escape("%s-1.html" % mainname), "text": text}, force=True)
 
+def output_visual(print_func, visual, parents):
+    logger.debug('visual difference for %s', visual.source)
+    sources = parents + [visual.source]
+    print_func(u'<div class="difference">')
+    print_func(u'<div class="diffheader">')
+    print_func(u'<div class="diffcontrol">[−]</div>')
+    print_func(u'<div><span class="source">%s</span>'
+               % html.escape(visual.source))
+    anchor = escape_anchor('/'.join(sources[1:]))
+    print_func(
+        u' <a class="anchor" href="#%s" name="%s">\xb6</a>' % (anchor, anchor))
+    print_func(u"</div>")
+    print_func(u"</div>")
+    print_func(u'<div class="difference">'
+               u'<img src=\"data:%s,%s\" alt=\"compared images\" /></div>' %
+               (visual.data_type, visual.content))
+    print_func(u"</div>", force=True)
+
 def escape_anchor(val):
     """
     ID and NAME tokens must begin with a letter ([A-Za-z]) and may be followed
@@ -461,7 +479,10 @@ def output_difference(difference, print_func, css_url, directory, parents):
             print_func(u'<div class="comment">%s</div>'
                        % u'<br />'.join(map(html.escape, difference.comments)))
         print_func(u"</div>")
-        if difference.unified_diff:
+        if difference.unified_diff and len(difference.visuals) > 0:
+            for visual in difference.visuals:
+                output_visual(print_func, visual, sources)
+        elif difference.unified_diff:
             output_unified_diff(print_func, css_url, directory, difference.unified_diff, difference.has_internal_linenos)
         for detail in difference.details:
             output_difference(detail, print_func, css_url, directory, sources)

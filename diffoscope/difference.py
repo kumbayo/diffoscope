@@ -32,6 +32,25 @@ DIFF_CHUNK = 4096
 logger = logging.getLogger(__name__)
 
 
+class VisualDifference(object):
+    def __init__(self, data_type, content, source):
+        self._data_type = data_type
+        self._content = content
+        self._source = source
+
+    @property
+    def data_type(self):
+        return self._data_type
+
+    @property
+    def content(self):
+        return self._content
+
+    @property
+    def source(self):
+        return self._source
+
+
 class Difference(object):
     def __init__(self, unified_diff, path1, path2, source=None, comment=None, has_internal_linenos=False):
         self._comments = []
@@ -60,6 +79,7 @@ class Difference(object):
         # Whether the unified_diff already contains line numbers inside itself
         self._has_internal_linenos = has_internal_linenos
         self._details = []
+        self._visuals = []
 
     def __repr__(self):
         return '<Difference %s -- %s %s>' % (self._source1, self._source2, self._details)
@@ -160,10 +180,19 @@ class Difference(object):
     def details(self):
         return self._details
 
+    @property
+    def visuals(self):
+        return self._visuals
+
     def add_details(self, differences):
         if len([d for d in differences if type(d) is not Difference]) > 0:
             raise TypeError("'differences' must contains Difference objects'")
         self._details.extend(differences)
+
+    def add_visuals(self, visuals):
+        if any([type(v) is not VisualDifference for v in visuals]):
+            raise TypeError("'visuals' must contain VisualDifference objects'")
+        self._visuals.extend(visuals)
 
     def get_reverse(self):
         if self._unified_diff is None:

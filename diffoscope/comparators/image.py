@@ -19,10 +19,11 @@
 
 import re
 import subprocess
+import base64
 
 from diffoscope.tools import tool_required
 from diffoscope.tempfiles import get_named_temporary_file
-from diffoscope.difference import Difference
+from diffoscope.difference import Difference, VisualDifference
 
 from .utils.file import File
 from .utils.command import Command
@@ -77,12 +78,58 @@ class Identify(Command):
             self.path,
         ]
 
+@tool_required('compare')
+def pixel_difference(image1_path, image2_path):
+    compared_filename = get_named_temporary_file(suffix='.png').name
+    try:
+        subprocess.check_call(('compare', image1_path, image2_path,
+                               '-compose', 'src', compared_filename))
+    except subprocess.CalledProcessError as e:
+        # ImageMagick's `compare` will return 1 if images are different
+        if e.returncode == 1:
+            pass
+    content = base64.b64encode(open(compared_filename, 'rb').read())
+    content = content.decode('utf8')
+    datatype = 'image/png;base64'
+    result = VisualDifference(datatype, content, "Pixel difference")
+    return result
+
+@tool_required('convert')
+def flicker_difference(image1_path, image2_path):
+    compared_filename = get_named_temporary_file(suffix='.gif').name
+    subprocess.check_call(
+        ('convert', '-delay', '50', image1_path, image2_path,
+         '-loop', '0', '-compose', 'difference', compared_filename))
+    content = base64.b64encode(open(compared_filename, 'rb').read())
+    content = content.decode('utf8')
+    datatype = 'image/gif;base64'
+    result = VisualDifference(datatype, content, "Flicker difference")
+    return result
+
+@tool_required('identify')
+def get_image_size(image_path):
+    return subprocess.check_output(('identify', '-format',
+                                    '%[h]x%[w]', image_path))
+
 class JPEGImageFile(File):
     RE_FILE_TYPE = re.compile(r'\bJPEG image data\b')
 
     def compare_details(self, other, source=None):
+        content_diff = Difference.from_command(Img2Txt, self.path, other.path,
+                                               source='Image content')
+        if content_diff is not None:
+            try:
+                own_size = get_image_size(self.path)
+                other_size = get_image_size(other.path)
+                if own_size == other_size:
+                    content_diff.add_visuals([
+                        pixel_difference(self.path, other.path),
+                        flicker_difference(self.path, other.path)
+                    ])
+            except subprocess.CalledProcessError:  # noqa
+                pass
         return [
-            Difference.from_command(Img2Txt, self.path, other.path),
+            content_diff,
             Difference.from_command(
                 Identify,
                 self.path,
@@ -103,7 +150,20 @@ class ICOImageFile(File):
         except subprocess.CalledProcessError:  # noqa
             pass
         else:
-            differences.append(Difference.from_command(Img2Txt, png_a, png_b))
+            content_diff = Difference.from_command(Img2Txt, png_a, png_b,
+                                                   source='Image content')
+            if content_diff is not None:
+                try:
+                    own_size = get_image_size(self.path)
+                    other_size = get_image_size(other.path)
+                    if own_size == other_size:
+                        content_diff.add_visuals([
+                            pixel_difference(self.path, other.path),
+                            flicker_difference(self.path, other.path)
+                        ])
+                except subprocess.CalledProcessError:  # noqa
+                    pass
+            differences.append(content_diff)
 
         differences.append(Difference.from_command(
             Identify,

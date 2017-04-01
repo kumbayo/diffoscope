@@ -42,6 +42,10 @@ EXTERNAL_TOOLS = {
         'debian': 'diffutils',
         'arch': 'diffutils',
     },
+    'compare': {
+        'debian': 'imagemagick',
+        'arch': 'imagemagick',
+    },
     'cpio': {
         'debian': 'cpio',
         'arch': 'cpio',
