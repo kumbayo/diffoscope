@@ -28,6 +28,18 @@ export PYBUILD_AFTER_INSTALL = rm -rvf '{destdir}/{install_dir}/htmlcov' '{destd
 %:
 	dh $@ --with python3 --with bash-completion --buildsystem=pybuild
 
+debian/%.1: debian/%.1.rst
+	rst2man $< $@
+
+debian/diffoscope.bash-completion:
+	register-python-argcomplete diffoscope > $@
+
+override_dh_auto_build: debian/diffoscope.bash-completion $(MANPAGES)
+	dh_auto_build -O--buildsystem=pybuild
+
+override_dh_installman: $(MANPAGES)
+	dh_installman -O--buildsystem=pybuild
+
 override_dh_python3:
 	dh_python3 -p diffoscope \
 		--recommends=python-debian \
@@ -40,18 +52,6 @@ override_dh_python3:
 override_dh_gencontrol:
 	bin/diffoscope --list-debian-substvars >> debian/diffoscope.substvars
 	dh_gencontrol -O--buildsystem=pybuild
-
-debian/%.1: debian/%.1.rst
-	rst2man $< $@
-
-debian/diffoscope.bash-completion:
-	register-python-argcomplete diffoscope > $@
-
-override_dh_auto_build: debian/diffoscope.bash-completion $(MANPAGES)
-	dh_auto_build -O--buildsystem=pybuild
-
-override_dh_installman: $(MANPAGES)
-	dh_installman -O--buildsystem=pybuild
 
 diffoscope/presenters/icon.py: favicon.png
 	(echo '# Generated from $@'; \
