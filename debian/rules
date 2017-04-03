@@ -54,7 +54,7 @@ override_dh_installman: $(MANPAGES)
 	dh_installman -O--buildsystem=pybuild
 
 diffoscope/presenters/icon.py: favicon.png
-	(echo '# Generated from favicon.png'; \
+	(echo '# Generated from $@'; \
 	 echo 'FAVICON_BASE64 = """'; \
 	 base64 $<; \
 	 echo '""".replace("\\n", "")'; \
