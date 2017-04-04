@@ -55,11 +55,10 @@ def pytest_report_header(config):
         return
 
     try:
-        return [
-            "",
-            "Debian packages installed:",
-            "",
-            subprocess.check_output(('dpkg', '-l'))
-        ]
+        return ["", "Installed Debian packages:", "", subprocess.check_output((
+            'dpkg-query',
+            '-W',
+            '-f', '${db:Status-Abbrev}\t${binary:Package} (${Version})\n'
+        ))]
     except:
         pass
