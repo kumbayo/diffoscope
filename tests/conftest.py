@@ -26,18 +26,23 @@ from diffoscope.progress import ProgressManager
 from diffoscope.comparators import ComparatorManager
 
 
-# Ensure set_locale fixture runs before each test.
-set_locale = pytest.fixture(autouse=True, scope='session')(set_locale)
-
 def pytest_configure(config):
     # Ensure set_path fixture runs before all tests.
     set_path()
+
+
+@pytest.fixture(autouse=True, scope='session')
+def locale():
+    # Ensure set_locale fixture runs before each test.
+    set_locale()
+
 
 @pytest.fixture(autouse=True)
 def reload_comparators():
     # Reload Comparators after every test so we are always in a consistent
     # state
     ComparatorManager().reload()
+
 
 @pytest.fixture(autouse=True)
 def reset_progress():
