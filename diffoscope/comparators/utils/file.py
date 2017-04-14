@@ -24,7 +24,8 @@ import magic
 import logging
 import subprocess
 
-from diffoscope.exc import RequiredToolNotFound, OutputParsingError
+from diffoscope.exc import RequiredToolNotFound, OutputParsingError, \
+    ContainerExtractionError
 from diffoscope.tools import tool_required
 from diffoscope.profiling import profile
 from diffoscope.difference import Difference
@@ -274,6 +275,12 @@ class File(object, metaclass=abc.ABCMeta):
                     return None
                 difference.add_comment("Error parsing output of `%s` for %s" %
                         (e.command, e.object_class))
+            except ContainerExtractionError as e:
+                difference = self.compare_bytes(other, source=source)
+                if difference is None:
+                    return None
+                difference.add_comment("Error extracting '{}', falling back to "
+                    "binary comparison ('{}')".format(e.pathname, e.wrapped_exc))
             return difference
         return self.compare_bytes(other, source)
 

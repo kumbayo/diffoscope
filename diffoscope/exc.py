@@ -38,3 +38,8 @@ class RequiredToolNotFound(Exception):
             return None
 
         return providers.get(get_current_os(), None)
+
+class ContainerExtractionError(Exception):
+    def __init__(self, pathname, wrapped_exc):
+        self.pathname = pathname
+        self.wrapped_exc = wrapped_exc

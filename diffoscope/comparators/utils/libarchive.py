@@ -25,6 +25,7 @@ import logging
 import libarchive
 import collections
 
+from diffoscope.exc import ContainerExtractionError
 from diffoscope.excludes import any_excluded
 from diffoscope.tempfiles import get_temporary_directory
 
@@ -227,9 +228,12 @@ class LibarchiveContainer(Archive):
                 logger.debug("Extracting %s to %s", entry.pathname, dst)
 
                 os.makedirs(os.path.dirname(dst), exist_ok=True)
-                with open(dst, 'wb') as f:
-                    for block in entry.get_blocks():
-                        f.write(block)
+                try:
+                    with open(dst, 'wb') as f:
+                        for block in entry.get_blocks():
+                            f.write(block)
+                except Exception as exc:
+                    raise ContainerExtractionError(entry.pathname, exc)
 
         logger.debug(
             "Extracted %d entries from %s to %s",
