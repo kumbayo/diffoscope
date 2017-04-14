@@ -188,14 +188,18 @@ class File(object, metaclass=abc.ABCMeta):
 
     def _compare_using_details(self, other, source):
         details = []
+        difference = Difference(None, self.name, other.name, source=source)
+
         if hasattr(self, 'compare_details'):
-            details.extend(filter(None, self.compare_details(other, source)))
+            details.extend(self.compare_details(other, source))
         if self.as_container:
-            details.extend(filter(None, self.as_container.compare(other.as_container)))
+            details.extend(self.as_container.compare(other.as_container))
+
+        details = [x for x in details if x]
         if not details:
             return None
-        difference = Difference(None, self.name, other.name, source=source)
         difference.add_details(details)
+
         return difference
 
     def has_same_content_as(self, other):
