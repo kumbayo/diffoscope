@@ -44,6 +44,23 @@ def run(capsys, *args):
 
     return out
 
+def run_images(capsys, *args):
+    with pytest.raises(SystemExit) as exc:
+        prev = os.getcwd()
+        os.chdir(DATA_DIR)
+
+        try:
+            main(args + ('test1.png', 'test2.png'))
+        finally:
+            os.chdir(prev)
+
+    out, err = capsys.readouterr()
+
+    assert err == ''
+    assert exc.value.code == 1
+
+    return out
+
 def data(filename):
     with open(os.path.join(DATA_DIR, filename), encoding='utf-8') as f:
         return f.read()
@@ -114,6 +131,16 @@ def test_html_option_with_file(tmpdir, capsys):
     assert out == ''
     with open(report_path, 'r', encoding='utf-8') as f:
         assert extract_body(f.read()) == extract_body(data('output.html'))
+
+def test_html_visuals(tmpdir, capsys):
+    report_path = str(tmpdir.join('report.html'))
+
+    out = run_images(capsys, '--html', report_path)
+
+    assert out == ''
+    body = extract_body(open(report_path, 'r', encoding='utf-8').read())
+    assert '<img src="data:image/png;base64' in body
+    assert '<img src="data:image/gif;base64' in body
 
 def test_htmldir_option(tmpdir, capsys):
     html_dir = os.path.join(str(tmpdir), 'target')

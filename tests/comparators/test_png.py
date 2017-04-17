@@ -20,6 +20,7 @@
 import pytest
 
 from diffoscope.comparators.png import PngFile
+from diffoscope.config import Config
 
 from utils.data import load_fixture, get_data
 from utils.tools import skip_unless_tools_exist
@@ -48,3 +49,12 @@ def test_diff(differences):
 @skip_unless_tools_exist('sng')
 def test_compare_non_existing(monkeypatch, png1):
     assert_non_existing(monkeypatch, png1, has_null_source=False)
+
+@skip_unless_tools_exist('sng', 'compose', 'convert', 'identify')
+def test_has_visuals(monkeypatch, png1, png2):
+    monkeypatch.setattr(Config(), 'html_output', True)
+    png_diff = png1.compare(png2)
+    assert len(png_diff.details) == 2
+    assert len(png_diff.details[1].visuals) == 2
+    assert png_diff.details[1].visuals[0].data_type == 'image/png;base64'
+    assert png_diff.details[1].visuals[1].data_type == 'image/gif;base64'

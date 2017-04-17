@@ -73,3 +73,12 @@ def differences_meta(image1_meta, image2_meta):
 def test_diff_meta(differences_meta):
     expected_diff = get_data('jpeg_image_meta_expected_diff')
     assert differences_meta[-1].unified_diff == expected_diff
+
+@skip_unless_tools_exist('img2txt', 'compose', 'convert', 'identify')
+def test_has_visuals(monkeypatch, image1, image2):
+    monkeypatch.setattr(Config(), 'html_output', True)
+    jpg_diff = image1.compare(image2)
+    assert len(jpg_diff.details) == 2
+    assert len(jpg_diff.details[0].visuals) == 2
+    assert jpg_diff.details[0].visuals[0].data_type == 'image/png;base64'
+    assert jpg_diff.details[0].visuals[1].data_type == 'image/gif;base64'
