@@ -285,6 +285,8 @@ def run_diffoscope(parsed_args):
     Config().fuzzy_threshold = parsed_args.fuzzy_threshold
     Config().new_file = parsed_args.new_file
     Config().excludes = parsed_args.excludes
+    Config().html_output = any((parsed_args.html_output,
+                                parsed_args.html_output_directory))
     set_path()
     set_locale()
     logger.debug('Starting comparison')

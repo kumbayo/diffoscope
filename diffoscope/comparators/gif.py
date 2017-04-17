@@ -18,12 +18,18 @@
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
 import re
+import subprocess
+import logging
 
 from diffoscope.tools import tool_required
 from diffoscope.difference import Difference
+from diffoscope.config import Config
 
 from .utils.file import File
 from .utils.command import Command
+from .image import pixel_difference, flicker_difference, get_image_size
+
+logger = logging.getLogger(__name__)
 
 
 class Gifbuild(Command):
@@ -41,14 +47,37 @@ class Gifbuild(Command):
             return b""
         return line
 
+@tool_required('identify')
+def is_image_static(image_path):
+    return subprocess.check_output(('identify', '-format',
+                                    '%n', image_path)) == b'1'
 
 class GifFile(File):
     RE_FILE_TYPE = re.compile(r'^GIF image data\b')
 
     def compare_details(self, other, source=None):
-        return [Difference.from_command(
+        gifbuild_diff = Difference.from_command(
             Gifbuild,
             self.path,
             other.path,
             source='gifbuild',
-       )]
+        )
+        differences = [gifbuild_diff]
+        if (gifbuild_diff is not None) and Config().html_output and \
+                (get_image_size(self.path) == get_image_size(other.path)):
+            try:
+                own_size = get_image_size(self.path)
+                other_size = get_image_size(other.path)
+                self_static = is_image_static(self.path)
+                other_static = is_image_static(other.path)
+                if (own_size == other_size) and self_static and other_static:
+                    logger.debug('Generating visual difference for %s and %s',
+                                 self.path, other.path)
+                    content_diff = Difference(None, self.path, other.path,
+                                              source='Image content')
+                    content_diff.add_visuals([pixel_difference(self.path, other.path),
+                                             flicker_difference(self.path, other.path)])
+                    differences.append(content_diff)
+            except subprocess.CalledProcessError:  #noqa
+                pass
+        return differences

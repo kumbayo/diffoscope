@@ -424,7 +424,7 @@ def output_unified_diff(print_func, css_url, directory, unified_diff, has_intern
         print_func(templates.UD_TABLE_FOOTER % {"filename": html.escape("%s-1.html" % mainname), "text": text}, force=True)
 
 def output_visual(print_func, visual, parents):
-    logger.debug('visual difference for %s', visual.source)
+    logger.debug('including image for %s', visual.source)
     sources = parents + [visual.source]
     print_func(u'<div class="difference">')
     print_func(u'<div class="diffheader">')
@@ -479,10 +479,10 @@ def output_difference(difference, print_func, css_url, directory, parents):
             print_func(u'<div class="comment">%s</div>'
                        % u'<br />'.join(map(html.escape, difference.comments)))
         print_func(u"</div>")
-        if difference.unified_diff and len(difference.visuals) > 0:
+        if len(difference.visuals) > 0:
             for visual in difference.visuals:
                 output_visual(print_func, visual, sources)
-        elif difference.unified_diff:
+        if difference.unified_diff:
             output_unified_diff(print_func, css_url, directory, difference.unified_diff, difference.has_internal_linenos)
         for detail in difference.details:
             output_difference(detail, print_func, css_url, directory, sources)

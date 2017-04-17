@@ -19,12 +19,18 @@
 
 import re
 import functools
+import subprocess
+import logging
 
 from diffoscope.tools import tool_required
 from diffoscope.difference import Difference
+from diffoscope.config import Config
 
 from .utils.file import File
 from .utils.command import Command
+from .image import pixel_difference, flicker_difference, get_image_size
+
+logger = logging.getLogger(__name__)
 
 
 class Sng(Command):
@@ -42,4 +48,20 @@ class PngFile(File):
     RE_FILE_TYPE = re.compile(r'^PNG image data\b')
 
     def compare_details(self, other, source=None):
-        return [Difference.from_command(Sng, self.path, other.path, source='sng')]
+        sng_diff = Difference.from_command(Sng, self.path, other.path, source='sng')
+        differences = [sng_diff]
+        if (sng_diff is not None) and Config().html_output:
+            try:
+                own_size = get_image_size(self.path)
+                other_size = get_image_size(other.path)
+                if own_size == other_size:
+                    logger.debug('Generating visual difference for %s and %s',
+                                 self.path, other.path)
+                    content_diff = Difference(None, self.path, other.path,
+                                              source='Image content')
+                    content_diff.add_visuals([pixel_difference(self.path, other.path),
+                                             flicker_difference(self.path, other.path)])
+                    differences.append(content_diff)
+            except subprocess.CalledProcessError:  #noqa
+                pass
+        return differences

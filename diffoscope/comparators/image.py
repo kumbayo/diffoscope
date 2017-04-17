@@ -20,15 +20,19 @@
 import re
 import subprocess
 import base64
+import logging
 
 from diffoscope.tools import tool_required
 from diffoscope.tempfiles import get_named_temporary_file
 from diffoscope.difference import Difference, VisualDifference
+from diffoscope.config import Config
 
 from .utils.file import File
 from .utils.command import Command
 
 re_ansi_escapes = re.compile(r'\x1b[^m]*m')
+
+logger = logging.getLogger(__name__)
 
 
 class Img2Txt(Command):
@@ -117,11 +121,13 @@ class JPEGImageFile(File):
     def compare_details(self, other, source=None):
         content_diff = Difference.from_command(Img2Txt, self.path, other.path,
                                                source='Image content')
-        if content_diff is not None:
+        if (content_diff is not None) and Config().html_output:
             try:
                 own_size = get_image_size(self.path)
                 other_size = get_image_size(other.path)
                 if own_size == other_size:
+                    logger.debug('Generating visual difference for %s and %s',
+                                 self.path, other.path)
                     content_diff.add_visuals([
                         pixel_difference(self.path, other.path),
                         flicker_difference(self.path, other.path)
@@ -152,11 +158,13 @@ class ICOImageFile(File):
         else:
             content_diff = Difference.from_command(Img2Txt, png_a, png_b,
                                                    source='Image content')
-            if content_diff is not None:
+            if (content_diff is not None) and Config().html_output:
                 try:
                     own_size = get_image_size(self.path)
                     other_size = get_image_size(other.path)
                     if own_size == other_size:
+                        logger.debug('Generating visual difference for %s and %s',
+                                     self.path, other.path)
                         content_diff.add_visuals([
                             pixel_difference(self.path, other.path),
                             flicker_difference(self.path, other.path)
