@@ -64,6 +64,8 @@ class ComparatorManager(object):
         ('pdf.PdfFile',),
         ('png.PngFile',),
         ('ppu.PpuFile',),
+        ('rdata.RdbFile',),
+        ('rdata.RdsFile',),
         ('rpm.RpmFile', 'rpm_fallback.RpmFile'),
         ('squashfs.SquashfsFile',),
         ('ar.ArFile',),

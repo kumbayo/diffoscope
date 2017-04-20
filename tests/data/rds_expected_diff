@@ -1,0 +1,52 @@
+@@ -1,40 +1,40 @@
+ $variables
+ $variables$`%*t%`
+-[1]  0 98
++[1]  0 96
+ 
+ $variables$`%t*%`
+-[1]  98 101
++[1] 96 99
+ 
+ $variables$`%t*t%`
+-[1] 199 104
++[1] 195 103
+ 
+ $variables$.__NAMESPACE__.
+-[1] 877  45
++[1] 854  43
+ 
+ $variables$.__S3MethodsTable__.
+-[1] 1043   45
++[1] 1016   43
+ 
+ $variables$.packageName
+-[1] 1088   44
++[1] 1059   42
+ 
+ $variables$tensor
+-[1] 1132  775
++[1] 1101  774
+ 
+ 
+ $references
+ $references$`env::1`
+-[1] 572 305
++[1] 564 290
+ 
+ $references$`env::2`
+-[1] 303 121
++[1] 298 119
+ 
+ $references$`env::3`
+-[1] 424 148
++[1] 417 147
+ 
+ $references$`env::4`
+-[1] 922 121
++[1] 897 119
+ 
+ 
+ $compressed
+ [1] TRUE
+ 
