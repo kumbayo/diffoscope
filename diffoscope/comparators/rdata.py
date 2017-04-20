@@ -31,14 +31,7 @@ import os.path
 HEADER = binascii.a2b_hex("580a000000020003")
 
 # has to be one line
-DUMP_RDB = """lazyLoad(commandArgs(TRUE));\
-for (obj in ls()) {\
-    print(obj);\
-    for (line in deparse(get(obj))) {\
-        cat(line,"\\n")\
-    }\
-}\
-"""
+DUMP_RDB = """lazyLoad(commandArgs(TRUE)); for (obj in ls()) { print(obj); for (line in deparse(get(obj))) cat(line,"\\n"); }"""
 # unfortunately this above snippet can't detect the build-path differences so
 # diffoscope still falls back to a hexdump
 

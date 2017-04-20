@@ -185,6 +185,9 @@ EXTERNAL_TOOLS = {
         'arch': 'rpmextract',
         'FreeBSD': 'rpm2cpio',
     },
+    'Rscript': {
+        'debian': 'r-base-core',
+    },
     'showttf': {
         'debian': 'fontforge-extras',
     },
