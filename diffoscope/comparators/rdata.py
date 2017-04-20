@@ -53,7 +53,11 @@ def ensure_archive_rdx(f):
         assert bname.endswith(".rdb")
         rdx_name = f.name[:-4] + ".rdx"
         rdx_bname = os.path.basename(rdx_name)
-        rdx_path = f.container.get_member(rdx_name).path
+        try:
+            rdx_path = f.container.get_member(rdx_name).path
+        except KeyError:
+            return f.path
+            # R will fail, diffoscope will report the error and continue
         shutil.copy(f.path, f.path + ".rdb")
         shutil.copy(rdx_path, f.path + ".rdx")
         return f.path + ".rdb"
