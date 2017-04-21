@@ -45,7 +45,6 @@ def ensure_archive_rdx(f):
         bname = os.path.basename(f.name)
         assert bname.endswith(".rdb")
         rdx_name = f.name[:-4] + ".rdx"
-        rdx_bname = os.path.basename(rdx_name)
         try:
             rdx_path = f.container.get_member(rdx_name).path
         except KeyError:
