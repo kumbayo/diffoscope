@@ -53,6 +53,7 @@ Build-Depends:
  python3-rpm <!nocheck>,
  python3-setuptools,
  python3-tlsh (>= 3.4.1) <!nocheck>,
+ r-base-core <!nocheck>,
  rpm2cpio <!nocheck>,
  sng <!nocheck>,
  sqlite3 <!nocheck>,
