@@ -40,21 +40,21 @@ def check_rds_extension(f):
     return f.name.endswith(".rds") or f.name.endswith(".rdx")
 
 def ensure_archive_rdx(f):
-    if f.container and not f.path.endswith(".rdb"):
-        # if we're in an archive, copy the .rdx file over so R can read it
-        bname = os.path.basename(f.name)
-        assert bname.endswith(".rdb")
-        rdx_name = f.name[:-4] + ".rdx"
-        try:
-            rdx_path = f.container.get_member(rdx_name).path
-        except KeyError:
-            return f.path
-            # R will fail, diffoscope will report the error and continue
-        shutil.copy(f.path, f.path + ".rdb")
-        shutil.copy(rdx_path, f.path + ".rdx")
-        return f.path + ".rdb"
-    else:
+    if not f.container or f.path.endswith(".rdb"):
         return f.path
+
+    # if we're in an archive, copy the .rdx file over so R can read it
+    bname = os.path.basename(f.name)
+    assert bname.endswith(".rdb")
+    rdx_name = f.name[:-4] + ".rdx"
+    try:
+        rdx_path = f.container.get_member(rdx_name).path
+    except KeyError:
+        return f.path
+        # R will fail, diffoscope will report the error and continue
+    shutil.copy(f.path, f.path + ".rdb")
+    shutil.copy(rdx_path, f.path + ".rdx")
+    return f.path + ".rdb"
 
 class RdsReader(Command):
     @tool_required('Rscript')
