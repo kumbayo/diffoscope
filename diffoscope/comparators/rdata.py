@@ -23,9 +23,9 @@ from diffoscope.difference import Difference
 from .utils.file import File
 from .utils.command import Command
 
-import binascii
 import shutil
 import os.path
+import binascii
 
 
 HEADER = binascii.a2b_hex("580a000000020003")

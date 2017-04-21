@@ -18,17 +18,13 @@
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
-import subprocess
 
-from diffoscope.comparators.rdata import RdsFile
 from diffoscope.comparators.gzip import GzipFile
 
 from utils import diff_ignore_line_numbers
 from utils.data import load_fixture, get_data
-from utils.tools import skip_unless_tools_exist, skip_unless_tool_is_at_least, \
-    skip_if_binutils_does_not_support_x86
+from utils.tools import skip_unless_tools_exist
 from utils.nonexisting import assert_non_existing
-
 
 
 file1 = load_fixture('test1.rdx')
