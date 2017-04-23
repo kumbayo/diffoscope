@@ -482,7 +482,7 @@ def output_difference(difference, print_func, css_url, directory, parents):
         if len(difference.visuals) > 0:
             for visual in difference.visuals:
                 output_visual(print_func, visual, sources)
-        if difference.unified_diff:
+        elif difference.unified_diff:
             output_unified_diff(print_func, css_url, directory, difference.unified_diff, difference.has_internal_linenos)
         for detail in difference.details:
             output_difference(detail, print_func, css_url, directory, sources)
