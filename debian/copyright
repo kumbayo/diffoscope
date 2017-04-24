@@ -93,6 +93,18 @@ Copyright: 2007-2014 OpenWrt.org
            2010 Vertical Communications
 License: GPL-2
 
+Files: tests/data/devicetree*.dtb
+Copyright:
+	2015 Nikolaus Schaller <hns@goldelico.com>
+	2012 Texas Instruments Incorporated - http:www.ti.com/
+	2011 Texas Instruments Incorporated - http:www.ti.com/
+	2013 Linaro, Ltd.
+	2015 Sakari Ailus
+	2011 Texas Instruments Incorporated - http:www.ti.com/
+	2017 Texas Instruments Incorporated - http:www.ti.com/
+	2009-2010 Texas Instruments / 2009 Nokia
+License: GPL-2
+
 Files: debian/*
 Copyright: 2014-2015 Jérémy Bobbio <lunar@debian.org>
 License: GPL-3+
