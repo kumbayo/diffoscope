@@ -57,6 +57,9 @@ EXTERNAL_TOOLS = {
         'debian': 'enjarify',
         'arch': 'enjarify',
     },
+    'fdtdump': {
+        'debian': 'device-tree-compiler',
+    },
     'file': {
         'debian': 'file',
         'arch': 'file',

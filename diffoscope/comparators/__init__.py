@@ -84,6 +84,7 @@ class ComparatorManager(object):
         ('gif.GifFile',),
         ('pcap.PcapFile',),
         ('pgp.PgpFile',),
+        ('dtb.DeviceTreeFile',),
     )
 
     _singleton = {}
