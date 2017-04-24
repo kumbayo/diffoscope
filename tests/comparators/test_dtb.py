@@ -19,7 +19,6 @@
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
-import subprocess
 
 from diffoscope.config import Config
 from diffoscope.comparators.dtb import DeviceTreeFile
