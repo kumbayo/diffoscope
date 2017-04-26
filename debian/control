@@ -37,6 +37,7 @@ Build-Depends:
  llvm <!nocheck>,
  mono-utils <!nocheck>,
  odt2txt <!nocheck>,
+ oggvideotools <!nocheck>,
  openssh-client <!nocheck>,
  pdftk <!nocheck>,
  pgpdump <!nocheck>,

@@ -151,6 +151,9 @@ EXTERNAL_TOOLS = {
     'odt2txt': {
         'debian': 'odt2txt',
     },
+    'oggDump': {
+        'debian': 'oggvideotools',
+    },
     'pgpdump': {
         'debian': 'pgpdump',
         'arch': 'pgpdump',
