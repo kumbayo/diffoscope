@@ -1,3 +1,42 @@
+diffoscope (82) experimental; urgency=medium
+
+  [ Chris Lamb ]
+  * New features:
+    - Add support for comparing Pcap files. (Closes: #858867)
+    - Add support for .docx and .odt files via docx2txt & odt2txt.
+      (Closes: #859056)
+    - Add support for PGP files via pgpdump. (Closes: #859034)
+    - Add support for comparing Ogg Vorbis files.
+  * Bug fixes:
+    - Don't crash on invalid archives; print a useful error instead.
+      (Closes: #833697)
+    - Ensure tests and the runtime environment can locate binaries in
+      /usr/sbin (eg. tcpdump)
+  * Tests:
+    - Ensure that PATH is modified.
+    - Ensure @tool_required raises RequiredToolNotFound.
+    - Don't assume that /sbin/init exists; locate any /sbin binary manually and
+      then test for that. This should prevent FTBFS on travis-ci.org.
+    - Show packages installed in report output.
+  * Misc:
+    - comparators.bzip2: Don't print error output from bzip2 call.
+    - comparators.pcap: Show the delta, not the absolute time.
+    - Use /usr/share/dpkg/pkg-info.mk over manual calls to dpkg-parsechangelog
+      in debian/rules.
+    - Document PYTHONPATH usage when running tests in README.Source.
+    - Add internal documentation for @tool_required decorator.
+
+  [ beuc@beuc.net ]
+  * Display differences in zip platform-specific timestamps. (Closes: #859117)
+
+  [ Ximin Luo ]
+  * Add support for R .rds and .rdb object files.
+
+  [ Vagrant Cascadian ]
+  * Add support for .dtb (device tree blob) files (Closes: #861109).
+
+ -- Chris Lamb <lamby@debian.org>  Wed, 26 Apr 2017 16:17:57 +0200
+
 diffoscope (81) experimental; urgency=medium
 
   [ Chris Lamb ]
