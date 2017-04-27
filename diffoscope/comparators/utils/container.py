@@ -120,11 +120,11 @@ class Container(object, metaclass=abc.ABCMeta):
 
             if Config().new_file:
                 for my_member in my_members.values():
-                    p.step(msg=my_member)
+                    p.step(msg=my_member.progress_name)
                     yield my_member, MissingFile('/dev/null', my_member), NO_COMMENT
 
                 for other_member in other_members.values():
-                    p.step(msg=other_member)
+                    p.step(msg=other_member.progress_name)
                     yield MissingFile('/dev/null', other_member), other_member, NO_COMMENT
 
     def compare(self, other, source=None):
