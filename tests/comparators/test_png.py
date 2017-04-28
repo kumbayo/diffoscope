@@ -52,7 +52,7 @@ def test_compare_non_existing(monkeypatch, png1):
 
 @skip_unless_tools_exist('sng', 'compose', 'convert', 'identify')
 def test_has_visuals(monkeypatch, png1, png2):
-    monkeypatch.setattr(Config(), 'html_output', True)
+    monkeypatch.setattr(Config(), 'compute_visual_diffs', True)
     png_diff = png1.compare(png2)
     assert len(png_diff.details) == 2
     assert len(png_diff.details[1].visuals) == 2

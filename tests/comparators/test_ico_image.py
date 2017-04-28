@@ -60,7 +60,7 @@ def test_diff_meta(differences_meta):
 
 @skip_unless_tools_exist('img2txt', 'compose', 'convert', 'identify')
 def test_has_visuals(monkeypatch, image1, image2):
-    monkeypatch.setattr(Config(), 'html_output', True)
+    monkeypatch.setattr(Config(), 'compute_visual_diffs', True)
     ico_diff = image1.compare(image2)
     assert len(ico_diff.details) == 2
     assert len(ico_diff.details[0].visuals) == 2

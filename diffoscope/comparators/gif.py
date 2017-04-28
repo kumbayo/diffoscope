@@ -72,7 +72,7 @@ class GifFile(File):
             source='gifbuild',
         )
         differences = [gifbuild_diff]
-        if gifbuild_diff is not None and Config().html_output and \
+        if gifbuild_diff is not None and Config().compute_visual_diffs and \
                 can_compose_gif_images(self, other):
             try:
                 logger.debug(

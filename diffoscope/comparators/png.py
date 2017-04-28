@@ -50,7 +50,7 @@ class PngFile(File):
     def compare_details(self, other, source=None):
         sng_diff = Difference.from_command(Sng, self.path, other.path, source='sng')
         differences = [sng_diff]
-        if sng_diff is not None and Config().html_output and \
+        if sng_diff is not None and Config().compute_visual_diffs and \
                 same_size(self, other):
             try:
                 logger.debug(

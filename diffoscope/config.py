@@ -34,7 +34,7 @@ class Config(object):
     fuzzy_threshold = 60
     enforce_constraints = True
     excludes = ()
-    html_output = False
+    compute_visual_diffs = False
 
     _singleton = {}
 

@@ -131,7 +131,7 @@ class JPEGImageFile(File):
             other.path,
             source="Image content",
         )
-        if content_diff is not None and Config().html_output and \
+        if content_diff is not None and Config().compute_visual_diffs and \
                 same_size(self, other):
             try:
                 logger.debug(
@@ -173,7 +173,7 @@ class ICOImageFile(File):
                 png_b,
                 source="Image content",
             )
-            if content_diff is not None and Config().html_output and \
+            if content_diff is not None and Config().compute_visual_diffs and \
                     same_size(self, other):
                 if get_image_size(self.path) == get_image_size(other.path):
                     logger.debug(
