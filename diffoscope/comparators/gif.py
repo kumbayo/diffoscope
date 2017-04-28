@@ -27,7 +27,7 @@ from diffoscope.config import Config
 
 from .utils.file import File
 from .utils.command import Command
-from .image import pixel_difference, flicker_difference, get_image_size
+from .image import pixel_difference, flicker_difference, same_size
 
 logger = logging.getLogger(__name__)
 
@@ -48,9 +48,18 @@ class Gifbuild(Command):
         return line
 
 @tool_required('identify')
-def is_image_static(image_path):
-    return subprocess.check_output(('identify', '-format',
-                                    '%n', image_path)) == b'1'
+def is_image_static(image):
+    try:
+        return subprocess.check_output((
+            'identify',
+            '-format', '%n',
+            image.path)) == b'1'
+    except subprocess.CalledProcessError:
+        return False
+
+def can_compose_gif_images(image1, image2):
+    return same_size(image1, image2) and is_image_static(image1) and \
+                is_image_static(image2)
 
 class GifFile(File):
     RE_FILE_TYPE = re.compile(r'^GIF image data\b')
@@ -63,21 +72,25 @@ class GifFile(File):
             source='gifbuild',
         )
         differences = [gifbuild_diff]
-        if (gifbuild_diff is not None) and Config().html_output and \
-                (get_image_size(self.path) == get_image_size(other.path)):
+        if gifbuild_diff is not None and Config().html_output and \
+                can_compose_gif_images(self, other):
             try:
-                own_size = get_image_size(self.path)
-                other_size = get_image_size(other.path)
-                self_static = is_image_static(self.path)
-                other_static = is_image_static(other.path)
-                if (own_size == other_size) and self_static and other_static:
-                    logger.debug('Generating visual difference for %s and %s',
-                                 self.path, other.path)
-                    content_diff = Difference(None, self.path, other.path,
-                                              source='Image content')
-                    content_diff.add_visuals([pixel_difference(self.path, other.path),
-                                             flicker_difference(self.path, other.path)])
-                    differences.append(content_diff)
+                logger.debug(
+                    'Generating visual difference for %s and %s',
+                    self.path,
+                    other.path,
+                )
+                content_diff = Difference(
+                    None,
+                    self.path,
+                    other.path,
+                    source='Image content',
+                )
+                content_diff.add_visuals([
+                    pixel_difference(self.path, other.path),
+                    flicker_difference(self.path, other.path),
+                ])
+                differences.append(content_diff)
             except subprocess.CalledProcessError:  #noqa
                 pass
         return differences

@@ -115,23 +115,34 @@ def get_image_size(image_path):
     return subprocess.check_output(('identify', '-format',
                                     '%[h]x%[w]', image_path))
 
+def same_size(image1, image2):
+    try:
+        return get_image_size(image1.path) == get_image_size(image2.path)
+    except subprocess.CalledProcessError:  # noqa
+        return False
+
 class JPEGImageFile(File):
     RE_FILE_TYPE = re.compile(r'\bJPEG image data\b')
 
     def compare_details(self, other, source=None):
-        content_diff = Difference.from_command(Img2Txt, self.path, other.path,
-                                               source='Image content')
-        if (content_diff is not None) and Config().html_output:
+        content_diff = Difference.from_command(
+            Img2Txt,
+            self.path,
+            other.path,
+            source="Image content",
+        )
+        if content_diff is not None and Config().html_output and \
+                same_size(self, other):
             try:
-                own_size = get_image_size(self.path)
-                other_size = get_image_size(other.path)
-                if own_size == other_size:
-                    logger.debug('Generating visual difference for %s and %s',
-                                 self.path, other.path)
-                    content_diff.add_visuals([
-                        pixel_difference(self.path, other.path),
-                        flicker_difference(self.path, other.path)
-                    ])
+                logger.debug(
+                    'Generating visual difference for %s and %s',
+                    self.path,
+                    other.path,
+                )
+                content_diff.add_visuals([
+                    pixel_difference(self.path, other.path),
+                    flicker_difference(self.path, other.path),
+                ])
             except subprocess.CalledProcessError:  # noqa
                 pass
         return [
@@ -156,21 +167,24 @@ class ICOImageFile(File):
         except subprocess.CalledProcessError:  # noqa
             pass
         else:
-            content_diff = Difference.from_command(Img2Txt, png_a, png_b,
-                                                   source='Image content')
-            if (content_diff is not None) and Config().html_output:
-                try:
-                    own_size = get_image_size(self.path)
-                    other_size = get_image_size(other.path)
-                    if own_size == other_size:
-                        logger.debug('Generating visual difference for %s and %s',
-                                     self.path, other.path)
-                        content_diff.add_visuals([
-                            pixel_difference(self.path, other.path),
-                            flicker_difference(self.path, other.path)
-                        ])
-                except subprocess.CalledProcessError:  # noqa
-                    pass
+            content_diff = Difference.from_command(
+                Img2Txt,
+                png_a,
+                png_b,
+                source="Image content",
+            )
+            if content_diff is not None and Config().html_output and \
+                    same_size(self, other):
+                if get_image_size(self.path) == get_image_size(other.path):
+                    logger.debug(
+                        'Generating visual difference for %s and %s',
+                        self.path,
+                        other.path,
+                    )
+                    content_diff.add_visuals([
+                        pixel_difference(self.path, other.path),
+                        flicker_difference(self.path, other.path),
+                    ])
             differences.append(content_diff)
 
         differences.append(Difference.from_command(
