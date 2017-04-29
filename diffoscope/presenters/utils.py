@@ -26,6 +26,11 @@ class Presenter(object):
     def __init__(self):
         self.depth = 0
 
+    @classmethod
+    def run(cls, data, difference, parsed_args, has_differences):
+        with make_printer(data['target']) as fn:
+            cls(fn).start(difference)
+
     def start(self, difference):
         self.visit(difference)
 

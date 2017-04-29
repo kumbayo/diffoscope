@@ -46,7 +46,7 @@ from diffoscope.config import Config
 
 from ..icon import FAVICON_BASE64
 from ..utils import PrintLimitReached, DiffBlockLimitReached, \
-    create_limited_print_func
+    create_limited_print_func, Presenter, make_printer
 
 from . import templates
 from .linediff import linediff
@@ -76,6 +76,28 @@ line1, line2, has_internal_linenos = 0, 0, True
 hunk_off1, hunk_size1, hunk_off2, hunk_size2 = 0, 0, 0, 0
 spl_rows, spl_current_page = 0, 0
 spl_print_func, spl_print_ctrl = None, None
+
+
+class HTMLPresenter(Presenter):
+    @classmethod
+    def run(cls, data, difference, parsed_args, has_differences):
+        with make_printer(parsed_args.html_output) as fn:
+            output_html(
+                difference,
+                css_url=parsed_args.css_url,
+                print_func=fn,
+            )
+
+
+class HTMLDirectoryPresenter(Presenter):
+    @classmethod
+    def run(cls, data, difference, parsed_args, has_differences):
+        output_html_directory(
+            parsed_args.html_output_directory,
+            difference,
+            css_url=parsed_args.css_url,
+            jquery_url=parsed_args.jquery_url,
+        )
 
 
 def new_unified_diff():

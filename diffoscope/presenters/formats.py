@@ -24,8 +24,7 @@ from ..profiling import profile
 
 from .text import TextPresenter
 from .json import JSONPresenter
-from .html import output_html, output_html_directory
-from .utils import make_printer
+from .html import HTMLPresenter, HTMLDirectoryPresenter
 from .markdown import MarkdownTextPresenter
 from .restructuredtext import RestructuredTextPresenter
 
@@ -42,11 +41,11 @@ def output_all(difference, parsed_args, has_differences):
 
     FORMATS = {
         'text': {
-            'fn': text,
+            'klass': TextPresenter,
             'target': parsed_args.text_output,
         },
         'html': {
-            'fn': html,
+            'klass': HTMLPresenter,
             'target': parsed_args.html_output,
         },
         'json': {
@@ -62,7 +61,7 @@ def output_all(difference, parsed_args, has_differences):
             'target': parsed_args.restructuredtext_output,
         },
         'html_directory': {
-            'fn': html_directory,
+            'klass': HTMLDirectoryPresenter,
             'target': parsed_args.html_output_directory,
         },
     }
@@ -78,47 +77,4 @@ def output_all(difference, parsed_args, has_differences):
         logger.debug("Generating %r output at %r", name, data['target'])
 
         with profile('output', name):
-            if 'fn' in data:
-                data['fn'](difference, parsed_args, has_differences)
-                continue
-
-            with make_printer(data['target']) as fn:
-                data['klass'](fn).start(difference)
-
-def text(difference, parsed_args, has_differences):
-    # As a special case, write an empty file instead of an empty diff.
-    if not has_differences:
-        open(parsed_args.text_output, 'w').close()
-        return
-
-    with make_printer(parsed_args.text_output or '-') as fn:
-        color = {
-            'auto': fn.output.isatty(),
-            'never': False,
-            'always': True,
-        }[parsed_args.text_color]
-
-        presenter = TextPresenter(fn, color)
-
-        try:
-            presenter.start(difference)
-        except UnicodeEncodeError:
-            logger.critical("Console is unable to print Unicode characters. "
-                "Set e.g. PYTHONIOENCODING=utf-8")
-            sys.exit(2)
-
-def html(difference, parsed_args, has_differences):
-    with make_printer(parsed_args.html_output) as fn:
-        output_html(
-            difference,
-            css_url=parsed_args.css_url,
-            print_func=fn,
-        )
-
-def html_directory(difference, parsed_args, has_differences):
-    output_html_directory(
-        parsed_args.html_output_directory,
-        difference,
-        css_url=parsed_args.css_url,
-        jquery_url=parsed_args.jquery_url,
-    )
+            data['klass'].run(data, difference, parsed_args, has_differences)
