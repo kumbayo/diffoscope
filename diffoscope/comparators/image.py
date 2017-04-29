@@ -18,14 +18,14 @@
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
 import re
-import subprocess
 import base64
 import logging
+import subprocess
 
+from diffoscope.config import Config
 from diffoscope.tools import tool_required
 from diffoscope.tempfiles import get_named_temporary_file
 from diffoscope.difference import Difference, VisualDifference
-from diffoscope.config import Config
 
 from .utils.file import File
 from .utils.command import Command
@@ -48,6 +48,7 @@ class Img2Txt(Command):
     def filter(self, line):
         # Strip ANSI escapes
         return re_ansi_escapes.sub('', line.decode('utf-8')).encode('utf-8')
+
 
 class Identify(Command):
     ATTRIBUTES = (
@@ -82,44 +83,65 @@ class Identify(Command):
             self.path,
         ]
 
+
 @tool_required('compare')
 def pixel_difference(image1_path, image2_path):
     compared_filename = get_named_temporary_file(suffix='.png').name
+
     try:
-        subprocess.check_call(('compare', image1_path, image2_path,
-                               '-compose', 'src', compared_filename))
+        subprocess.check_call((
+            'compare',
+            image1_path,
+            image2_path,
+            '-compose', 'src',
+            compared_filename,
+        ))
     except subprocess.CalledProcessError as e:
         # ImageMagick's `compare` will return 1 if images are different
         if e.returncode == 1:
             pass
-    content = base64.b64encode(open(compared_filename, 'rb').read())
-    content = content.decode('utf8')
-    datatype = 'image/png;base64'
-    result = VisualDifference(datatype, content, "Pixel difference")
-    return result
+
+    with open(compared_filename, 'rb') as f:
+        content = base64.b64encode(f.read()).decode('utf8')
+
+    return VisualDifference('image/png;base64', content, "Pixel difference")
+
 
 @tool_required('convert')
 def flicker_difference(image1_path, image2_path):
     compared_filename = get_named_temporary_file(suffix='.gif').name
-    subprocess.check_call(
-        ('convert', '-delay', '50', image1_path, image2_path,
-         '-loop', '0', '-compose', 'difference', compared_filename))
-    content = base64.b64encode(open(compared_filename, 'rb').read())
-    content = content.decode('utf8')
-    datatype = 'image/gif;base64'
-    result = VisualDifference(datatype, content, "Flicker difference")
-    return result
+
+    subprocess.check_call((
+        'convert',
+        '-delay', '50',
+        image1_path,
+        image2_path,
+        '-loop', '0',
+        '-compose', 'difference',
+        compared_filename,
+    ))
+
+    with open(compared_filename, 'rb') as f:
+        content = base64.b64encode(f.read()).decode('utf8')
+
+    return VisualDifference('image/gif;base64', content, "Flicker difference")
+
 
 @tool_required('identify')
 def get_image_size(image_path):
-    return subprocess.check_output(('identify', '-format',
-                                    '%[h]x%[w]', image_path))
+    return subprocess.check_output((
+        'identify',
+        '-format', '%[h]x%[w]',
+        image_path,
+    ))
+
 
 def same_size(image1, image2):
     try:
         return get_image_size(image1.path) == get_image_size(image2.path)
     except subprocess.CalledProcessError:  # noqa
         return False
+
 
 class JPEGImageFile(File):
     RE_FILE_TYPE = re.compile(r'\bJPEG image data\b')
@@ -135,7 +157,7 @@ class JPEGImageFile(File):
                 same_size(self, other):
             try:
                 logger.debug(
-                    'Generating visual difference for %s and %s',
+                    "Generating visual difference for %s and %s",
                     self.path,
                     other.path,
                 )
@@ -154,6 +176,7 @@ class JPEGImageFile(File):
                 source="Image metadata",
             ),
         ]
+
 
 class ICOImageFile(File):
     RE_FILE_TYPE = re.compile(r'\bMS Windows icon resource\b')
@@ -177,7 +200,7 @@ class ICOImageFile(File):
                     same_size(self, other):
                 if get_image_size(self.path) == get_image_size(other.path):
                     logger.debug(
-                        'Generating visual difference for %s and %s',
+                        "Generating visual difference for %s and %s",
                         self.path,
                         other.path,
                     )
