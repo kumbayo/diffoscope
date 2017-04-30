@@ -40,7 +40,7 @@ from .difference import Difference
 from .comparators import ComparatorManager
 from .external_tools import EXTERNAL_TOOLS
 from .presenters.html import JQUERY_SYSTEM_LOCATIONS
-from .presenters.formats import output_all
+from .presenters.formats import configure_presenters, output_all
 from .comparators.utils.compare import compare_root_paths
 
 logger = logging.getLogger(__name__)
@@ -285,6 +285,7 @@ def run_diffoscope(parsed_args):
     Config().fuzzy_threshold = parsed_args.fuzzy_threshold
     Config().new_file = parsed_args.new_file
     Config().excludes = parsed_args.excludes
+    presenter_config = configure_presenters(parsed_args)
     # Don't waste time computing visual differences if we won't use them.
     Config().compute_visual_diffs = any((
         parsed_args.html_output,
@@ -304,7 +305,7 @@ def run_diffoscope(parsed_args):
     if difference is None and parsed_args.output_empty:
         difference = Difference(None, parsed_args.path1, parsed_args.path2)
     with profile('main', 'outputs'):
-        output_all(difference, parsed_args, has_differences)
+        output_all(presenter_config, difference, parsed_args, has_differences)
     return 1 if has_differences else 0
 
 

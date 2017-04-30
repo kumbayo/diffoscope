@@ -31,14 +31,7 @@ from .restructuredtext import RestructuredTextPresenter
 logger = logging.getLogger(__name__)
 
 
-def output_all(difference, parsed_args, has_differences):
-    """
-    Generate all known output formats.
-    """
-
-    if difference is None:
-        return
-
+def configure_presenters(parsed_args):
     FORMATS = {
         'text': {
             'klass': TextPresenter,
@@ -66,14 +59,22 @@ def output_all(difference, parsed_args, has_differences):
         },
     }
 
+    result = {k: v for k, v in FORMATS.items() if v['target'] is not None}
+
     # If no output specified, default to printing --text output to stdout
-    if not any(x['target'] for x in FORMATS.values()):
+    if not result:
         parsed_args.text_output = FORMATS['text']['target'] = '-'
+        result['text'] = FORMATS['text']
 
-    for name, data in FORMATS.items():
-        if data['target'] is None:
-            continue
+    logger.debug(
+        "Will generate the following formats: %s", ", ".join(result.keys()),
+    )
 
+    return result
+
+
+def output_all(config, difference, parsed_args, has_differences):
+    for name, data in config.items():
         logger.debug("Generating %r output at %r", name, data['target'])
 
         with profile('output', name):
