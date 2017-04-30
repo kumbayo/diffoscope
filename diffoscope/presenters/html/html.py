@@ -82,7 +82,7 @@ class HTMLPresenter(Presenter):
     supports_visual_diffs = True
 
     @classmethod
-    def run(cls, data, difference, parsed_args, has_differences):
+    def run(cls, data, difference, parsed_args):
         with make_printer(parsed_args.html_output) as fn:
             output_html(
                 difference,
@@ -93,7 +93,7 @@ class HTMLPresenter(Presenter):
 
 class HTMLDirectoryPresenter(HTMLPresenter):
     @classmethod
-    def run(cls, data, difference, parsed_args, has_differences):
+    def run(cls, data, difference, parsed_args):
         output_html_directory(
             parsed_args.html_output_directory,
             difference,

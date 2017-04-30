@@ -44,13 +44,8 @@ class TextPresenter(Presenter):
         super().__init__()
 
     @classmethod
-    def run(cls, data, difference, parsed_args, has_differences):
-        # As a special case, write an empty file instead of an empty diff.
-        if not has_differences:
-            open(parsed_args.text_output, 'w').close()
-            return
-
-        with make_printer(parsed_args.text_output or '-') as fn:
+    def run(cls, data, difference, parsed_args):
+        with make_printer(data['target']) as fn:
             color = {
                 'auto': fn.output.isatty(),
                 'never': False,

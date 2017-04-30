@@ -76,7 +76,7 @@ class PresenterManager(object):
 
         # If no output specified, default to printing --text output to stdout
         if not self.config:
-            parsed_args.text_output = FORMATS['text']['target'] = '-'
+            FORMATS['text']['target'] = '-'
             self.config['text'] = FORMATS['text']
 
         logger.debug(
@@ -85,16 +85,25 @@ class PresenterManager(object):
         )
 
     def output(self, difference, parsed_args, has_differences):
+        # As a special case, write an empty file instead of an empty diff.
+        if not has_differences:
+            try:
+                target = self.config['text']['target']
+
+                if target != '-':
+                    open(target, 'w').close()
+            except KeyError:
+                pass
+            return
+
+        if difference is None:
+            return
+
         for name, data in self.config.items():
             logger.debug("Generating %r output at %r", name, data['target'])
 
             with profile('output', name):
-                data['klass'].run(
-                    data,
-                    difference,
-                    parsed_args,
-                    has_differences,
-                )
+                data['klass'].run(data, difference, parsed_args)
 
     def compute_visual_diffs(self):
         """
