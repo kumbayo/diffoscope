@@ -287,10 +287,9 @@ def run_diffoscope(parsed_args):
     Config().excludes = parsed_args.excludes
     presenter_config = configure_presenters(parsed_args)
     # Don't waste time computing visual differences if we won't use them.
-    Config().compute_visual_diffs = any((
-        parsed_args.html_output,
-        parsed_args.html_output_directory,
-    ))
+    Config().compute_visual_diffs = any(
+        x['klass'].supports_visual_diffs for x in presenter_config.values(),
+    )
     set_path()
     set_locale()
     logger.debug('Starting comparison')

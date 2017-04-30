@@ -79,6 +79,8 @@ spl_print_func, spl_print_ctrl = None, None
 
 
 class HTMLPresenter(Presenter):
+    supports_visual_diffs = True
+
     @classmethod
     def run(cls, data, difference, parsed_args, has_differences):
         with make_printer(parsed_args.html_output) as fn:
@@ -89,7 +91,7 @@ class HTMLPresenter(Presenter):
             )
 
 
-class HTMLDirectoryPresenter(Presenter):
+class HTMLDirectoryPresenter(HTMLPresenter):
     @classmethod
     def run(cls, data, difference, parsed_args, has_differences):
         output_html_directory(

@@ -23,6 +23,8 @@ import contextlib
 
 
 class Presenter(object):
+    supports_visual_diffs = False
+
     def __init__(self):
         self.depth = 0
 
