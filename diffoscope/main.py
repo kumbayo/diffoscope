@@ -40,7 +40,7 @@ from .difference import Difference
 from .comparators import ComparatorManager
 from .external_tools import EXTERNAL_TOOLS
 from .presenters.html import JQUERY_SYSTEM_LOCATIONS
-from .presenters.formats import configure_presenters, output_all
+from .presenters.formats import PresenterManager
 from .comparators.utils.compare import compare_root_paths
 
 logger = logging.getLogger(__name__)
@@ -271,6 +271,7 @@ def maybe_set_limit(config, parsed_args, key):
 def run_diffoscope(parsed_args):
     setup_logging(parsed_args.debug)
     ProfileManager().setup(parsed_args)
+    PresenterManager().configure(parsed_args)
     logger.debug("Starting diffoscope %s", VERSION)
     if not tlsh and Config().fuzzy_threshold != parsed_args.fuzzy_threshold:
         logger.warning('Fuzzy-matching is currently disabled as the "tlsh" module is unavailable.')
@@ -285,11 +286,7 @@ def run_diffoscope(parsed_args):
     Config().fuzzy_threshold = parsed_args.fuzzy_threshold
     Config().new_file = parsed_args.new_file
     Config().excludes = parsed_args.excludes
-    presenter_config = configure_presenters(parsed_args)
-    # Don't waste time computing visual differences if we won't use them.
-    Config().compute_visual_diffs = any(
-        x['klass'].supports_visual_diffs for x in presenter_config.values(),
-    )
+    Config().compute_visual_diffs = PresenterManager().compute_visual_diffs()
     set_path()
     set_locale()
     logger.debug('Starting comparison')
@@ -304,7 +301,7 @@ def run_diffoscope(parsed_args):
     if difference is None and parsed_args.output_empty:
         difference = Difference(None, parsed_args.path1, parsed_args.path2)
     with profile('main', 'outputs'):
-        output_all(presenter_config, difference, parsed_args, has_differences)
+        PresenterManager().output(difference, parsed_args, has_differences)
     return 1 if has_differences else 0
 
 

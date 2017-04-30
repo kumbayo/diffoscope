@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
-import sys
 import logging
 
 from ..profiling import profile
@@ -31,51 +30,77 @@ from .restructuredtext import RestructuredTextPresenter
 logger = logging.getLogger(__name__)
 
 
-def configure_presenters(parsed_args):
-    FORMATS = {
-        'text': {
-            'klass': TextPresenter,
-            'target': parsed_args.text_output,
-        },
-        'html': {
-            'klass': HTMLPresenter,
-            'target': parsed_args.html_output,
-        },
-        'json': {
-            'klass': JSONPresenter,
-            'target': parsed_args.json_output,
-        },
-        'markdown': {
-            'klass': MarkdownTextPresenter,
-            'target': parsed_args.markdown_output,
-        },
-        'restructuredtext': {
-            'klass': RestructuredTextPresenter,
-            'target': parsed_args.restructuredtext_output,
-        },
-        'html_directory': {
-            'klass': HTMLDirectoryPresenter,
-            'target': parsed_args.html_output_directory,
-        },
-    }
+class PresenterManager(object):
+    _singleton = {}
 
-    result = {k: v for k, v in FORMATS.items() if v['target'] is not None}
+    def __init__(self):
+        self.__dict__ = self._singleton
 
-    # If no output specified, default to printing --text output to stdout
-    if not result:
-        parsed_args.text_output = FORMATS['text']['target'] = '-'
-        result['text'] = FORMATS['text']
+        if not self._singleton:
+            self.reset()
 
-    logger.debug(
-        "Will generate the following formats: %s", ", ".join(result.keys()),
-    )
+    def reset(self):
+        self.config = {}
 
-    return result
+    def configure(self, parsed_args):
+        FORMATS = {
+            'text': {
+                'klass': TextPresenter,
+                'target': parsed_args.text_output,
+            },
+            'html': {
+                'klass': HTMLPresenter,
+                'target': parsed_args.html_output,
+            },
+            'json': {
+                'klass': JSONPresenter,
+                'target': parsed_args.json_output,
+            },
+            'markdown': {
+                'klass': MarkdownTextPresenter,
+                'target': parsed_args.markdown_output,
+            },
+            'restructuredtext': {
+                'klass': RestructuredTextPresenter,
+                'target': parsed_args.restructuredtext_output,
+            },
+            'html_directory': {
+                'klass': HTMLDirectoryPresenter,
+                'target': parsed_args.html_output_directory,
+            },
+        }
 
+        self.config = {
+            k: v for k, v in FORMATS.items() if v['target'] is not None
+        }
 
-def output_all(config, difference, parsed_args, has_differences):
-    for name, data in config.items():
-        logger.debug("Generating %r output at %r", name, data['target'])
+        # If no output specified, default to printing --text output to stdout
+        if not self.config:
+            parsed_args.text_output = FORMATS['text']['target'] = '-'
+            self.config['text'] = FORMATS['text']
 
-        with profile('output', name):
-            data['klass'].run(data, difference, parsed_args, has_differences)
+        logger.debug(
+            "Will generate the following formats: %s",
+            ", ".join(self.config.keys()),
+        )
+
+    def output(self, difference, parsed_args, has_differences):
+        for name, data in self.config.items():
+            logger.debug("Generating %r output at %r", name, data['target'])
+
+            with profile('output', name):
+                data['klass'].run(
+                    data,
+                    difference,
+                    parsed_args,
+                    has_differences,
+                )
+
+    def compute_visual_diffs(self):
+        """
+        Don't waste time computing visual differences if we won't use them.
+        """
+
+        return any(
+            x['klass'].supports_visual_diffs for x in self.config.values(),
+        )
