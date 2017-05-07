@@ -136,7 +136,17 @@ def test_with_compare_details_and_failed_process():
 
 @skip_unless_tools_exist('xxd')
 def test_with_compare_details_and_tool_not_found(monkeypatch):
-    monkeypatch.setattr('diffoscope.exc.RequiredToolNotFound.get_package', lambda _: 'some-package')
+    from diffoscope.external_tools import EXTERNAL_TOOLS
+    monkeypatch.setitem(
+        EXTERNAL_TOOLS,
+        'nonexistent',
+        {
+            'debian': 'some-package',
+            'arch': 'some-package',
+            'Fedora': 'some-package',
+            'FreeBSD': 'some-package'
+        }
+    )
     class MockFile(FilesystemFile):
         @tool_required('nonexistent')
         def compare_details(self, other, source=None):
