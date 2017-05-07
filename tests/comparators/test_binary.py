@@ -135,6 +135,30 @@ def test_with_compare_details_and_failed_process():
     assert normalize_zeros(difference.unified_diff) == expected_diff
 
 @skip_unless_tools_exist('xxd')
+def test_with_compare_details_and_parsing_error():
+    from diffoscope.exc import OutputParsingError
+    class MockFile(FilesystemFile):
+        def compare_details(self, other, source=None):
+            subprocess.check_output(['sh', '-c', 'exit 0'], shell=False)
+            raise OutputParsingError('sh', self)
+    difference = MockFile(TEST_FILE1_PATH).compare(MockFile(TEST_FILE2_PATH))
+    expected_diff = get_data('../data/binary_expected_diff')
+    assert 'Error parsing output' in difference.comment
+    assert normalize_zeros(difference.unified_diff) == expected_diff
+
+@skip_unless_tools_exist('xxd')
+def test_with_compare_details_and_extraction_error():
+    from diffoscope.exc import ContainerExtractionError
+    class MockFile(FilesystemFile):
+        def compare_details(self, other, source=None):
+            subprocess.check_output(['sh', '-c', 'exit 0'], shell=False)
+            raise ContainerExtractionError(self.path, Exception())
+    difference = MockFile(TEST_FILE1_PATH).compare(MockFile(TEST_FILE2_PATH))
+    expected_diff = get_data('../data/binary_expected_diff')
+    assert 'Error extracting' in difference.comment
+    assert normalize_zeros(difference.unified_diff) == expected_diff
+
+@skip_unless_tools_exist('xxd')
 def test_with_compare_details_and_tool_not_found(monkeypatch):
     from diffoscope.external_tools import EXTERNAL_TOOLS
     monkeypatch.setitem(
