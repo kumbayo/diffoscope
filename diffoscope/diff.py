@@ -235,40 +235,6 @@ class FIFOFeeder(threading.Thread):
         if self._exception is not None:
             raise self._exception
 
-
-def empty_file_feeder():
-    def feeder(f):
-        return False
-    return feeder
-
-def make_feeder_from_raw_reader(in_file, filter=lambda buf: buf):
-    def feeder(out_file):
-        h = None
-        end_nl = False
-        max_lines = Config().max_diff_input_lines
-        line_count = 0
-
-        if max_lines < float("inf"):
-            h = hashlib.sha1()
-
-        for buf in in_file:
-            line_count += 1
-            out = filter(buf)
-            if h:
-                h.update(out)
-            if line_count < max_lines:
-                out_file.write(out)
-            end_nl = buf[-1] == '\n'
-
-        if h and line_count >= max_lines:
-            out_file.write("[ Too much input for diff (SHA1: {}) ]\n".format(
-                h.hexdigest(),
-            ).encode('utf-8'))
-            end_nl = True
-
-        return end_nl
-    return feeder
-
 def diff(feeder1, feeder2):
     tmpdir = get_temporary_directory().name
 
