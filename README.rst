@@ -73,13 +73,12 @@ as follows:
 
 
 There are `more detailed instructions available
-<https://www.debian.org/Bugs/Reporting>`__ more detailed instructions
-available] about reporting a bug in the Debian bug tracker.
+<https://www.debian.org/Bugs/Reporting>`__ about reporting a bug in the Debian bug tracker.
 
 If you're on a Debian-based system, you can install and use the ``reportbug``
 package to help walk you through the process.
 
-You can also submit patches to the Debian bug tracke. Start by cloning the `Git
+You can also submit patches to the Debian bug tracker. Start by cloning the `Git
 repository <https://anonscm.debian.org/git/reproducible/diffoscope.git/>`__,
 make your changes and commit them as you normally would. You can then use
 Git's ``format-patch`` command to save your changes as a series of patches that
