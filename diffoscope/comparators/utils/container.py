@@ -46,6 +46,11 @@ class Container(object, metaclass=abc.ABCMeta):
     def __init__(self, source):
         self._source = source
 
+        # Keep a count of how "nested" we are
+        self.depth = 0
+        if hasattr(source, 'container') and source.container is not None:
+            self.depth = source.container.depth + 1
+
     @property
     def source(self):
         return self._source

@@ -27,6 +27,7 @@ import subprocess
 from diffoscope.exc import RequiredToolNotFound, OutputParsingError, \
     ContainerExtractionError
 from diffoscope.tools import tool_required
+from diffoscope.config import Config
 from diffoscope.profiling import profile
 from diffoscope.difference import Difference
 
@@ -194,6 +195,14 @@ class File(object, metaclass=abc.ABCMeta):
         if hasattr(self, 'compare_details'):
             details.extend(self.compare_details(other, source))
         if self.as_container:
+            # Don't recursve forever on archive quines, etc.
+            depth = self._as_container.depth
+            if depth >= Config().max_container_depth:
+                msg = "Reached max container depth ({})".format(depth)
+                logger.debug(msg)
+                difference.add_comment(msg)
+                return difference
+
             details.extend(self.as_container.compare(other.as_container))
 
         details = [x for x in details if x]

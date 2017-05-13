@@ -63,12 +63,9 @@ def test_identification_deb(quine3, quine4):
 
 @pytest.fixture
 def differences_deb(quine3, quine4):
-    # These tests currently fail
-    with pytest.raises(RecursionError):
-        return quine3.compare(quine4).details
+    return quine3.compare(quine4).details
 
 
 def test_differences_deb(differences_deb):
-    assert differences_deb is None
-    #expected_diff = get_data('quine_deb_expected_diff')
-    #assert differences_deb[0].unified_diff == expected_diff
+    expected_diff = get_data('quine_deb_expected_diff')
+    assert differences_deb[0].unified_diff == expected_diff

@@ -35,6 +35,7 @@ class Config(object):
     enforce_constraints = True
     excludes = ()
     compute_visual_diffs = False
+    max_container_depth = 50
 
     _singleton = {}
 
