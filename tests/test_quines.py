@@ -19,6 +19,7 @@
 
 import pytest
 
+from diffoscope.comparators.deb import DebFile
 from diffoscope.comparators.zip import ZipFile
 from diffoscope.comparators.gzip import GzipFile
 
@@ -26,6 +27,13 @@ from comparators.utils.data import load_fixture, get_data
 
 quine1 = load_fixture('quine.gz')
 quine2 = load_fixture('quine.zip')
+quine3 = load_fixture('quine_a.deb')
+quine4 = load_fixture('quine_b.deb')
+
+"""
+Check that we are not recursively unpacking the quines in an infinite loop. See
+<https://research.swtch.com/zip> and <https://bugs.debian.org/780761>.
+"""
 
 
 def test_identification(quine1, quine2):
@@ -44,8 +52,23 @@ def differences(quine1, quine2):
 
 
 def test_difference(differences):
-    # Check that we are not recursively unpacking the quines in an infinite
-    # loop. See <https://research.swtch.com/zip>
-
     expected_diff = get_data('quine_expected_diff')
     assert differences[0].unified_diff == expected_diff
+
+
+def test_identification_deb(quine3, quine4):
+    assert isinstance(quine3, DebFile)
+    assert isinstance(quine4, DebFile)
+
+
+@pytest.fixture
+def differences_deb(quine3, quine4):
+    # These tests currently fail
+    with pytest.raises(RecursionError):
+        return quine3.compare(quine4).details
+
+
+def test_differences_deb(differences_deb):
+    assert differences_deb is None
+    #expected_diff = get_data('quine_deb_expected_diff')
+    #assert differences_deb[0].unified_diff == expected_diff
