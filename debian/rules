@@ -26,9 +26,8 @@ export PYBUILD_AFTER_TEST = debian/tests/basic-command-line
 export PYBUILD_AFTER_INSTALL = rm -rvf '{destdir}/{install_dir}/htmlcov' '{destdir}/{install_dir}/.coverage'
 
 ifneq ($(JENKINS_EXPORTS_DIR),)
-	$(info exporting junit style test report to $(JENKINS_EXPORTS_DIR))
-	export PYBUILD_BEFORE_TEST = mkdir -pv $(JENKINS_EXPORTS_DIR)/test-results
-	export PYBUILD_TEST_ARGS += --junit-xml=$(JENKINS_EXPORTS_DIR)/test-results/tests.xml
+  export PYBUILD_BEFORE_TEST = mkdir -pv $(JENKINS_EXPORTS_DIR)/test-results
+  export PYBUILD_TEST_ARGS += --junit-xml=$(JENKINS_EXPORTS_DIR)/test-results/tests.xml
 endif
 
 
