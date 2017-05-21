@@ -22,6 +22,7 @@ import logging
 import os.path
 
 from diffoscope.difference import Difference
+from diffoscope.exc import ContainerExtractionError
 
 from .utils.file import File
 from .utils.archive import Archive
@@ -36,6 +37,7 @@ logger = logging.getLogger(__name__)
 
 class FsImageContainer(Archive):
     def open_archive(self):
+        self.launched = False
         if not guestfs:
             return None
 
@@ -47,25 +49,31 @@ class FsImageContainer(Archive):
         self.g.add_drive_opts (self.source.path, format="raw", readonly=1)
         try:
             self.g.launch()
-        except RuntimeError:
+        except RuntimeError as exc:
             logger.exception("guestfs can't be launched")
             logger.error("If memory is too tight for 512 MiB, try running with LIBGUESTFS_MEMSIZE=256 or lower.")
-            return None
+            self.g.close()
+            self.g = None
+            raise ContainerExtractionError(self.source.path, exc)
+        self.launched = True
         devices = self.g.list_devices()
         self.g.mount(devices[0], "/")
         self.fs = self.g.list_filesystems()[devices[0]]
         return self
 
     def close_archive(self):
-        if not guestfs:
+        if not guestfs or not self.launched:
             return None
         self.g.umount_all()
         self.g.close()
 
     def get_member_names(self):
+        if not guestfs or not self.launched:
+            return []
         return [os.path.basename(self.source.path) + '.tar']
 
     def extract(self, member_name, dest_dir):
+        assert guestfs and self.launched
         dest_path = os.path.join(dest_dir, member_name)
         logger.debug('filesystem image extracting to %s', dest_path)
         self.g.tar_out("/", dest_path)
