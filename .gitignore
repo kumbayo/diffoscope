@@ -9,3 +9,4 @@
 /htmlcov/
 favicon.png
 /debian/*.1
+/build/
