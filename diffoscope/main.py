@@ -168,6 +168,11 @@ def create_parser():
                         Config().max_diff_input_lines,
                         default=None).completer=RangeCompleter(0,
                         Config().max_diff_input_lines, 5000)
+    group3.add_argument('--max-container-depth', metavar='DEPTH', type=int,
+                        help='Maximum depth to recurse into containers. '
+                        '(Cannot be disabled for security reasons, default: '
+                        '%(default)s)',
+                        default=Config().max_container_depth)
 
     group4 = parser.add_argument_group('information commands')
     group4.add_argument('--help', '-h', action='help',
@@ -276,6 +281,7 @@ def run_diffoscope(parsed_args):
     maybe_set_limit(Config(), parsed_args, "max_diff_block_lines_parent")
     maybe_set_limit(Config(), parsed_args, "max_diff_block_lines")
     maybe_set_limit(Config(), parsed_args, "max_diff_input_lines")
+    Config().max_container_depth = parsed_args.max_container_depth
     Config().fuzzy_threshold = parsed_args.fuzzy_threshold
     Config().new_file = parsed_args.new_file
     Config().excludes = parsed_args.excludes
