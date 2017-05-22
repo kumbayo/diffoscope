@@ -63,13 +63,13 @@ def create_parser():
         add_help=False)
     parser.add_argument('path1', help='First file or directory to compare')
     parser.add_argument('path2', help='Second file or directory to compare')
-    parser.add_argument('--debug', dest='debug', action='store_true',
+    parser.add_argument('--debug', action='store_true',
                         default=False, help='Display debug messages')
     parser.add_argument('--debugger', action='store_true',
                         help='Open the Python debugger in case of crashes')
-    parser.add_argument('--status-fd', dest='status_fd', metavar='FD', type=int,
+    parser.add_argument('--status-fd', metavar='FD', type=int,
                         help='Send machine-readable status to file descriptor FD')
-    parser.add_argument('--progress', dest='progress', action='store_const',
+    parser.add_argument('--progress', action='store_const',
                         const=True, help='Show an approximate progress bar')
     parser.add_argument('--no-progress', dest='progress', action='store_const',
                         const=False, help='Do not show any progress bar')
@@ -110,28 +110,24 @@ def create_parser():
     group2.add_argument('--no-default-limits', action='store_true', default=False,
                         help='Disable most default limits. Note that text '
                         'output already ignores most of these.')
-    group2.add_argument('--max-text-report-size', metavar='BYTES',
-                        dest='max_text_report_size', type=int,
+    group2.add_argument('--max-text-report-size', metavar='BYTES', type=int,
                         help='Maximum bytes written in --text report. (0 to '
                         'disable)', default=None).completer=RangeCompleter(0,
                         Config().max_text_report_size, 200000)
-    group2.add_argument('--max-report-size', metavar='BYTES',
-                        dest='max_report_size', type=int,
+    group2.add_argument('--max-report-size', metavar='BYTES', type=int,
                         help='Maximum bytes written in report. In html-dir '
                         'output, this is the max bytes of the parent page. '
                         '(0 to disable, default: %d)' %
                         Config().max_report_size,
                         default=None).completer=RangeCompleter(0,
                         Config().max_report_size, 200000)
-    group2.add_argument('--max-report-child-size', metavar='BYTES',
-                        dest='max_report_child_size', type=int,
+    group2.add_argument('--max-report-child-size', metavar='BYTES', type=int,
                         help='In --html-dir output, this is the max bytes of '
                         'each child page (0 to disable, default: %(default)s, '
                         'remaining in effect even with --no-default-limits)',
                         default=Config().max_report_child_size).completer=RangeCompleter(0,
                         Config().max_report_child_size, 50000)
-    group2.add_argument('--max-diff-block-lines', dest='max_diff_block_lines',
-                        metavar='LINES', type=int,
+    group2.add_argument('--max-diff-block-lines', metavar='LINES', type=int,
                         help='Maximum number of lines output per diff block. '
                         'In --html-dir output, we use %d times this number instead, '
                         'taken over all pages. (0 to disable, default: %d)' %
@@ -139,8 +135,7 @@ def create_parser():
                         Config().max_diff_block_lines),
                         default=None).completer=RangeCompleter(0,
                         Config().max_diff_block_lines, 5)
-    group2.add_argument('--max-diff-block-lines-parent', dest='max_diff_block_lines_parent',
-                        metavar='LINES', type=int,
+    group2.add_argument('--max-diff-block-lines-parent', metavar='LINES', type=int,
                         help='In --html-dir output, this is maximum number of '
                         'lines output per diff block on the parent page '
                         'before spilling it into child pages (0 to disable, '
@@ -148,8 +143,7 @@ def create_parser():
                         '--no-default-limits)',
                         default=Config().max_diff_block_lines_parent).completer=RangeCompleter(0,
                         Config().max_diff_block_lines_parent, 200)
-    group2.add_argument('--max-diff-block-lines-saved', dest='max_diff_block_lines_saved',
-                        metavar='LINES', type=int,
+    group2.add_argument('--max-diff-block-lines-saved', metavar='LINES', type=int,
                         help='Maximum number of lines saved per diff block. '
                         'Most users should not need this, unless you run out '
                         'of memory. This truncates diff(1) output before even '
@@ -158,18 +152,17 @@ def create_parser():
                         default=0).completer=RangeCompleter(0, 0, 200)
 
     group3 = parser.add_argument_group('diff calculation')
-    group3.add_argument('--new-file', dest='new_file', action='store_true',
+    group3.add_argument('--new-file', action='store_true',
                         help='Treat absent files as empty')
     group3.add_argument('--exclude', dest='excludes', nargs='?',
                         metavar='PATTERN', action='append', default=[],
                         help='Exclude files that match %(metavar)s')
-    group3.add_argument('--fuzzy-threshold', dest='fuzzy_threshold', type=int,
+    group3.add_argument('--fuzzy-threshold', type=int,
                         help='Threshold for fuzzy-matching '
                         '(0 to disable, %(default)s is default, 400 is high fuzziness)',
                         default=Config().fuzzy_threshold).completer=RangeCompleter(0,
                         400, 20)
-    group3.add_argument('--max-diff-input-lines', dest='max_diff_input_lines',
-                        metavar='LINES', type=int,
+    group3.add_argument('--max-diff-input-lines', metavar='LINES', type=int,
                         help='Maximum number of lines fed to diff(1) '
                         '(0 to disable, default: %d)' %
                         Config().max_diff_input_lines,
