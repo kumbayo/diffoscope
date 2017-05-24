@@ -29,15 +29,21 @@ class ProgressLoggingHandler(logging.StreamHandler):
 
     def __init__(self, progressbar):
         self.progressbar = progressbar
-        logging.StreamHandler.__init__(self)
+        super().__init__()
 
     def emit(self, record):
-        # delete the current line (i.e. the progress bar)
-        self.stream.write("\r\033[K")
-        self.flush()
-        logging.StreamHandler.emit(self, record)
-        if not self.progressbar.bar.finished:
-            self.progressbar.bar.update()
+        try:
+            # delete the current line (i.e. the progress bar)
+            self.stream.write("\r\033[K")
+            self.flush()
+            super().emit(record)
+            if not self.progressbar.bar.finished:
+                self.progressbar.bar.update()
+        except Exception:
+            # have to do this try-except wrapping otherwise tests fail
+            # due to test_progress.py running main() several times.
+            # this mirrors the super() implementation.
+            self.handleError(record)
 
 class ProgressManager(object):
     _singleton = {}
