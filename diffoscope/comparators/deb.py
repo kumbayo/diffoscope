@@ -85,7 +85,8 @@ class DebFile(File):
     @property
     def md5sums(self):
         if not hasattr(self, '_md5sums'):
-            md5sums_file = self.as_container.control_tar.as_container.lookup_file('./md5sums')
+            control_tar = self.as_container.control_tar
+            md5sums_file = control_tar.as_container.lookup_file('./md5sums') if control_tar else None
             if md5sums_file:
                 self._md5sums = md5sums_file.parse()
             else:
