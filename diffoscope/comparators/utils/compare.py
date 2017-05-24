@@ -94,14 +94,6 @@ def compare_files(file1, file2, source=None, diff_content_only=False):
     with profile('compare_files (cumulative)', file1):
         return file1.compare(file2, source)
 
-def compare_commented_files(diff_content_only, file1, file2, comment=None, source=None):
-    difference = compare_files(file1, file2, source=source, diff_content_only=diff_content_only)
-    if comment:
-        if difference is None:
-            difference = Difference(None, file1.name, file2.name)
-        difference.add_comment(comment)
-    return difference
-
 def bail_if_non_existing(*paths):
     if not all(map(os.path.lexists, paths)):
         for path in paths:

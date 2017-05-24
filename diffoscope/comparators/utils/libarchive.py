@@ -241,3 +241,9 @@ class LibarchiveContainer(Archive):
             "Extracted %d entries from %s to %s",
             len(self._members), self.source.path, tmpdir,
         )
+
+    def comparisons(self, other):
+        def hide_trivial_dirs(item):
+            file1, file2, comment = item
+            return not (isinstance(file1, Directory) and isinstance(file2, Directory) and comment is None)
+        return filter(hide_trivial_dirs, super().comparisons(other))

@@ -23,6 +23,7 @@ import itertools
 import collections
 
 from diffoscope.config import Config
+from diffoscope.difference import Difference
 from diffoscope.progress import Progress
 
 from ..missing_file import MissingFile
@@ -133,15 +134,17 @@ class Container(object, metaclass=abc.ABCMeta):
                     yield MissingFile('/dev/null', other_member), other_member, NO_COMMENT
 
     def compare(self, other, source=None, no_recurse=False):
-        from .compare import compare_commented_files
-        from ..directory import Directory
+        from .compare import compare_files
 
-        def hide_trivial_dirs(fst, snd, comment):
-            return not (isinstance(fst, Directory) and isinstance(snd, Directory) and comment == NO_COMMENT)
-        def compare(*args):
-            return compare_commented_files(no_recurse, *args)
-        return itertools.starmap(compare,
-            (x for x in self.comparisons(other) if hide_trivial_dirs(*x)))
+        def compare_pair(file1, file2, comment):
+            difference = compare_files(file1, file2, source=None, diff_content_only=no_recurse)
+            if comment:
+                if difference is None:
+                    difference = Difference(None, file1.name, file2.name)
+                difference.add_comment(comment)
+            return difference
+
+        return filter(None, itertools.starmap(compare_pair, self.comparisons(other)))
 
 
 class MissingContainer(Container):
