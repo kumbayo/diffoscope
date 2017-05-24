@@ -20,11 +20,11 @@
 import logging
 
 
-def setup_logging(debug):
+def setup_logging(debug, log_handler):
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG if debug else logging.WARNING)
 
-    ch = logging.StreamHandler()
+    ch = log_handler or logging.StreamHandler()
     ch.setLevel(logging.DEBUG)
     logger.addHandler(ch)
 

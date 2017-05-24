@@ -25,6 +25,20 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+class ProgressLoggingHandler(logging.StreamHandler):
+
+    def __init__(self, progressbar):
+        self.progressbar = progressbar
+        logging.StreamHandler.__init__(self)
+
+    def emit(self, record):
+        # delete the current line (i.e. the progress bar)
+        self.stream.write("\r\033[K")
+        self.flush()
+        logging.StreamHandler.emit(self, record)
+        if not self.progressbar.bar.finished:
+            self.progressbar.bar.update()
+
 class ProgressManager(object):
     _singleton = {}
 
@@ -45,15 +59,18 @@ class ProgressManager(object):
             if parsed_args.progress:
                 return True
 
-            # ... otherwise show it if STDOUT is a tty and debug is not set
+            # ... otherwise show it if STDOUT is a tty
             if parsed_args.progress is None:
-                return sys.stdout.isatty() and not parsed_args.debug
+                return sys.stdout.isatty()
 
             return False
 
+        log_handler = None
         if show_progressbar():
             try:
-                self.register(ProgressBar())
+                bar = ProgressBar()
+                self.register(bar)
+                log_handler = ProgressLoggingHandler(bar)
             except ImportError:
                 # User asked for bar, so show them the error
                 if parsed_args.progress:
@@ -62,7 +79,7 @@ class ProgressManager(object):
         if parsed_args.status_fd:
             self.register(StatusFD(os.fdopen(parsed_args.status_fd, 'w')))
 
-    ##
+        return log_handler
 
     def register(self, observer):
         logger.debug("Registering %s as a progress observer", observer)

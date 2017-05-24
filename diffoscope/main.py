@@ -267,7 +267,8 @@ def maybe_set_limit(config, parsed_args, key):
 
 
 def run_diffoscope(parsed_args):
-    setup_logging(parsed_args.debug)
+    log_handler = ProgressManager().setup(parsed_args)
+    setup_logging(parsed_args.debug, log_handler)
     ProfileManager().setup(parsed_args)
     PresenterManager().configure(parsed_args)
     logger.debug("Starting diffoscope %s", VERSION)
@@ -289,7 +290,6 @@ def run_diffoscope(parsed_args):
     set_path()
     set_locale()
     logger.debug('Starting comparison')
-    ProgressManager().setup(parsed_args)
     with Progress(1, parsed_args.path1):
         with profile('main', 'outputs'):
             difference = compare_root_paths(
