@@ -63,7 +63,7 @@ def compare_root_paths(path1, path2):
     file2 = specialize(FilesystemFile(path2, container=container2))
     return compare_files(file1, file2)
 
-def compare_files(file1, file2, source=None):
+def compare_files(file1, file2, source=None, diff_content_only=False):
     logger.debug(
         "Comparing %s (%s) and %s (%s)",
         file1.name,
@@ -79,6 +79,10 @@ def compare_files(file1, file2, source=None):
         if file1.has_same_content_as(file2):
             logger.debug("has_same_content_as returned True; skipping further comparisons")
             return None
+    if diff_content_only:
+        difference = Difference(None, file1.name, file2.name)
+        difference.add_comment("Files differ")
+        return difference
     specialize(file1)
     specialize(file2)
     if isinstance(file1, MissingFile):
@@ -90,8 +94,8 @@ def compare_files(file1, file2, source=None):
     with profile('compare_files (cumulative)', file1):
         return file1.compare(file2, source)
 
-def compare_commented_files(file1, file2, comment=None, source=None):
-    difference = compare_files(file1, file2, source=source)
+def compare_commented_files(diff_content_only, file1, file2, comment=None, source=None):
+    difference = compare_files(file1, file2, source=source, diff_content_only=diff_content_only)
     if comment:
         if difference is None:
             difference = Difference(None, file1.name, file2.name)

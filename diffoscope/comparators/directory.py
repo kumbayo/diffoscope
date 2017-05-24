@@ -131,7 +131,7 @@ class Directory(object):
         return file.is_directory()
 
 
-class FilesystemDirectory(object):
+class FilesystemDirectory(Directory):
     def __init__(self, path):
         self._path = path
 

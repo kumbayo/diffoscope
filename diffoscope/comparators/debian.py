@@ -181,8 +181,8 @@ class DotChangesFile(DebControlFile):
 
         return True
 
-    def compare(self, other, source=None):
-        differences = super().compare(other, source)
+    def compare(self, other, **kwargs):
+        differences = super().compare(other, **kwargs)
 
         if differences is None:
             return None

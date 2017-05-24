@@ -136,13 +136,13 @@ class ApkContainer(Archive):
             diff_manifests.add_comment(comment)
         return diff_manifests
 
-    def compare(self, other, source=None):
+    def compare(self, other, **kwargs):
         differences = []
         try:
             differences.append(self.compare_manifests(other))
         except AttributeError:  # no apk-specific methods, e.g. MissingArchive
             pass
-        differences.extend(super().compare(other, source=source))
+        differences.extend(super().compare(other, **kwargs))
         return differences
 
 class ApkFile(File):

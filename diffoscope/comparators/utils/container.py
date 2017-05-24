@@ -132,13 +132,16 @@ class Container(object, metaclass=abc.ABCMeta):
                     p.step(msg=other_member.progress_name)
                     yield MissingFile('/dev/null', other_member), other_member, NO_COMMENT
 
-    def compare(self, other, source=None):
+    def compare(self, other, source=None, no_recurse=False):
         from .compare import compare_commented_files
+        from ..directory import Directory
 
-        return itertools.starmap(
-            compare_commented_files,
-            self.comparisons(other),
-        )
+        def hide_trivial_dirs(fst, snd, comment):
+            return not (isinstance(fst, Directory) and isinstance(snd, Directory) and comment == NO_COMMENT)
+        def compare(*args):
+            return compare_commented_files(no_recurse, *args)
+        return itertools.starmap(compare,
+            (x for x in self.comparisons(other) if hide_trivial_dirs(*x)))
 
 
 class MissingContainer(Container):

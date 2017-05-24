@@ -197,13 +197,12 @@ class File(object, metaclass=abc.ABCMeta):
         if self.as_container:
             # Don't recursve forever on archive quines, etc.
             depth = self._as_container.depth
-            if depth >= Config().max_container_depth:
+            no_recurse = (depth >= Config().max_container_depth)
+            if no_recurse:
                 msg = "Reached max container depth ({})".format(depth)
                 logger.debug(msg)
                 difference.add_comment(msg)
-                return difference
-
-            details.extend(self.as_container.compare(other.as_container))
+            details.extend(self.as_container.compare(other.as_container, no_recurse=no_recurse))
 
         details = [x for x in details if x]
         if not details:
