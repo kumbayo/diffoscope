@@ -290,7 +290,7 @@ def run_diffoscope(parsed_args):
     set_path()
     set_locale()
     logger.debug('Starting comparison')
-    with Progress(1, parsed_args.path1):
+    with Progress():
         with profile('main', 'outputs'):
             difference = compare_root_paths(
                 parsed_args.path1, parsed_args.path2)

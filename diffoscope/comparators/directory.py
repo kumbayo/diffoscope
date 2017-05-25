@@ -200,8 +200,8 @@ class DirectoryContainer(Container):
             for name in sorted(to_compare):
                 my_file, my_size = my_members[name]
                 other_file, other_size = other_members[name]
+                p.begin_step(my_size + other_size, msg=name)
                 yield my_file, other_file, name
-                p.step(my_size + other_size, msg=name)
 
     def compare(self, other, source=None):
         from .utils.compare import compare_files

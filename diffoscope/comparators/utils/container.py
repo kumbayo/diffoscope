@@ -128,7 +128,7 @@ class Container(object, metaclass=abc.ABCMeta):
                 my_member_name, (my_member, my_size) = my_members.popitem(last=False)
                 if my_member_name in other_members:
                     other_member, other_size = other_members.pop(my_member_name)
-                    p.step(my_size + other_size, msg=my_member.progress_name)
+                    p.begin_step(my_size + other_size, msg=my_member.progress_name)
                     yield my_member, other_member, NO_COMMENT
                 else:
                     my_remainders[my_member_name] = (my_member, my_size)
@@ -141,16 +141,16 @@ class Container(object, metaclass=abc.ABCMeta):
                 other_member, other_size = other_members.pop(other_name)
                 comment = "Files similar despite different names" \
                     " (difference score: {})".format(score)
-                p.step(my_size + other_size, msg=my_name)
+                p.begin_step(my_size + other_size, msg=my_name)
                 yield my_member, other_member, comment
 
             if Config().new_file:
                 for my_member, my_size in my_members.values():
-                    p.step(my_size, msg=my_member.progress_name)
+                    p.begin_step(my_size, msg=my_member.progress_name)
                     yield my_member, MissingFile('/dev/null', my_member), NO_COMMENT
 
                 for other_member, other_size in other_members.values():
-                    p.step(other_size, msg=other_member.progress_name)
+                    p.begin_step(other_size, msg=other_member.progress_name)
                     yield MissingFile('/dev/null', other_member), other_member, NO_COMMENT
 
     def compare(self, other, source=None, no_recurse=False):
