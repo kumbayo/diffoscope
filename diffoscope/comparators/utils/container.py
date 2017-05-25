@@ -20,14 +20,16 @@
 import abc
 import logging
 import itertools
-import collections
+from collections import OrderedDict
 
 from diffoscope.config import Config
 from diffoscope.difference import Difference
+from diffoscope.excludes import filter_excludes
 from diffoscope.progress import Progress
 
 from ..missing_file import MissingFile
 
+from .file import path_apparent_size
 from .fuzzy import perform_fuzzy_matching
 
 NO_COMMENT = None
@@ -61,8 +63,7 @@ class Container(object, metaclass=abc.ABCMeta):
         Returns a dictionary. The key is what is used to match when comparing
         containers.
         """
-
-        return collections.OrderedDict(self.get_all_members())
+        return OrderedDict(self.get_all_members())
 
     def lookup_file(self, *names):
         """
@@ -96,41 +97,60 @@ class Container(object, metaclass=abc.ABCMeta):
     def get_member(self, member_name):
         raise NotImplementedError()
 
+    def get_filtered_member_names(self):
+        return filter_excludes(self.get_member_names())
+
+    def get_filtered_members_sizes(self):
+        for name in self.get_filtered_member_names():
+            member = self.get_member(name)
+            if member.is_directory():
+                size = 4096 # default "size" of a directory
+            else:
+                size = path_apparent_size(member.path)
+            yield name, (member, size)
+
     def get_all_members(self):
         # If your get_member implementation is O(n) then this will be O(n^2)
         # cost. In such cases it is HIGHLY RECOMMENDED to override this as well
-        for name in self.get_member_names():
+        for name in self.get_filtered_member_names():
             yield name, self.get_member(name)
 
     def comparisons(self, other):
-        my_members = self.get_members()
-        my_reminders = collections.OrderedDict()
-        other_members = other.get_members()
+        my_members = OrderedDict(self.get_filtered_members_sizes())
+        my_remainders = OrderedDict()
+        other_members = OrderedDict(other.get_filtered_members_sizes())
+        total_size = sum(x[1] for x in my_members.values()) + sum(x[1] for x in other_members.values())
+        # TODO: progress could be a bit more accurate here, give more weight to fuzzy-hashed files
 
-        with Progress(max(len(my_members), len(other_members))) as p:
+        with Progress(total_size) as p:
             # keep it sorted like my members
             while my_members:
-                my_member_name, my_member = my_members.popitem(last=False)
+                my_member_name, (my_member, my_size) = my_members.popitem(last=False)
                 if my_member_name in other_members:
-                    p.step(msg=my_member.progress_name)
-                    yield my_member, other_members.pop(my_member_name), NO_COMMENT
+                    other_member, other_size = other_members.pop(my_member_name)
+                    p.step(my_size + other_size, msg=my_member.progress_name)
+                    yield my_member, other_member, NO_COMMENT
                 else:
-                    my_reminders[my_member_name] = my_member
+                    my_remainders[my_member_name] = (my_member, my_size)
 
-            my_members = my_reminders
-            for my_name, other_name, score in perform_fuzzy_matching(my_members, other_members):
+            my_members = my_remainders
+            my_members_fuzz = OrderedDict((k, v[0]) for k, v in my_members.items())
+            other_members_fuzz = OrderedDict((k, v[0]) for k, v in other_members.items())
+            for my_name, other_name, score in perform_fuzzy_matching(my_members_fuzz, other_members_fuzz):
+                my_member, my_size = my_members.pop(my_name)
+                other_member, other_size = other_members.pop(other_name)
                 comment = "Files similar despite different names" \
                     " (difference score: {})".format(score)
-                p.step(2, msg=my_name)
-                yield my_members.pop(my_name), other_members.pop(other_name), comment
+                p.step(my_size + other_size, msg=my_name)
+                yield my_member, other_member, comment
 
             if Config().new_file:
-                for my_member in my_members.values():
-                    p.step(msg=my_member.progress_name)
+                for my_member, my_size in my_members.values():
+                    p.step(my_size, msg=my_member.progress_name)
                     yield my_member, MissingFile('/dev/null', my_member), NO_COMMENT
 
-                for other_member in other_members.values():
-                    p.step(msg=other_member.progress_name)
+                for other_member, other_size in other_members.values():
+                    p.step(other_size, msg=other_member.progress_name)
                     yield MissingFile('/dev/null', other_member), other_member, NO_COMMENT
 
     def compare(self, other, source=None, no_recurse=False):

@@ -22,11 +22,11 @@ import os
 import re
 import logging
 import subprocess
+from collections import OrderedDict
 
 from diffoscope.exc import RequiredToolNotFound
 from diffoscope.tools import tool_required
 from diffoscope.progress import Progress
-from diffoscope.excludes import filter_excludes
 from diffoscope.difference import Difference
 
 from .binary import FilesystemFile
@@ -191,17 +191,17 @@ class DirectoryContainer(Container):
             return FilesystemFile(os.path.join(self.source.path, member_name), container=self)
 
     def comparisons(self, other):
-        my_names = self.get_member_names()
-        other_names = other.get_member_names()
-        to_compare = set(my_names).intersection(other_names)
-        to_compare = set(filter_excludes(to_compare))
+        my_members = OrderedDict(self.get_filtered_members_sizes())
+        other_members = OrderedDict(other.get_filtered_members_sizes())
+        total_size = sum(x[1] for x in my_members.values()) + sum(x[1] for x in other_members.values())
 
-        with Progress(len(to_compare)) as p:
+        to_compare = set(my_members.keys()).intersection(other_members.keys())
+        with Progress(total_size) as p:
             for name in sorted(to_compare):
-                my_file = self.get_member(name)
-                other_file = other.get_member(name)
+                my_file, my_size = my_members[name]
+                other_file, other_size = other_members[name]
                 yield my_file, other_file, name
-                p.step(msg=name)
+                p.step(my_size + other_size, msg=name)
 
     def compare(self, other, source=None):
         from .utils.compare import compare_files

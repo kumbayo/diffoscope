@@ -26,17 +26,17 @@ logger = logging.getLogger(__name__)
 
 
 def filter_excludes(filenames):
-    result = []
-
     for x in filenames:
         for y in Config().excludes:
             if fnmatch.fnmatchcase(x, y):
                 logger.debug("Excluding %s as it matches pattern '%s'", x, y)
                 break
         else:
-            result.append(x)
-
-    return result
+            yield x
 
 def any_excluded(*filenames):
-    return len(filter_excludes(filenames)) != len(filenames)
+    for x in filenames:
+        for y in Config().excludes:
+            if fnmatch.fnmatchcase(x, y):
+                return True
+    return False

@@ -187,8 +187,6 @@ class LibarchiveContainer(Archive):
     def get_all_members(self):
         with libarchive.file_reader(self.source.path) as archive:
             for entry in archive:
-                if any_excluded(entry.pathname):
-                    continue
                 yield entry.pathname, self.get_subclass(entry)
 
     def get_subclass(self, entry):
