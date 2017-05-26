@@ -119,8 +119,8 @@ class ProgressManager(object):
 class Progress(object):
     def __init__(self, total=None):
         self.done = []
-        self.current_steps = 0
-        self.current_child_steps_done = 0
+        self.current_steps = None
+        self.current_child_steps_done = None
         if total:
             self.total = total
         else:
@@ -160,19 +160,20 @@ class Progress(object):
         return all_done, int(float(self.total) / own_done * all_done)
 
     def is_active(self):
-        return self.current_steps
+        return self.current_steps is not None
 
     def maybe_end(self, msg=""):
         if self.is_active():
             self.done += [(self.current_steps, self.current_child_steps_done)]
-            self.current_steps = 0
-            self.current_child_steps_done = 0
+            self.current_steps = None
+            self.current_child_steps_done = None
             ProgressManager().update(msg)
 
     def begin_step(self, step, msg=""):
-        assert step > 0
+        assert step is not None
         self.maybe_end(msg)
         self.current_steps = step
+        self.current_child_steps_done = 0
 
     def child_done(self, total):
         self.current_child_steps_done += total
