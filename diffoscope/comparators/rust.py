@@ -21,7 +21,6 @@
 import zlib
 import os.path
 import logging
-import collections
 
 from diffoscope.difference import Difference
 

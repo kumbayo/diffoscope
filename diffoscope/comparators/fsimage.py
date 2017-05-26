@@ -20,7 +20,6 @@
 import re
 import logging
 import os.path
-import collections
 
 from diffoscope.difference import Difference
 

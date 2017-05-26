@@ -21,7 +21,6 @@ import re
 import os.path
 import logging
 import subprocess
-import collections
 
 from diffoscope.tools import tool_required
 

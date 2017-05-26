@@ -22,7 +22,6 @@ import os.path
 import hashlib
 import logging
 import functools
-import collections
 
 from debian.deb822 import Dsc
 

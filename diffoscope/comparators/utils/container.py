@@ -119,39 +119,34 @@ class Container(object, metaclass=abc.ABCMeta):
 
     def comparisons(self, other):
         my_members = OrderedDict(self.get_filtered_members_sizes())
-        my_remainders = OrderedDict()
         other_members = OrderedDict(other.get_filtered_members_sizes())
-        total_size = sum(x[1] for x in my_members.values()) + sum(x[1] for x in other_members.values())
+        total_size = sum(x[1] for x in itertools.chain(my_members.values(), other_members.values()))
         # TODO: progress could be a bit more accurate here, give more weight to fuzzy-hashed files
+        # TODO: merge DirectoryContainer.comparisons() into this
 
         with Progress(total_size) as p:
-            if len(my_members) == 1 and len(other_members) == 1:
-                _, (my_member, my_size) = my_members.popitem()
-                _, (other_member, other_size) = other_members.popitem()
-                p.begin_step(my_size + other_size, msg=my_member.progress_name)
-                yield my_member, other_member, NO_COMMENT
-                return
-
-            # keep it sorted like my members
-            while my_members:
-                my_member_name, (my_member, my_size) = my_members.popitem(last=False)
-                if my_member_name in other_members:
-                    other_member, other_size = other_members.pop(my_member_name)
-                    p.begin_step(my_size + other_size, msg=my_member.progress_name)
-                    yield my_member, other_member, NO_COMMENT
-                else:
-                    my_remainders[my_member_name] = (my_member, my_size)
-
-            my_members = my_remainders
-            my_members_fuzz = OrderedDict((k, v[0]) for k, v in my_members.items())
-            other_members_fuzz = OrderedDict((k, v[0]) for k, v in other_members.items())
-            for my_name, other_name, score in perform_fuzzy_matching(my_members_fuzz, other_members_fuzz):
+            def prep_yield(my_name, other_name, comment=NO_COMMENT):
                 my_member, my_size = my_members.pop(my_name)
                 other_member, other_size = other_members.pop(other_name)
+                p.begin_step(my_size + other_size, msg=my_member.progress_name)
+                return my_member, other_member, comment
+
+            # if both containers contain 1 element, compare these
+            if len(my_members) == 1 and len(other_members) == 1:
+                yield prep_yield(next(iter(my_members.keys())),
+                                 next(iter(other_members.keys())))
+                return
+
+            other_names = set(other_members.keys())
+            # keep it sorted like my_members
+            both_names = [name for name in my_members.keys() if name in other_names]
+            for name in both_names:
+                yield prep_yield(name, name)
+
+            for my_name, other_name, score in perform_fuzzy_matching(my_members, other_members):
                 comment = "Files similar despite different names" \
                     " (difference score: {})".format(score)
-                p.begin_step(my_size + other_size, msg=my_name)
-                yield my_member, other_member, comment
+                yield prep_yield(my_name, other_name, comment)
 
             if Config().new_file:
                 for my_member, my_size in my_members.values():
