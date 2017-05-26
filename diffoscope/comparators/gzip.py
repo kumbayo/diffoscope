@@ -40,9 +40,6 @@ class GzipContainer(Archive):
     def close_archive(self):
         pass
 
-    def get_members(self):
-        return collections.OrderedDict({'gzip-content': self.get_member(self.get_member_names()[0])})
-
     def get_member_names(self):
         return [self.get_compressed_content_name('.gz')]
 

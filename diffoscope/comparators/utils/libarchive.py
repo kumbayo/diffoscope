@@ -173,10 +173,6 @@ class LibarchiveContainer(Archive):
         self.ensure_unpacked()
         return self._members.keys()
 
-    def extract(self, member_name, dest_dir):
-        self.ensure_unpacked()
-        return self._members[member_name]
-
     def get_member(self, member_name):
         with libarchive.file_reader(self.source.path) as archive:
             for entry in archive:
@@ -184,10 +180,16 @@ class LibarchiveContainer(Archive):
                     return self.get_subclass(entry)
         raise KeyError('%s not found in archive', member_name)
 
-    def get_all_members(self):
+    def get_filtered_members(self):
         with libarchive.file_reader(self.source.path) as archive:
             for entry in archive:
+                if any_excluded(entry.pathname):
+                    continue
                 yield entry.pathname, self.get_subclass(entry)
+
+    def extract(self, member_name, dest_dir):
+        self.ensure_unpacked()
+        return self._members[member_name]
 
     def get_subclass(self, entry):
         if entry.isdir:

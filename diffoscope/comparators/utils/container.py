@@ -58,12 +58,32 @@ class Container(object, metaclass=abc.ABCMeta):
     def source(self):
         return self._source
 
-    def get_members(self):
+    @abc.abstractmethod
+    def get_member_names(self):
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_member(self, member_name):
+        raise NotImplementedError()
+
+    def get_filtered_members(self):
+        # If your get_member implementation is O(n) then this will be O(n^2)
+        # cost. In such cases it is HIGHLY RECOMMENDED to override this as well
+        for name in filter_excludes(self.get_member_names()):
+            yield name, self.get_member(name)
+
+    def get_adjusted_members(self):
         """
-        Returns a dictionary. The key is what is used to match when comparing
-        containers.
+        Returns an iterable of pairs. The key is what is used to match when
+        comparing containers. This may be used to e.g. strip off version
+        numbers, hashes, etc, efficiently for known file formats, so that we
+        don't need to use the expensive tlsh "fuzzy-hashing" logic.
+
+        Note that containers with 1 element are already force-compared against
+        other containers with 1 element, so you don't need to override this
+        method for those cases.
         """
-        return OrderedDict(self.get_all_members())
+        return self.get_filtered_members()
 
     def lookup_file(self, *names):
         """
@@ -89,31 +109,13 @@ class Container(object, metaclass=abc.ABCMeta):
 
         return container.lookup_file(*remainings)
 
-    @abc.abstractmethod
-    def get_member_names(self):
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def get_member(self, member_name):
-        raise NotImplementedError()
-
-    def get_filtered_member_names(self):
-        return filter_excludes(self.get_member_names())
-
     def get_filtered_members_sizes(self):
-        for name in self.get_filtered_member_names():
-            member = self.get_member(name)
+        for name, member in self.get_adjusted_members():
             if member.is_directory():
                 size = 4096 # default "size" of a directory
             else:
                 size = path_apparent_size(member.path)
             yield name, (member, size)
-
-    def get_all_members(self):
-        # If your get_member implementation is O(n) then this will be O(n^2)
-        # cost. In such cases it is HIGHLY RECOMMENDED to override this as well
-        for name in self.get_filtered_member_names():
-            yield name, self.get_member(name)
 
     def comparisons(self, other):
         my_members = OrderedDict(self.get_filtered_members_sizes())
@@ -123,6 +125,13 @@ class Container(object, metaclass=abc.ABCMeta):
         # TODO: progress could be a bit more accurate here, give more weight to fuzzy-hashed files
 
         with Progress(total_size) as p:
+            if len(my_members) == 1 and len(other_members) == 1:
+                _, (my_member, my_size) = my_members.popitem()
+                _, (other_member, other_size) = other_members.popitem()
+                p.begin_step(my_size + other_size, msg=my_member.progress_name)
+                yield my_member, other_member, NO_COMMENT
+                return
+
             # keep it sorted like my members
             while my_members:
                 my_member_name, (my_member, my_size) = my_members.popitem(last=False)

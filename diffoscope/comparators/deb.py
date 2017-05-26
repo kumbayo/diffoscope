@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 # given container
 def get_build_id_map(container):
     d = {}
-    for member_name, member in container.get_members().items():
+    for member_name, member in container.get_adjusted_members():
         # Let's assume the name will end with .deb to avoid looking at
         # too many irrelevant files
         if not member_name.endswith('.deb'):
@@ -59,7 +59,7 @@ class DebContainer(LibarchiveContainer):
 
     @property
     def data_tar(self):
-        for name, member in self.get_members().items():
+        for name, member in self.get_adjusted_members():
             if DebContainer.RE_DATA_TAR.match(name):
                 specialize(member)
                 if name.endswith('.tar'):
@@ -69,7 +69,7 @@ class DebContainer(LibarchiveContainer):
 
     @property
     def control_tar(self):
-        for name, member in self.get_members().items():
+        for name, member in self.get_adjusted_members():
             if DebContainer.RE_CONTROL_TAR.match(name):
                 specialize(member)
                 if name.endswith('.tar'):
