@@ -187,12 +187,13 @@ def run_diff(fifo1, fifo2, end_nl_q1, end_nl_q2):
     return parser.diff
 
 class FIFOFeeder(threading.Thread):
-    def __init__(self, feeder, fifo_path, end_nl_q=None, *, daemon=True):
+    def __init__(self, feeder, fifo_path, end_nl_q=None, *, daemon=True, early_eval=False):
         os.mkfifo(fifo_path)
         super().__init__(daemon=daemon)
         self.feeder = feeder
         self.fifo_path = fifo_path
         self.end_nl_q = Queue() if end_nl_q is None else end_nl_q
+        self.early_eval = early_eval
         self._exception = None
         self._want_join = threading.Event()
 
@@ -222,9 +223,24 @@ class FIFOFeeder(threading.Thread):
             # Now clear the fd's nonblocking flag to let writes block normally.
             fcntl.fcntl(fifo_fd, fcntl.F_SETFL, 0)
             with open(fifo_fd, 'wb') as fifo:
+                # If early-eval is requested, run the feeder and store its output
+                # in a temporary file, *before* writing to the "real" fifo. This is
+                # necessary to force command-based diffs to run in parallel, see
+                # Debian #863636
+                feeder = self.feeder
+                if self.early_eval:
+                    temp_path = self.fifo_path + ".contents"
+                    with open(temp_path, 'wb') as temp:
+                        end_nl = feeder(temp)
+                    def feeder(fifo):
+                        with open(temp_path, 'rb') as f:
+                            for buf in iter(lambda: f.read(32768), b''):
+                                fifo.write(buf)
+                        return end_nl
+
                 # The queue works around a unified diff limitation: if there's
                 # no newlines in both don't make it a difference
-                end_nl = self.feeder(fifo)
+                end_nl = feeder(fifo)
                 self.end_nl_q.put(end_nl)
         except Exception as error:
             self._exception = error
@@ -241,7 +257,7 @@ def diff(feeder1, feeder2):
     fifo1_path = os.path.join(tmpdir, 'fifo1')
     fifo2_path = os.path.join(tmpdir, 'fifo2')
     with FIFOFeeder(feeder1, fifo1_path) as fifo1, \
-         FIFOFeeder(feeder2, fifo2_path) as fifo2:
+         FIFOFeeder(feeder2, fifo2_path, early_eval=True) as fifo2:
         return run_diff(fifo1_path, fifo2_path, fifo1.end_nl_q, fifo2.end_nl_q)
 
 def reverse_unified_diff(diff):
