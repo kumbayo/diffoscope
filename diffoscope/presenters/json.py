@@ -37,7 +37,7 @@ class JSONPresenter(Presenter):
     def start(self, difference):
         super().start(difference)
 
-        self.stack[0][JSON_FORMAT_MAGIC] = DIFFOSCOPE_JSON_FORMAT_VERSION
+        self.stack[0][JSON_FORMAT_MAGIC] = JSON_FORMAT_MAGIC
         self.stack[0].move_to_end(JSON_FORMAT_MAGIC, last=False)
         self.print_func(json.dumps(self.stack[0], indent=2))
 
