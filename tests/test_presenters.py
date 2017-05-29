@@ -26,7 +26,6 @@ from diffoscope.main import main
 from .utils.data import cwd_data, get_data
 
 re_html = re.compile(r'.*<body(?P<body>.*)<div class="footer">', re.MULTILINE | re.DOTALL)
-DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
 
 def run(capsys, *args):

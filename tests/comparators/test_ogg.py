@@ -45,8 +45,6 @@ def differences(ogg1, ogg2):
 
 @skip_unless_tools_exist('oggDump')
 def test_diff(differences):
-    with open('tests/data/ogg_expected_diff', 'w') as f:
-        f.write(differences[0].unified_diff)
     expected_diff = get_data('ogg_expected_diff')
     assert differences[0].unified_diff == expected_diff
 
