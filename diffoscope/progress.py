@@ -149,12 +149,17 @@ class Progress(object):
                 # cost of what we expect will have been done, once the current in-progress
                 # step plus all of its children, have completed
                 expected_all_done = all_done + (cur_child_total - cur_child_done)
+                assert own_done # non-zero
                 return all_done, int(float(self.total) / own_done * expected_all_done)
             else:
                 pass # nothing in progress
         else:
             # nothing in progress
             assert not cur_child_estimate
+
+        if not own_done:
+            assert not children_done
+            return 0, self.total
 
         # weigh self.total by (all_done/own_done)
         return all_done, int(float(self.total) / own_done * all_done)
