@@ -30,7 +30,7 @@ class JSONReaderV1(object):
 
     def load(self, fp, fn):
         raw = json.load(codecs.getreader("utf-8")(fp))
-        if JSON_FORMAT_MAGIC not in raw:
+        if JSON_FORMAT_MAGIC not in raw or raw[JSON_FORMAT_MAGIC] != 1:
             raise UnrecognizedFormatError("magic not found in json: %s" % JSON_FORMAT_MAGIC)
         return self.load_rec(raw)
 
