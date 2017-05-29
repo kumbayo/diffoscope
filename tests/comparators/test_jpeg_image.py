@@ -24,8 +24,8 @@ from diffoscope.config import Config
 from diffoscope.comparators.image import JPEGImageFile
 from diffoscope.comparators.missing_file import MissingFile
 
-from utils.data import load_fixture, get_data
-from utils.tools import skip_unless_tools_exist, skip_unless_tool_is_at_least
+from ..utils.data import load_fixture, get_data
+from ..utils.tools import skip_unless_tools_exist, skip_unless_tool_is_at_least
 
 
 image1 = load_fixture('test1.jpg')

@@ -23,8 +23,8 @@ from diffoscope.config import Config
 from diffoscope.comparators.missing_file import MissingFile
 from diffoscope.comparators.fsimage import FsImageFile
 
-from utils.data import load_fixture, get_data
-from utils.tools import skip_unless_tools_exist, skip_unless_module_exists
+from ..utils.data import load_fixture, get_data
+from ..utils.tools import skip_unless_tools_exist, skip_unless_module_exists
 
 img1 = load_fixture('test1.ext4')
 img2 = load_fixture('test2.ext4')

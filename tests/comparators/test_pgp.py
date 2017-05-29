@@ -21,9 +21,9 @@ import pytest
 
 from diffoscope.comparators.pgp import PgpFile
 
-from utils.data import load_fixture, get_data
-from utils.tools import skip_unless_tools_exist
-from utils.nonexisting import assert_non_existing
+from ..utils.data import load_fixture, get_data
+from ..utils.tools import skip_unless_tools_exist
+from ..utils.nonexisting import assert_non_existing
 
 pgp1 = load_fixture('test1.pgp')
 pgp2 = load_fixture('test2.pgp')

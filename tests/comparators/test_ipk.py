@@ -23,7 +23,7 @@ from diffoscope.config import Config
 from diffoscope.comparators.ipk import IpkFile
 from diffoscope.comparators.missing_file import MissingFile
 
-from utils.data import load_fixture, get_data
+from ..utils.data import load_fixture, get_data
 
 
 ipk1 = load_fixture('base-files_157-r45695_ar71xx.ipk')

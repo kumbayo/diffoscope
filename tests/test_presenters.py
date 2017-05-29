@@ -23,47 +23,29 @@ import pytest
 
 from diffoscope.main import main
 
+from .utils.data import cwd_data, get_data
+
 re_html = re.compile(r'.*<body(?P<body>.*)<div class="footer">', re.MULTILINE | re.DOTALL)
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
 
 def run(capsys, *args):
-    with pytest.raises(SystemExit) as exc:
-        prev = os.getcwd()
-        os.chdir(DATA_DIR)
-
-        try:
-            main(args + ('test1.tar', 'test2.tar'))
-        finally:
-            os.chdir(prev)
-
+    with pytest.raises(SystemExit) as exc, cwd_data():
+        main(args + ('test1.tar', 'test2.tar'))
     out, err = capsys.readouterr()
 
     assert err == ''
     assert exc.value.code == 1
-
     return out
 
 def run_images(capsys, *args):
-    with pytest.raises(SystemExit) as exc:
-        prev = os.getcwd()
-        os.chdir(DATA_DIR)
-
-        try:
-            main(args + ('test1.png', 'test2.png'))
-        finally:
-            os.chdir(prev)
-
+    with pytest.raises(SystemExit) as exc, cwd_data():
+        main(args + ('test1.png', 'test2.png'))
     out, err = capsys.readouterr()
 
     assert err == ''
     assert exc.value.code == 1
-
     return out
-
-def data(filename):
-    with open(os.path.join(DATA_DIR, filename), encoding='utf-8') as f:
-        return f.read()
 
 def extract_body(val):
     """
@@ -81,12 +63,12 @@ def extract_body(val):
 def test_text_option_is_default(capsys):
     out = run(capsys)
 
-    assert out == data('output.txt')
+    assert out == get_data('output.txt')
 
 def test_text_option_color(capsys):
     out = run(capsys, '--text-color=always')
 
-    assert out == data('output.colored.txt')
+    assert out == get_data('output.colored.txt')
 
 def test_text_option_with_file(tmpdir, capsys):
     report_path = str(tmpdir.join('report.txt'))
@@ -96,32 +78,32 @@ def test_text_option_with_file(tmpdir, capsys):
     assert out == ''
 
     with open(report_path, 'r', encoding='utf-8') as f:
-        assert f.read() == data('output.txt')
+        assert f.read() == get_data('output.txt')
 
 def test_text_option_with_stdiout(capsys):
     out = run(capsys, '--text', '-')
 
-    assert out == data('output.txt')
+    assert out == get_data('output.txt')
 
 def test_markdown(capsys):
     out = run(capsys, '--markdown', '-')
 
-    assert out == data('output.md')
+    assert out == get_data('output.md')
 
 def test_restructuredtext(capsys):
     out = run(capsys, '--restructured-text', '-')
 
-    assert out == data('output.rst')
+    assert out == get_data('output.rst')
 
 def test_json(capsys):
     out = run(capsys, '--json', '-')
 
-    assert out == data('output.json')
+    assert out == get_data('output.json')
 
 def test_no_report_option(capsys):
     out = run(capsys)
 
-    assert out == data('output.txt')
+    assert out == get_data('output.txt')
 
 def test_html_option_with_file(tmpdir, capsys):
     report_path = str(tmpdir.join('report.html'))
@@ -130,7 +112,7 @@ def test_html_option_with_file(tmpdir, capsys):
 
     assert out == ''
     with open(report_path, 'r', encoding='utf-8') as f:
-        assert extract_body(f.read()) == extract_body(data('output.html'))
+        assert extract_body(f.read()) == extract_body(get_data('output.html'))
 
 def test_html_visuals(tmpdir, capsys):
     report_path = str(tmpdir.join('report.html'))
@@ -150,9 +132,9 @@ def test_htmldir_option(tmpdir, capsys):
     assert out == ''
     assert os.path.isdir(html_dir)
     with open(os.path.join(html_dir, 'index.html'), 'r', encoding='utf-8') as f:
-        assert extract_body(f.read()) == extract_body(data('index.html'))
+        assert extract_body(f.read()) == extract_body(get_data('index.html'))
 
 def test_html_option_with_stdout(capsys):
     out = run(capsys, '--html', '-')
 
-    assert extract_body(out) == extract_body(data('output.html'))
+    assert extract_body(out) == extract_body(get_data('output.html'))

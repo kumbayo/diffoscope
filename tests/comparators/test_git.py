@@ -21,7 +21,7 @@ import pytest
 
 from diffoscope.comparators.git import GitIndexFile
 
-from utils.data import get_data, load_fixture
+from ..utils.data import get_data, load_fixture
 
 
 git1 = load_fixture('test1.git-index')

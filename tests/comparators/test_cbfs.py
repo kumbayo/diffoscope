@@ -25,9 +25,9 @@ from diffoscope.comparators.cbfs import CbfsFile
 from diffoscope.comparators.binary import FilesystemFile
 from diffoscope.comparators.utils.specialize import specialize
 
-from utils.data import data, get_data
-from utils.tools import skip_unless_tools_exist
-from utils.nonexisting import assert_non_existing
+from ..utils.data import data, get_data
+from ..utils.tools import skip_unless_tools_exist
+from ..utils.nonexisting import assert_non_existing
 
 
 TEST_FILE1_PATH = data('text_ascii1')

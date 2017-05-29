@@ -23,8 +23,8 @@ from diffoscope.config import Config
 from diffoscope.comparators.missing_file import MissingFile
 from diffoscope.comparators.iso9660 import Iso9660File
 
-from utils.data import load_fixture, get_data
-from utils.tools import skip_unless_tools_exist
+from ..utils.data import load_fixture, get_data
+from ..utils.tools import skip_unless_tools_exist
 
 
 iso1 = load_fixture('test1.iso')

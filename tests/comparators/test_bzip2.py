@@ -24,9 +24,9 @@ from diffoscope.comparators.bzip2 import Bzip2File
 from diffoscope.comparators.binary import FilesystemFile
 from diffoscope.comparators.utils.specialize import specialize
 
-from utils.data import load_fixture, get_data
-from utils.tools import skip_unless_tools_exist
-from utils.nonexisting import assert_non_existing
+from ..utils.data import load_fixture, get_data
+from ..utils.tools import skip_unless_tools_exist
+from ..utils.nonexisting import assert_non_existing
 
 
 bzip1 = load_fixture('test1.bz2')

@@ -40,7 +40,6 @@ def init_fixture(filename):
 def data(filename):
     return os.path.join(
         os.path.dirname(os.path.dirname(__file__)),
-        '..',
         'data',
         filename,
     )

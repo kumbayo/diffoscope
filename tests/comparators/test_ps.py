@@ -21,9 +21,9 @@ import pytest
 
 from diffoscope.comparators.ps import PsFile
 
-from utils.data import load_fixture, get_data
-from utils.tools import skip_unless_tools_exist
-from utils.nonexisting import assert_non_existing
+from ..utils.data import load_fixture, get_data
+from ..utils.tools import skip_unless_tools_exist
+from ..utils.nonexisting import assert_non_existing
 
 
 ps1 = load_fixture('test1.ps')

@@ -25,7 +25,7 @@ from diffoscope.main import main
 from diffoscope.comparators.utils.compare import compare_root_paths
 from diffoscope.readers import load_diff_from_path
 
-from comparators.utils.data import cwd_data, get_data
+from .utils.data import cwd_data, get_data
 
 
 def run_read_write(capsys, diff, *args):

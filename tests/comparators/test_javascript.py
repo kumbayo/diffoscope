@@ -23,8 +23,8 @@ from diffoscope.config import Config
 from diffoscope.comparators.javascript import JavaScriptFile
 from diffoscope.comparators.missing_file import MissingFile
 
-from utils.data import load_fixture, get_data
-from utils.tools import skip_unless_tools_exist
+from ..utils.data import load_fixture, get_data
+from ..utils.tools import skip_unless_tools_exist
 
 
 javascript1 = load_fixture('test1.js')

@@ -24,10 +24,10 @@ from diffoscope.config import Config
 from diffoscope.comparators.dex import DexFile
 from diffoscope.comparators.missing_file import MissingFile
 
-from utils.data import load_fixture, get_data
-from utils.tools import skip_unless_tools_exist, skip_unless_tool_is_at_least
+from ..utils.data import load_fixture, get_data
+from ..utils.tools import skip_unless_tools_exist, skip_unless_tool_is_at_least
 
-from test_java import javap_version
+from .test_java import javap_version
 
 
 dex1 = load_fixture('test1.dex')

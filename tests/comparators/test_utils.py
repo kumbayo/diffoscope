@@ -24,8 +24,8 @@ from diffoscope.config import Config
 from diffoscope.difference import Difference
 from diffoscope.comparators.utils.command import Command
 
-from utils.data import data, load_fixture
-from utils.tools import tools_missing, skip_unless_tools_exist, \
+from ..utils.data import data, load_fixture
+from ..utils.tools import tools_missing, skip_unless_tools_exist, \
     skip_unless_module_exists
 
 

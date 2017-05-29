@@ -23,8 +23,8 @@ from diffoscope.config import Config
 from diffoscope.comparators.fonts import TtfFile
 from diffoscope.comparators.missing_file import MissingFile
 
-from utils.data import load_fixture, get_data
-from utils.tools import skip_unless_tools_exist
+from ..utils.data import load_fixture, get_data
+from ..utils.tools import skip_unless_tools_exist
 
 
 ttf1 = load_fixture('Samyak-Malayalam1.ttf')

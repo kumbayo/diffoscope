@@ -19,7 +19,7 @@
 
 import pytest
 
-from utils.data import load_fixture
+from ..utils.data import load_fixture
 
 
 archive1 = load_fixture('archive1.tar')

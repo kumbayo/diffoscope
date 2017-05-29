@@ -23,8 +23,8 @@ from diffoscope.config import Config
 from diffoscope.comparators.mono import MonoExeFile
 from diffoscope.comparators.missing_file import MissingFile
 
-from utils.data import load_fixture, get_data
-from utils.tools import skip_unless_tools_exist
+from ..utils.data import load_fixture, get_data
+from ..utils.tools import skip_unless_tools_exist
 
 
 # these were generated with:

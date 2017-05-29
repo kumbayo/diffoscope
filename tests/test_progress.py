@@ -25,7 +25,7 @@ import pytest
 from diffoscope.main import main
 from diffoscope.progress import ProgressManager, StatusFD
 
-from comparators.utils.tools import skip_unless_module_exists
+from .utils.tools import skip_unless_module_exists
 
 TEST_TAR1_PATH = os.path.join(os.path.dirname(__file__), 'data', 'test1.tar')
 TEST_TAR2_PATH = os.path.join(os.path.dirname(__file__), 'data', 'test2.tar')

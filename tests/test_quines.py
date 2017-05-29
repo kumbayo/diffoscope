@@ -23,7 +23,7 @@ from diffoscope.comparators.deb import DebFile
 from diffoscope.comparators.zip import ZipFile
 from diffoscope.comparators.gzip import GzipFile
 
-from comparators.utils.data import load_fixture, get_data
+from .utils.data import load_fixture, get_data
 
 quine1 = load_fixture('quine.gz')
 quine2 = load_fixture('quine.zip')

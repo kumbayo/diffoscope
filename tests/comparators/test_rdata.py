@@ -21,10 +21,10 @@ import pytest
 
 from diffoscope.comparators.gzip import GzipFile
 
-from utils import diff_ignore_line_numbers
-from utils.data import load_fixture, get_data
-from utils.tools import skip_unless_tools_exist
-from utils.nonexisting import assert_non_existing
+from ..utils import diff_ignore_line_numbers
+from ..utils.data import load_fixture, get_data
+from ..utils.tools import skip_unless_tools_exist
+from ..utils.nonexisting import assert_non_existing
 
 
 file1 = load_fixture('test1.rdx')
