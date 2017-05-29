@@ -18,14 +18,18 @@
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
 import json
+from collections import OrderedDict
 
 from .utils import Presenter
+
+JSON_FORMAT_VERSION = 1
+JSON_FORMAT_MAGIC = "diffoscope-json-version"
 
 
 class JSONPresenter(Presenter):
     def __init__(self, print_func):
-        self.root = []
-        self.current = self.root
+        self.stack = []
+        self.current = self.stack
         self.print_func = print_func
 
         super().__init__()
@@ -33,15 +37,18 @@ class JSONPresenter(Presenter):
     def start(self, difference):
         super().start(difference)
 
-        self.print_func(json.dumps(self.root[0], indent=2, sort_keys=True))
+        self.stack[0][JSON_FORMAT_MAGIC] = DIFFOSCOPE_JSON_FORMAT_VERSION
+        self.stack[0].move_to_end(JSON_FORMAT_MAGIC, last=False)
+        self.print_func(json.dumps(self.stack[0], indent=2))
 
     def visit_difference(self, difference):
-        self.current.append({
-            'source1': difference.source1,
-            'source2': difference.source2,
-            'comments': [x for x in difference.comments],
-            'differences': [],
-            'unified_diff': difference.unified_diff,
-        })
+        child_differences = []
+        self.current.append(OrderedDict([
+            ('source1', difference.source1),
+            ('source2', difference.source2),
+            ('comments', [x for x in difference.comments]),
+            ('differences', child_differences),
+            ('unified_diff', difference.unified_diff),
+        ]))
 
-        self.current = self.current[-1]['differences']
+        self.current = child_differences
