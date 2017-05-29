@@ -34,6 +34,7 @@ class Config(object):
     fuzzy_threshold = 60
     enforce_constraints = True
     excludes = ()
+    exclude_commands = ()
     compute_visual_diffs = False
     max_container_depth = 50
 

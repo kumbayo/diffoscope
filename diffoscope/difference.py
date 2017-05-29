@@ -23,6 +23,7 @@ import logging
 import subprocess
 
 from .exc import RequiredToolNotFound
+from .excludes import command_excluded
 from .diff import diff, reverse_unified_diff
 from .config import Config
 from .profiling import profile
@@ -131,21 +132,28 @@ class Difference(object):
         if 'command_args' in kwargs:
             command_args = kwargs['command_args']
             del kwargs['command_args']
-        command1 = None
-        if path1 == '/dev/null':
-            feeder1 = empty_file_feeder()
-        else:
-            command1 = klass(path1, *command_args)
-            feeder1 = make_feeder_from_command(command1)
-        command2 = None
-        if path2 == '/dev/null':
-            feeder2 = empty_file_feeder()
-        else:
-            command2 = klass(path2, *command_args)
-            feeder2 = make_feeder_from_command(command2)
+
+        def command_and_feeder(path):
+            command = None
+            if path == '/dev/null':
+                feeder = empty_file_feeder()
+            else:
+                command = klass(path, *command_args)
+                feeder = make_feeder_from_command(command)
+                if command_excluded(command.shell_cmdline()):
+                    return None, None
+                command.start()
+            return feeder, command
+
+        feeder1, command1 = command_and_feeder(path1)
+        feeder2, command2 = command_and_feeder(path2)
+        if not feeder1 or not feeder2:
+            return None
+
         if 'source' not in kwargs:
             source_cmd = command1 or command2
-            kwargs['source'] = ' '.join(map(lambda x: '{}' if x == source_cmd.path else x, source_cmd.cmdline()))
+            kwargs['source'] = source_cmd.shell_cmdline()
+
         difference = Difference.from_feeder(feeder1, feeder2, path1, path2, *args, **kwargs)
         if not difference:
             return None

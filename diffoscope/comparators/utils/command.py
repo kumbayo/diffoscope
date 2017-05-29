@@ -30,6 +30,8 @@ logger = logging.getLogger(__name__)
 class Command(object, metaclass=abc.ABCMeta):
     def __init__(self, path):
         self._path = path
+
+    def start(self):
         logger.debug("Executing %s", ' '.join([shlex.quote(x) for x in self.cmdline()]))
         self._process = subprocess.Popen(self.cmdline(),
                                          shell=False, close_fds=True,
@@ -57,6 +59,9 @@ class Command(object, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def cmdline(self):
         raise NotImplementedError()
+
+    def shell_cmdline(self):
+        return ' '.join(map(lambda x: '{}' if x == self.path else shlex.quote(x), self.cmdline()))
 
     def env(self):
         return None # inherit parent environment by default

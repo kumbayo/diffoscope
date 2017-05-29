@@ -159,9 +159,16 @@ def create_parser():
     group3 = parser.add_argument_group('diff calculation')
     group3.add_argument('--new-file', action='store_true',
                         help='Treat absent files as empty')
-    group3.add_argument('--exclude', dest='excludes', nargs='?',
-                        metavar='PATTERN', action='append', default=[],
+    group3.add_argument('--exclude', dest='excludes',
+                        metavar='GLOB_PATTERN', action='append', default=[],
                         help='Exclude files that match %(metavar)s')
+    group3.add_argument('--exclude-command', dest='exclude_commands',
+                        metavar='REGEX_PATTERN', action='append', default=[],
+                        help='Exclude commands that match %(metavar)s. For '
+                        "example, '^readelf.*\s--debug-dump=info' takes by far "
+                        'the longest time, and differences here are probably '
+                        'only secondary differences caused by something that '
+                        'is already represented elsewhere in the diff.')
     group3.add_argument('--fuzzy-threshold', type=int,
                         help='Threshold for fuzzy-matching '
                         '(0 to disable, %(default)s is default, 400 is high fuzziness)',
@@ -291,6 +298,7 @@ def run_diffoscope(parsed_args):
     Config().fuzzy_threshold = parsed_args.fuzzy_threshold
     Config().new_file = parsed_args.new_file
     Config().excludes = parsed_args.excludes
+    Config().exclude_commands = parsed_args.exclude_commands
     Config().compute_visual_diffs = PresenterManager().compute_visual_diffs()
     set_path()
     set_locale()
