@@ -52,7 +52,7 @@ class VisualDifference(object):
 
 
 class Difference(object):
-    def __init__(self, unified_diff, path1, path2, source=None, comment=None, has_internal_linenos=False):
+    def __init__(self, unified_diff, path1, path2, source=None, comment=None, has_internal_linenos=False, details=None):
         self._comments = []
         if comment:
             if type(comment) is list:
@@ -78,11 +78,20 @@ class Difference(object):
             raise TypeError("path2/source[1] is not a string")
         # Whether the unified_diff already contains line numbers inside itself
         self._has_internal_linenos = has_internal_linenos
-        self._details = []
+        self._details = details or []
         self._visuals = []
 
     def __repr__(self):
         return '<Difference %s -- %s %s>' % (self._source1, self._source2, self._details)
+
+    def equals(self, other):
+        return self == other or (
+            self.unified_diff == other.unified_diff and
+            self.source1 == other.source1 and
+            self.source2 == other.source2 and
+            self.comments == other.comments and
+            self.has_internal_linenos == other.has_internal_linenos and
+            all(x.equals(y) for x, y in zip(self.details, other.details)))
 
     @staticmethod
     def from_feeder(feeder1, feeder2, path1, path2, source=None, comment=None, **kwargs):

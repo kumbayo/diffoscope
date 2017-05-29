@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
+import contextlib
 import os
 import re
 import pytest
@@ -48,6 +49,18 @@ def data(filename):
 def get_data(filename):
     with open(data(filename), encoding='utf-8') as f:
         return f.read()
+
+
+@contextlib.contextmanager
+def cwd_data():
+    """A context manager which changes the working directory to the given
+    path, and then changes it back to its previous value on exit.
+
+    """
+    prev_cwd = os.getcwd()
+    os.chdir(data(""))
+    yield
+    os.chdir(prev_cwd)
 
 
 def load_fixture(filename):

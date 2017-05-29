@@ -42,6 +42,7 @@ from .external_tools import EXTERNAL_TOOLS
 from .presenters.html import JQUERY_SYSTEM_LOCATIONS
 from .presenters.formats import PresenterManager
 from .comparators.utils.compare import compare_root_paths
+from .readers import load_diff, load_diff_from_path
 
 logger = logging.getLogger(__name__)
 
@@ -61,8 +62,12 @@ def create_parser():
     parser = argparse.ArgumentParser(
         description='Calculate differences between two files or directories',
         add_help=False)
-    parser.add_argument('path1', help='First file or directory to compare')
-    parser.add_argument('path2', help='Second file or directory to compare')
+    parser.add_argument('path1', nargs='?', help='First file or directory to '
+        'compare. If omitted, tries to read a diffoscope diff from stdin.')
+    parser.add_argument('path2', nargs='?', help='Second file or directory to '
+        'compare. If omitted, no comparison is done but instead we read a '
+        'diffoscope diff from path1 and will output this in the formats '
+        'specified by the rest of the command line.')
     parser.add_argument('--debug', action='store_true',
                         default=False, help='Display debug messages')
     parser.add_argument('--debugger', action='store_true',
@@ -289,16 +294,22 @@ def run_diffoscope(parsed_args):
     Config().compute_visual_diffs = PresenterManager().compute_visual_diffs()
     set_path()
     set_locale()
-    logger.debug('Starting comparison')
-    with Progress():
-        with profile('main', 'outputs'):
-            difference = compare_root_paths(
-                parsed_args.path1, parsed_args.path2)
-    ProgressManager().finish()
+    path1, path2 = parsed_args.path1, parsed_args.path2
+    if path2 is None:
+        if path1 is None or path1 == '-':
+            difference = load_diff(sys.stdin, "stdin")
+        else:
+            difference = load_diff_from_path(path1)
+    else:
+        logger.debug('Starting comparison')
+        with Progress():
+            with profile('main', 'outputs'):
+                difference = compare_root_paths(path1, path2)
+        ProgressManager().finish()
     # Generate an empty, dummy diff to write, saving the exit code first.
     has_differences = bool(difference is not None)
     if difference is None and parsed_args.output_empty:
-        difference = Difference(None, parsed_args.path1, parsed_args.path2)
+        difference = Difference(None, path1, path2)
     with profile('main', 'outputs'):
         PresenterManager().output(difference, parsed_args, has_differences)
     return 1 if has_differences else 0
