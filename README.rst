@@ -128,10 +128,10 @@ Once the tracker.debian.org entry appears, consider tweeting the release on
 Contributors
 ------------
 
-Lunar, Reiner Herrmann, Chris Lamb, Helmut Grohne, Holger Levsen,
-Mattia Rizzolo, Daniel Kahn Gillmor, Paul Gevers, Peter De Wachter,
-Yasushi SHOJI, Clemens Lang, Ed Maste, Joachim Breitner, Mike McQuaid.
-Baptiste Daroussin, Levente Polyak.
+Lunar, Reiner Herrmann, Chris Lamb, Mattia Rizzolo, Ximin Luo, Helmut Grohne,
+Holger Levsen, Daniel Kahn Gillmor, Paul Gevers, Peter De Wachter, Yasushi
+SHOJI, Clemens Lang, Ed Maste, Joachim Breitner, Mike McQuaid. Baptiste
+Daroussin, Levente Polyak.
 
 Contact
 -------
