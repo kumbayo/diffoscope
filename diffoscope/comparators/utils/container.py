@@ -109,7 +109,7 @@ class Container(object, metaclass=abc.ABCMeta):
 
         return container.lookup_file(*remainings)
 
-    def get_filtered_members_sizes(self):
+    def get_adjusted_members_sizes(self):
         for name, member in self.get_adjusted_members():
             if member.is_directory():
                 size = 4096 # default "size" of a directory
@@ -118,8 +118,8 @@ class Container(object, metaclass=abc.ABCMeta):
             yield name, (member, size)
 
     def comparisons(self, other):
-        my_members = OrderedDict(self.get_filtered_members_sizes())
-        other_members = OrderedDict(other.get_filtered_members_sizes())
+        my_members = OrderedDict(self.get_adjusted_members_sizes())
+        other_members = OrderedDict(other.get_adjusted_members_sizes())
         total_size = sum(x[1] for x in itertools.chain(my_members.values(), other_members.values()))
         # TODO: progress could be a bit more accurate here, give more weight to fuzzy-hashed files
         # TODO: merge DirectoryContainer.comparisons() into this

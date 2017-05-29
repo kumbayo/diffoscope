@@ -191,8 +191,8 @@ class DirectoryContainer(Container):
             return FilesystemFile(os.path.join(self.source.path, member_name), container=self)
 
     def comparisons(self, other):
-        my_members = OrderedDict(self.get_filtered_members_sizes())
-        other_members = OrderedDict(other.get_filtered_members_sizes())
+        my_members = OrderedDict(self.get_adjusted_members_sizes())
+        other_members = OrderedDict(other.get_adjusted_members_sizes())
         total_size = sum(x[1] for x in my_members.values()) + sum(x[1] for x in other_members.values())
 
         to_compare = set(my_members.keys()).intersection(other_members.keys())
