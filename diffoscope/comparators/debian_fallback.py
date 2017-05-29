@@ -25,8 +25,8 @@ from .text import TextFile
 class DotChangesFile(TextFile):
     RE_FILE_EXTENSION = re.compile(r'\.changes$')
 
-    def compare(self, other, **kwargs):
-        difference = super().compare(other, **kwargs)
+    def compare(self, other, *args, **kwargs):
+        difference = super().compare(other, *args, **kwargs)
         if not difference:
             return None
         difference.add_comment('Unable to find Python debian module. Falling back to text comparison.')
@@ -35,8 +35,8 @@ class DotChangesFile(TextFile):
 class DotDscFile(TextFile):
     RE_FILE_EXTENSION = re.compile(r'\.dsc$')
 
-    def compare(self, other, **kwargs):
-        difference = super().compare(other, **kwargs)
+    def compare(self, other, *args, **kwargs):
+        difference = super().compare(other, *args, **kwargs)
         if not difference:
             return None
         difference.add_comment('Unable to find Python debian module. Falling back to text comparison.')
@@ -45,8 +45,8 @@ class DotDscFile(TextFile):
 class DotBuildinfoFile(TextFile):
     RE_FILE_EXTENSION = re.compile(r'\.buildinfo$')
 
-    def compare(self, other, **kwargs):
-        difference = super().compare(other, **kwargs)
+    def compare(self, other, *args, **kwargs):
+        difference = super().compare(other, *args, **kwargs)
         if not difference:
             return None
         difference.add_comment('Unable to find Python debian module. Falling back to text comparison.')
