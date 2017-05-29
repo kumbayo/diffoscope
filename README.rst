@@ -42,6 +42,16 @@ To get all possible options, run::
 
     $ bin/diffoscope --help
 
+If you have enough RAM, you can improve performance by running::
+
+    $ TMPDIR=/run/shm bin/diffoscope very-big-input-0/ very-big-input-1/
+
+By default this allowed to use up half of RAM; for more add something like::
+
+    tmpfs   /run/shm    tmpfs   size=80%    0   0
+
+to your ``/etc/fstab``; see ``man mount`` for details.
+
 External dependencies
 ---------------------
 
