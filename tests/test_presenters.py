@@ -22,6 +22,7 @@ import re
 import pytest
 
 from diffoscope.main import main
+from diffoscope.presenters.utils import create_limited_print_func, PrintLimitReached
 
 from .utils.data import cwd_data, get_data
 
@@ -137,3 +138,16 @@ def test_html_option_with_stdout(capsys):
     out = run(capsys, '--html', '-')
 
     assert extract_body(out) == extract_body(get_data('output.html'))
+
+def test_limited_print():
+    fake = lambda x: None
+    with pytest.raises(PrintLimitReached):
+        p = create_limited_print_func(fake, 5)
+        p("123456")
+    with pytest.raises(PrintLimitReached):
+        p = create_limited_print_func(fake, 5)
+        p("123")
+        p("456")
+    p = create_limited_print_func(fake, 5)
+    p("123")
+    p("456", force=True)

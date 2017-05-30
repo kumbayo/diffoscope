@@ -82,16 +82,16 @@ def make_printer(path):
         output.close()
 
 def create_limited_print_func(print_func, max_page_size):
-    count = 0
+    count = [0]
 
-    def fn(val, force=False, count=count):
+    def fn(val, force=False):
         print_func(val)
 
         if force or max_page_size == 0:
             return
 
-        count += len(val)
-        if count >= max_page_size:
+        count[0] += len(val)
+        if count[0] >= max_page_size:
             raise PrintLimitReached()
 
     return fn
