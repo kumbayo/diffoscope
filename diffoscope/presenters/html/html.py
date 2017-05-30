@@ -452,7 +452,7 @@ def output_visual(print_func, visual, parents):
     sources = parents + [visual.source]
     print_func(u'<div class="difference">')
     print_func(u'<div class="diffheader">')
-    print_func(u'<div class="diffcontrol">[−]</div>')
+    print_func(u'<div class="diffcontrol">⊟</div>')
     print_func(u'<div><span class="source">%s</span>'
                % html.escape(visual.source))
     anchor = escape_anchor('/'.join(sources[1:]))
@@ -486,7 +486,7 @@ def output_difference(difference, print_func, css_url, directory, parents):
     print_func(u'<div class="difference">')
     try:
         print_func(u'<div class="diffheader">')
-        diffcontrol = ("diffcontrol", u'[−]') if difference.has_children() else ("diffcontrol-nochildren", u'[∘]')
+        diffcontrol = ("diffcontrol", u'⊟') if difference.has_children() else ("diffcontrol-nochildren", u'⊡')
         if difference.source1 == difference.source2:
             print_func(u'<div class="%s">%s</div>' % diffcontrol)
             print_func(u'<div><span class="source">%s</span>'

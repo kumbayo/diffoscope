@@ -126,7 +126,7 @@ HEADER = """<!DOCTYPE html>
       display: none; /* currently, only available in html-dir output where jquery is enabled */
     }
     .diffoscope .diffcontrol-double {
-      line-height: 200%%;
+      line-height: 250%%;
     }
     .diffoscope .colines {
       width: 3em;
@@ -182,10 +182,10 @@ $(function() {
     }
     if (orig.is(":visible")) {
         target.hide();
-        control.text("[+]");
+        control.text("⊞");
     } else {
         target.show();
-        control.text("[−]");
+        control.text("⊟");
     }
   });
   diffcontrols.attr('title','shift-click to show/hide all children too.');
