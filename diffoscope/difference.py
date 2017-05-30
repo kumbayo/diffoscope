@@ -51,6 +51,9 @@ class VisualDifference(object):
     def source(self):
         return self._source
 
+    def size(self):
+        return len(self.data_type) + len(self.content) + len(self.source)
+
 
 class Difference(object):
     def __init__(self, unified_diff, path1, path2, source=None, comment=None, has_internal_linenos=False, details=None):
@@ -81,9 +84,23 @@ class Difference(object):
         self._has_internal_linenos = has_internal_linenos
         self._details = details or []
         self._visuals = []
+        self._size_cache = None
 
     def __repr__(self):
         return '<Difference %s -- %s %s>' % (self._source1, self._source2, self._details)
+
+    def get_reverse(self):
+        logger.debug('reverse orig %s %s', self.source1, self.source2)
+        if self._visuals:
+            raise NotImplementedError("reversing VisualDifference is not yet implemented")
+        difference = Difference(
+            None if self.unified_diff is None else reverse_unified_diff(self.unified_diff),
+            self.source2,
+            self.source1,
+            comment = self.comments,
+            has_internal_linenos = self.has_internal_linenos,
+            details = [d.get_reverse() for d in self._details])
+        return difference
 
     def equals(self, other):
         return self == other or (
@@ -93,6 +110,16 @@ class Difference(object):
             self.comments == other.comments and
             self.has_internal_linenos == other.has_internal_linenos and
             all(x.equals(y) for x, y in zip(self.details, other.details)))
+
+    def size(self):
+        if self._size_cache is None:
+            self._size_cache = (len(self.unified_diff) +
+                len(self.source1) +
+                len(self.source2) +
+                sum(map(len, self.comments)) +
+                sum(d.size() for d in self._details) +
+                sum(v.size() for v in self._visuals))
+        return self._size_cache
 
     @staticmethod
     def from_feeder(feeder1, feeder2, path1, path2, source=None, comment=None, **kwargs):
@@ -176,6 +203,7 @@ class Difference(object):
     def add_comment(self, comment):
         for line in comment.splitlines():
             self._comments.append(line)
+        self._size_cache = None
 
     @property
     def source1(self):
@@ -205,21 +233,13 @@ class Difference(object):
         if len([d for d in differences if type(d) is not Difference]) > 0:
             raise TypeError("'differences' must contains Difference objects'")
         self._details.extend(differences)
+        self._size_cache = None
 
     def add_visuals(self, visuals):
         if any([type(v) is not VisualDifference for v in visuals]):
             raise TypeError("'visuals' must contain VisualDifference objects'")
         self._visuals.extend(visuals)
-
-    def get_reverse(self):
-        if self._unified_diff is None:
-            unified_diff = None
-        else:
-            unified_diff = reverse_unified_diff(self._unified_diff)
-        logger.debug('reverse orig %s %s', self._source1, self._source2)
-        difference = Difference(unified_diff, None, None, source=[self._source2, self._source1], comment=self._comments)
-        difference.add_details([d.get_reverse() for d in self._details])
-        return difference
+        self._size_cache = None
 
 def make_feeder_from_text_reader(in_file, filter=lambda text_buf: text_buf):
     def encoding_filter(text_buf):
