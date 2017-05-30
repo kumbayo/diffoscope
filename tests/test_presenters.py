@@ -112,7 +112,8 @@ def test_html_option_with_file(tmpdir, capsys):
 
     assert out == ''
     with open(report_path, 'r', encoding='utf-8') as f:
-        assert extract_body(f.read()) == extract_body(get_data('output.html'))
+        body = extract_body(f.read())
+        assert body.count('div class="difference"') == 4
 
 def test_html_visuals(tmpdir, capsys):
     report_path = str(tmpdir.join('report.html'))
@@ -132,12 +133,13 @@ def test_htmldir_option(tmpdir, capsys):
     assert out == ''
     assert os.path.isdir(html_dir)
     with open(os.path.join(html_dir, 'index.html'), 'r', encoding='utf-8') as f:
-        assert extract_body(f.read()) == extract_body(get_data('index.html'))
+        body = extract_body(f.read())
+        assert body.count('div class="difference"') == 4
 
 def test_html_option_with_stdout(capsys):
-    out = run(capsys, '--html', '-')
+    body = extract_body(run(capsys, '--html', '-'))
 
-    assert extract_body(out) == extract_body(get_data('output.html'))
+    assert body.count('div class="difference"') == 4
 
 def test_limited_print():
     fake = lambda x: None
