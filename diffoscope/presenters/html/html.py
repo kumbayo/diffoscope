@@ -486,12 +486,13 @@ def output_difference(difference, print_func, css_url, directory, parents):
     print_func(u'<div class="difference">')
     try:
         print_func(u'<div class="diffheader">')
+        diffcontrol = ("diffcontrol", u'[−]') if difference.has_children() else ("diffcontrol-nochildren", u'[∘]')
         if difference.source1 == difference.source2:
-            print_func(u'<div class="diffcontrol">[−]</div>')
+            print_func(u'<div class="%s">%s</div>' % diffcontrol)
             print_func(u'<div><span class="source">%s</span>'
                        % html.escape(difference.source1))
         else:
-            print_func(u'<div class="diffcontrol diffcontrol-double">[−]</div>')
+            print_func(u'<div class="%s diffcontrol-double">%s</div>' % diffcontrol)
             print_func(u'<div><span class="source">%s</span> vs.</div>'
                        % html.escape(difference.source1))
             print_func(u'<div><span class="source">%s</span>'

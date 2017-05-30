@@ -119,7 +119,7 @@ HEADER = """<!DOCTYPE html>
       background: #faa;
       cursor: pointer;
     }
-    .diffoscope .diffcontrol {
+    .diffoscope .diffcontrol, .diffoscope .diffcontrol-nochildren {
       float: left;
       margin-right: 0.3em;
       cursor: pointer;
@@ -190,6 +190,7 @@ $(function() {
   });
   diffcontrols.attr('title','shift-click to show/hide all children too.');
   diffcontrols.show();
+  $(".diffcontrol-nochildren").show();
 });
 </script>
 """

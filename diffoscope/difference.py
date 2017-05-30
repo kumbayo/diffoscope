@@ -121,6 +121,12 @@ class Difference(object):
                 sum(v.size() for v in self._visuals))
         return self._size_cache
 
+    def has_children(self):
+        """Whether there are children.
+
+        Useful for e.g. choosing whether to display [+]/[-] controls."""
+        return self._unified_diff is not None or self._details or self._visuals
+
     @staticmethod
     def from_feeder(feeder1, feeder2, path1, path2, source=None, comment=None, **kwargs):
         try:
