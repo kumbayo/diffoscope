@@ -56,6 +56,7 @@ EXTERNAL_TOOLS = {
     },
     'docx2txt': {
         'debian': 'docx2txt',
+        'arch': 'docx2txt',
     },
     'enjarify': {
         'debian': 'enjarify',
@@ -63,6 +64,7 @@ EXTERNAL_TOOLS = {
     },
     'fdtdump': {
         'debian': 'device-tree-compiler',
+        'arch': 'dtc',
     },
     'file': {
         'debian': 'file',
@@ -78,6 +80,7 @@ EXTERNAL_TOOLS = {
     },
     'gifbuild': {
         'debian': 'giflib-tools',
+        'arch': 'giflib',
     },
     'ghc': {
         'debian': 'ghc',
@@ -113,6 +116,7 @@ EXTERNAL_TOOLS = {
     },
     'js-beautify': {
         'debian': 'jsbeautifier',
+        'arch': 'python-jsbeautifier',
     },
     'llvm-bcanalyzer': {
         'debian': 'llvm',
@@ -154,6 +158,7 @@ EXTERNAL_TOOLS = {
     },
     'odt2txt': {
         'debian': 'odt2txt',
+        'arch': 'odt2txt',
     },
     'oggDump': {
         'debian': 'oggvideotools',
@@ -197,6 +202,7 @@ EXTERNAL_TOOLS = {
     },
     'Rscript': {
         'debian': 'r-base-core',
+        'arch': 'r',
     },
     'showttf': {
         'debian': 'fontforge-extras',
@@ -223,6 +229,7 @@ EXTERNAL_TOOLS = {
     },
     'tcpdump': {
         'debian': 'tcpdump',
+        'arch': 'tcpdump',
     },
     'unsquashfs': {
         'debian': 'squashfs-tools',
