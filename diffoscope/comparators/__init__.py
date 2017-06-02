@@ -52,6 +52,7 @@ class ComparatorManager(object):
         ('llvm.LlvmBitCodeFile',),
         ('sqlite.Sqlite3Database',),
         ('fonts.TtfFile',),
+        ('fontconfig.FontconfigCacheFile',),
         ('gettext.MoFile',),
         ('ipk.IpkFile',),
         ('rust.RustObjectFile',),

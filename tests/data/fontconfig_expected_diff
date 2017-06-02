@@ -1,0 +1,18 @@
+@@ -1,12 +1,12 @@
+ 
+ struct FcCache {
+     unsigned int    magic = 0xFC02FC04;  /* FC_CACHE_MAGIC_MMAP or FC_CACHE_ALLOC */
+     int             version = 4;  /* FC_CACHE_VERSION_NUMBER */
+-    intptr_t        size = 14208;  /* size of file */
+-    intptr_t        dir = 0x56;  /* offset to dir name ("/usr/share/fonts/type1/texlive-fonts-recommended") */
+-    intptr_t        dirs = 0x00000070;  /* offset to subdirs */
++    intptr_t        size = 15384;  /* size of file */
++    intptr_t        dir = 0x56;  /* offset to dir name ("/usr/share/fonts/truetype/dejavu") */
++    intptr_t        dirs = 0x00000060;  /* offset to subdirs */
+     int             dirs_count = 0;  /* number of subdir strings */
+-    intptr_t        set = 0x00000070;  /* offset to font set */
+-    int             checksum = 996;  /* checksum of directory state */
++    intptr_t        set = 0x00000060;  /* offset to font set */
++    int             checksum = 1496417874;  /* checksum of directory state */
+     int64_t         checksum_nano = 7018986666877744431;  /* checksum of directory state */
+ };
