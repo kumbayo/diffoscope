@@ -24,5 +24,6 @@ def load_diff_from_path(path):
     with open(path, 'rb') as fp:
         return load_diff(fp, path)
 
+
 def load_diff(fp, path):
-    return JSONReaderV1().load(fp, "stdin")
+    return JSONReaderV1().load(fp, 'stdin')

@@ -23,6 +23,7 @@ class PyTest(TestCommand):
         errno = pytest.main(self.pytest_args)
         sys.exit(errno)
 
+
 setup(
     name='diffoscope',
     version=diffoscope.VERSION,

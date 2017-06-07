@@ -22,7 +22,6 @@ import io
 import os
 import errno
 import fcntl
-import hashlib
 import logging
 import threading
 import subprocess
@@ -147,13 +146,17 @@ class DiffParser(object):
         if self._remaining_hunk_lines == 0 or line[0] != self._direction:
             removed = self._block_len - Config().max_diff_block_lines_saved
             if removed:
-                self._diff.write('%s[ %d lines removed ]\n' % (self._direction, removed))
+                self._diff.write('%s[ %d lines removed ]\n' % (
+                    self._direction,
+                    removed,
+                ))
             return self.read_hunk(line)
 
         self._block_len += 1
         self._remaining_hunk_lines -= 1
 
         return self.skip_block
+
 
 @tool_required('diff')
 def run_diff(fifo1, fifo2, end_nl_q1, end_nl_q2):
@@ -186,6 +189,7 @@ def run_diff(fifo1, fifo2, end_nl_q1, end_nl_q2):
 
     return parser.diff
 
+
 class FIFOFeeder(threading.Thread):
     def __init__(self, feeder, fifo_path, end_nl_q=None, daemon=True, *args):
         os.mkfifo(fifo_path)
@@ -210,7 +214,7 @@ class FIFOFeeder(threading.Thread):
             # more need for the FIFO, so stop the thread.
             while True:
                 try:
-                    fifo_fd = os.open(self.fifo_path, os.O_WRONLY | os.O_NONBLOCK)
+                    fd = os.open(self.fifo_path, os.O_WRONLY | os.O_NONBLOCK)
                 except OSError as error:
                     if error.errno != errno.ENXIO:
                         raise
@@ -220,8 +224,9 @@ class FIFOFeeder(threading.Thread):
                     break
 
             # Now clear the fd's nonblocking flag to let writes block normally.
-            fcntl.fcntl(fifo_fd, fcntl.F_SETFL, 0)
-            with open(fifo_fd, 'wb') as fifo:
+            fcntl.fcntl(fd, fcntl.F_SETFL, 0)
+
+            with open(fd, 'wb') as fifo:
                 # The queue works around a unified diff limitation: if there's
                 # no newlines in both don't make it a difference
                 end_nl = self.feeder(fifo)
@@ -235,14 +240,16 @@ class FIFOFeeder(threading.Thread):
         if self._exception is not None:
             raise self._exception
 
+
 def diff(feeder1, feeder2):
     tmpdir = get_temporary_directory().name
 
     fifo1_path = os.path.join(tmpdir, 'fifo1')
     fifo2_path = os.path.join(tmpdir, 'fifo2')
     with FIFOFeeder(feeder1, fifo1_path) as fifo1, \
-         FIFOFeeder(feeder2, fifo2_path) as fifo2:
+            FIFOFeeder(feeder2, fifo2_path) as fifo2:
         return run_diff(fifo1_path, fifo2_path, fifo1.end_nl_q, fifo2.end_nl_q)
+
 
 def reverse_unified_diff(diff):
     res = []
@@ -268,6 +275,7 @@ def reverse_unified_diff(diff):
         else:
             res.append(line)
     return ''.join(res)
+
 
 def color_unified_diff(diff):
     RESET = '\033[0m'

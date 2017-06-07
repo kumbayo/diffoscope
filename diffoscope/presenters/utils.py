@@ -58,11 +58,14 @@ class Presenter(object):
         # str.splitlines, etc.
         return prefix + val.rstrip().replace('\n', '\n{}'.format(prefix))
 
+
 class PrintLimitReached(Exception):
     pass
 
+
 class DiffBlockLimitReached(Exception):
     pass
+
 
 @contextlib.contextmanager
 def make_printer(path):
@@ -80,6 +83,7 @@ def make_printer(path):
 
     if path != '-':
         output.close()
+
 
 def create_limited_print_func(print_func, max_page_size):
     count = [0]

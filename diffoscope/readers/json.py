@@ -17,29 +17,35 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
-import codecs
 import json
-from collections import OrderedDict
+import codecs
 
 from ..difference import Difference
 from ..presenters.json import JSON_FORMAT_MAGIC
+
 from .utils import UnrecognizedFormatError
 
 
 class JSONReaderV1(object):
-
     def load(self, fp, fn):
-        raw = json.load(codecs.getreader("utf-8")(fp))
+        raw = json.load(codecs.getreader('utf-8')(fp))
         if JSON_FORMAT_MAGIC not in raw or raw[JSON_FORMAT_MAGIC] != 1:
-            raise UnrecognizedFormatError("magic not found in json: %s" % JSON_FORMAT_MAGIC)
+            raise UnrecognizedFormatError(
+                "Magic not found in JSON: {}".format(JSON_FORMAT_MAGIC)
+            )
         return self.load_rec(raw)
 
     def load_rec(self, raw):
-        source1 = raw["source1"]
-        source2 = raw["source2"]
-        unified_diff = raw["unified_diff"]
-        has_internal_linenos = raw.get("has_internal_linenos", False)
-        comments = raw.get("comments", [])
-        details = [self.load_rec(child) for child in raw.get("details", [])]
+        source1 = raw['source1']
+        source2 = raw['source2']
+        unified_diff = raw['unified_diff']
+        comments = raw.get('comments', [])
+        details = [self.load_rec(child) for child in raw.get('details', [])]
 
-        return Difference(unified_diff, source1, source2, comment=comments, details=details)
+        return Difference(
+            unified_diff,
+            source1,
+            source2,
+            comment=comments,
+            details=details,
+        )

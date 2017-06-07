@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
-import os
 import collections
 import platform
 import functools
@@ -69,6 +68,7 @@ def tool_required(command):
                 return fn(*args, **kwargs)
         return tool_check
     return wrapper
+
 
 def get_current_os():
     system = platform.system()
