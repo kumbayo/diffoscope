@@ -18,7 +18,7 @@ class PyTest(TestCommand):
         super().finalize_options()
 
     def run_tests(self):
-        #import here, cause outside the eggs aren't loaded
+        # Inline import, otherwise the eggs aren't loaded
         import pytest
         errno = pytest.main(self.pytest_args)
         sys.exit(errno)
