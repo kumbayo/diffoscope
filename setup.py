@@ -34,7 +34,7 @@ setup(
     url='https://diffoscope.org/',
     packages=find_packages(exclude=['tests', 'tests.*']),
     tests_require=['pytest'],
-    cmdclass = {'test': PyTest},
+    cmdclass={'test': PyTest},
     entry_points={
         'console_scripts': [
                 'diffoscope=diffoscope.main:main'
