@@ -246,7 +246,7 @@ def diff(feeder1, feeder2):
 
 def reverse_unified_diff(diff):
     res = []
-    for line in diff.splitlines(True): # keepends=True
+    for line in diff.splitlines(keepends=True):
         found = DiffParser.RANGE_RE.match(line)
 
         if found:
