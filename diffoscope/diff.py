@@ -187,7 +187,7 @@ def run_diff(fifo1, fifo2, end_nl_q1, end_nl_q2):
     return parser.diff
 
 class FIFOFeeder(threading.Thread):
-    def __init__(self, feeder, fifo_path, end_nl_q=None, *, daemon=True):
+    def __init__(self, feeder, fifo_path, end_nl_q=None, daemon=True, *args):
         os.mkfifo(fifo_path)
         super().__init__(daemon=daemon)
         self.feeder = feeder
