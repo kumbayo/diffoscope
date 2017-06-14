@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
+import hashlib
+import heapq
 import re
 import logging
 
@@ -102,13 +104,16 @@ class Difference(object):
 
     def size(self):
         if self._size_cache is None:
-            self._size_cache = (len(self.unified_diff) +
-                len(self.source1) +
-                len(self.source2) +
-                sum(map(len, self.comments)) +
-                sum(d.size() for d in self._details) +
-                sum(v.size() for v in self._visuals))
+            self._size_cache = sum(d.size_self() for d in self.traverse_depth())
         return self._size_cache
+
+    def size_self(self):
+        """Size, excluding children."""
+        return ((len(self.unified_diff) if self.unified_diff else 0) +
+                (len(self.source1) if self.source1 else 0) +
+                (len(self.source2) if self.source2 else 0) +
+                sum(map(len, self.comments)) +
+                sum(v.size() for v in self._visuals))
 
     def has_children(self):
         """
@@ -118,6 +123,37 @@ class Difference(object):
         """
 
         return self._unified_diff is not None or self._details or self._visuals
+
+    def traverse_depth(self, depth=-1):
+        yield self
+        if depth != 0:
+            for d in self._details:
+                yield from d.traverse_depth(depth-1)
+
+    def traverse_breadth(self, queue=None):
+        queue = queue if queue is not None else [self]
+        if queue:
+            top = queue.pop(0)
+            yield top
+            queue.extend(top._details)
+            yield from self.traverse_breadth(queue)
+
+    def traverse_heapq(self, scorer, queue=None):
+        """Traverse the difference tree using a priority queue, where each node
+        is scored according to a user-supplied function, and nodes with smaller
+        scores are traversed first (after they have been added to the queue).
+
+        The function `scorer` takes two arguments, a node to score and the
+        score of its parent node (or None if there is no parent). It should
+        return the score of the input node.
+        """
+        queue = queue if queue is not None else [(scorer(self, None), self)]
+        if queue:
+            val, top = heapq.heappop(queue)
+            yield top
+            for d in top._details:
+                heapq.heappush(queue, (scorer(d, val), d))
+            yield from self.traverse_heapq(scorer, queue)
 
     @staticmethod
     def from_feeder(feeder1, feeder2, path1, path2, source=None, comment=None, **kwargs):

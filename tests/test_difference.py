@@ -18,11 +18,18 @@
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
 import io
+import itertools
 import pytest
 
 from diffoscope.config import Config
 from diffoscope.difference import Difference
 
+
+def assert_size(diff, size):
+    assert size == diff.size()
+    assert size == sum(d.size_self() for d in diff.traverse_breadth())
+    g = itertools.count()
+    assert size == sum(d.size_self() for d in diff.traverse_heapq(lambda x, _: next(g)))
 
 def assert_algebraic_properties(d, size):
     assert d.equals(d.get_reverse().get_reverse())
@@ -47,11 +54,38 @@ def test_too_long_diff_block_lines(monkeypatch):
 
 def test_size_updates():
     d = Difference("0123456789", "path1", "path2")
-    assert d.size() == 20
+    assert_size(d, 20)
     d.add_details([Difference("0123456789", "path1/a", "path2/a")])
-    assert d.size() == 44
+    assert_size(d, 44)
     d.add_comment("lol1")
-    assert d.size() == 48
+    assert_size(d, 48)
+
+def test_traverse_heapq():
+    d0 = Difference("0", "path1/a", "path2/a")
+    d1 = Difference("012", "path1/b", "path2/b")
+    d2 = Difference("01", "path1/c", "path2/c")
+    d0.add_details([
+        Difference("012345678", "path1/a/1", "path2/a/1"),
+        Difference("0123", "path1/a/2", "path2/a/2"),
+        Difference("012", "path1/a/3", "path2/a/3")])
+    d1.add_details([
+        Difference("01234567", "path1/b/1", "path2/b/1"),
+        Difference("01234", "path1/b/2", "path2/b/2"),
+        Difference("012345", "path1/b/3", "path2/b/3")])
+    d2.add_details([
+        Difference("01", "path1/c/1", "path2/c/1"),
+        Difference("0123456789", "path1/c/2", "path2/c/2"),
+        Difference("0123456", "path1/c/3", "path2/c/3")])
+    diff = Difference("0123456789", "path1", "path2")
+    diff.add_details([d0, d1, d2])
+    # traverse nodes in depth order, but at a given depth traverse the nodes
+    # there from smallest diff (counted non-recursively) to largest
+    def f(node, parscore):
+        depth = parscore[0] + 1 if parscore else 0
+        return depth, node.size_self()
+    assert_size(diff, 284)
+    results = [d.source1[6:] for d in diff.traverse_heapq(f)]
+    assert results == ['', 'a', 'c', 'b', 'c/1', 'a/3', 'a/2', 'b/2', 'b/3', 'c/3', 'b/1', 'a/1', 'c/2']
 
 def test_non_str_arguments_to_source1_source2():
     for x in (
