@@ -337,7 +337,7 @@ class HTMLPresenter(Presenter):
         print_func(u'<div class="difference">')
         try:
             print_func(u'<div class="diffheader">')
-            diffcontrol = ("diffcontrol", u'⊟') if difference.has_children() else ("diffcontrol-nochildren", u'⊡')
+            diffcontrol = ("diffcontrol", u'⊟') if difference.has_visible_children() else ("diffcontrol-nochildren", u'⊡')
             if difference.source1 == difference.source2:
                 print_func(u'<div class="%s">%s</div>' % diffcontrol)
                 print_func(u'<div><span class="source">%s</span>'

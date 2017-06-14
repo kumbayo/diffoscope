@@ -115,14 +115,14 @@ class Difference(object):
                 sum(map(len, self.comments)) +
                 sum(v.size() for v in self._visuals))
 
-    def has_children(self):
+    def has_visible_children(self):
         """
-        Whether there are children.
+        Whether there are visible children.
 
         Useful for e.g. choosing whether to display [+]/[-] controls.
         """
-
-        return self._unified_diff is not None or self._details or self._visuals
+        return (self._unified_diff is not None or
+                self._comments or self._details or self._visuals)
 
     def traverse_depth(self, depth=-1):
         yield self
