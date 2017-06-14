@@ -43,13 +43,13 @@ import contextlib
 
 from diffoscope import VERSION
 from diffoscope.config import Config
+from diffoscope.difference import SideBySideDiff, DIFFON, DIFFOFF
 
 from ..icon import FAVICON_BASE64
 from ..utils import PrintLimitReached, DiffBlockLimitReached, \
     create_limited_print_func, Presenter, make_printer
 
 from . import templates
-from .linediff import linediff
 
 # minimum line size, we add a zero-sized breakable space every
 # LINESIZE characters
@@ -59,9 +59,6 @@ TABSIZE = 8
 
 # Characters we're willing to word wrap on
 WORDBREAK = " \t;.,/):-"
-
-DIFFON = "\x01"
-DIFFOFF = "\x02"
 
 JQUERY_SYSTEM_LOCATIONS = (
     '/usr/share/javascript/jquery/jquery.js',
@@ -179,56 +176,29 @@ class HTMLPresenter(Presenter):
         self.new_unified_diff()
 
     def new_unified_diff(self):
-        self.buf = []
-        self.add_cpt = 0
-        self.del_cpt = 0
-        self.line1 = 0
-        self.line2 = 0
-        self.has_internal_linenos = True
-        self.hunk_off1 = 0
-        self.hunk_size1 = 0
-        self.hunk_off2 = 0
-        self.hunk_size2 = 0
         self.spl_rows = 0
         self.spl_current_page = 0
         self.spl_print_func = None
         self.spl_print_ctrl = None
 
-    def output_hunk(self):
-        self.spl_print_func(u'<tr class="diffhunk"><td colspan="2">Offset %d, %d lines modified</td>' % (self.hunk_off1, self.hunk_size1))
-        self.spl_print_func(u'<td colspan="2">Offset %d, %d lines modified</td></tr>\n' % (self.hunk_off2, self.hunk_size2))
+    def output_hunk_header(self, hunk_off1, hunk_size1, hunk_off2, hunk_size2):
+        self.spl_print_func(u'<tr class="diffhunk"><td colspan="2">Offset %d, %d lines modified</td>' % (hunk_off1, hunk_size1))
+        self.spl_print_func(u'<td colspan="2">Offset %d, %d lines modified</td></tr>\n' % (hunk_off2, hunk_size2))
         self.row_was_output()
 
-    def output_line(self, s1, s2):
-        orig1 = s1
-        orig2 = s2
-
+    def output_line(self, has_internal_linenos, type_name, s1, line1, s2, line2):
         if s1 and len(s1) > MAX_LINE_SIZE:
             s1 = s1[:MAX_LINE_SIZE] + u" ✂"
         if s2 and len(s2) > MAX_LINE_SIZE:
             s2 = s2[:MAX_LINE_SIZE] + u" ✂"
 
-        if s1 == None and s2 == None:
-            type_name = "unmodified"
-        elif s1 == "" and s2 == "":
-            type_name = "unmodified"
-        elif s1 == None or s1 == "":
-            type_name = "added"
-        elif s2 == None or s2 == "":
-            type_name = "deleted"
-        elif orig1 == orig2 and not s1.endswith('lines removed ]') and not s2.endswith('lines removed ]'):
-            type_name = "unmodified"
-        else:
-            type_name = "changed"
-            s1, s2 = linediff(s1, s2, DIFFON, DIFFOFF)
-
         self.spl_print_func(u'<tr class="diff%s">' % type_name)
         try:
             if s1:
-                if self.has_internal_linenos:
+                if has_internal_linenos:
                     self.spl_print_func(u'<td colspan="2" class="diffpresent">')
                 else:
-                    self.spl_print_func(u'<td class="diffline">%d </td>' % self.line1)
+                    self.spl_print_func(u'<td class="diffline">%d </td>' % line1)
                     self.spl_print_func(u'<td class="diffpresent">')
                 self.spl_print_func(convert(s1, ponct=1, tag='del'))
                 self.spl_print_func(u'</td>')
@@ -236,10 +206,10 @@ class HTMLPresenter(Presenter):
                 self.spl_print_func(u'<td colspan="2">\xa0</td>')
 
             if s2:
-                if self.has_internal_linenos:
+                if has_internal_linenos:
                     self.spl_print_func(u'<td colspan="2" class="diffpresent">')
                 else:
-                    self.spl_print_func(u'<td class="diffline">%d </td>' % self.line2)
+                    self.spl_print_func(u'<td class="diffline">%d </td>' % line2)
                     self.spl_print_func(u'<td class="diffpresent">')
                 self.spl_print_func(convert(s2, ponct=1, tag='ins'))
                 self.spl_print_func(u'</td>')
@@ -248,42 +218,6 @@ class HTMLPresenter(Presenter):
         finally:
             self.spl_print_func(u"</tr>\n", force=True)
             self.row_was_output()
-
-        m = orig1 and re.match(r"^\[ (\d+) lines removed \]$", orig1)
-        if m:
-            self.line1 += int(m.group(1))
-        elif orig1:
-            self.line1 += 1
-        m = orig2 and re.match(r"^\[ (\d+) lines removed \]$", orig2)
-        if m:
-            self.line2 += int(m.group(1))
-        elif orig2:
-            self.line2 += 1
-
-    def empty_buffer(self):
-        if self.del_cpt == 0 or self.add_cpt == 0:
-            for l in self.buf:
-                self.output_line(l[0], l[1])
-
-        elif self.del_cpt != 0 and self.add_cpt != 0:
-            l0, l1 = [], []
-            for l in self.buf:
-                if l[0] != None:
-                    l0.append(l[0])
-                if l[1] != None:
-                    l1.append(l[1])
-            max_len = (len(l0) > len(l1)) and len(l0) or len(l1)
-            for i in range(max_len):
-                s0, s1 = "", ""
-                if i < len(l0):
-                    s0 = l0[i]
-                if i < len(l1):
-                    s1 = l1[i]
-                self.output_line(s0, s1)
-
-        self.add_cpt = 0
-        self.del_cpt = 0
-        self.buf = []
 
     def spl_print_enter(self, print_context, rotation_params):
         # Takes ownership of print_context
@@ -345,85 +279,22 @@ class HTMLPresenter(Presenter):
         self.spl_print_func(templates.UD_TABLE_HEADER)
 
     def output_unified_diff_table(self, unified_diff, has_internal_linenos):
-        self.has_internal_linenos = has_internal_linenos
         self.spl_print_func(templates.UD_TABLE_HEADER)
         try:
-            bytes_processed = 0
-            for l in unified_diff.splitlines():
-                bytes_processed += len(l) + 1
-                m = re.match(r'^--- ([^\s]*)', l)
-                if m:
-                    self.empty_buffer()
-                    continue
-                m = re.match(r'^\+\+\+ ([^\s]*)', l)
-                if m:
-                    self.empty_buffer()
-                    continue
-
-                m = re.match(r"@@ -(\d+),?(\d*) \+(\d+),?(\d*)", l)
-                if m:
-                    self.empty_buffer()
-                    hunk_data = map(lambda x:x=="" and 1 or int(x), m.groups())
-                    self.hunk_off1, self.hunk_size1, self.hunk_off2, self.hunk_size2 = hunk_data
-                    self.line1, self.line2 = self.hunk_off1, self.hunk_off2
-                    self.output_hunk()
-                    continue
-
-                if re.match(r'^\[', l):
-                    self.empty_buffer()
-                    self.spl_print_func(u'<td colspan="2">%s</td>\n' % l)
-
-                if re.match(r"^\\ No newline", l):
-                    if self.hunk_size2 == 0:
-                        self.buf[-1] = (self.buf[-1][0], self.buf[-1][1] + '\n' + l[2:])
-                    else:
-                        self.buf[-1] = (buf[-1][0] + '\n' + l[2:], self.buf[-1][1])
-                    continue
-
-                if self.hunk_size1 <= 0 and self.hunk_size2 <= 0:
-                    self.empty_buffer()
-                    continue
-
-                m = re.match(r"^\+\[ (\d+) lines removed \]$", l)
-                if m:
-                    self.add_cpt += int(m.group(1))
-                    self.hunk_size2 -= int(m.group(1))
-                    self.buf.append((None, l[1:]))
-                    continue
-
-                if re.match(r"^\+", l):
-                    self.add_cpt += 1
-                    self.hunk_size2 -= 1
-                    self.buf.append((None, l[1:]))
-                    continue
-
-                m = re.match(r"^-\[ (\d+) lines removed \]$", l)
-                if m:
-                    self.del_cpt += int(m.group(1))
-                    self.hunk_size1 -= int(m.group(1))
-                    self.buf.append((l[1:], None))
-                    continue
-
-                if re.match(r"^-", l):
-                    self.del_cpt += 1
-                    self.hunk_size1 -= 1
-                    self.buf.append((l[1:], None))
-                    continue
-
-                if re.match(r"^ ", l) and self.hunk_size1 and self.hunk_size2:
-                    self.empty_buffer()
-                    self.hunk_size1 -= 1
-                    self.hunk_size2 -= 1
-                    self.buf.append((l[1:], l[1:]))
-                    continue
-
-                self.empty_buffer()
-
-            self.empty_buffer()
+            ydiff = SideBySideDiff(unified_diff)
+            for t, args in ydiff.items():
+                if t == "L":
+                    self.output_line(has_internal_linenos, *args)
+                elif t == "H":
+                    self.output_hunk_header(*args)
+                elif t == "C":
+                    self.spl_print_func(u'<td colspan="2">%s</td>\n' % args)
+                else:
+                    raise AssertionError()
             return True
         except DiffBlockLimitReached:
             total = len(unified_diff)
-            bytes_left = total - bytes_processed
+            bytes_left = total - ydiff.bytes_processed
             frac = bytes_left / total
             self.spl_print_func(
                 u'<tr class="error">'
