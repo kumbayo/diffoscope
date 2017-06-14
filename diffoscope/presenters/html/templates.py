@@ -173,12 +173,13 @@ $(function() {
   var diffcontrols = $(".diffcontrol");
   diffcontrols.on('click', function(evt) {
     var control = $(this);
-    var target = control.parent().siblings('table.diff, div.difference');
+    var parent = control.parent();
+    var target = $.merge(parent.siblings('table.diff, div.difference'), parent.find('div.comment'));
     var orig = target;
     if (evt.shiftKey) {
-        var parent = control.parent().parent();
-        control = parent.find('.diffcontrol');
-        target = parent.find('table.diff, div.difference');
+        var gparent = parent.parent();
+        control = gparent.find('.diffcontrol');
+        target = gparent.find('table.diff, div.difference, div.comment');
     }
     if (orig.is(":visible")) {
         target.hide();
