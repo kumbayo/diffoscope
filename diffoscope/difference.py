@@ -23,9 +23,9 @@ import logging
 import subprocess
 
 from .exc import RequiredToolNotFound
-from .excludes import command_excluded
 from .diff import diff, reverse_unified_diff
 from .config import Config
+from .excludes import command_excluded
 from .profiling import profile
 
 DIFF_CHUNK = 4096
@@ -33,38 +33,18 @@ DIFF_CHUNK = 4096
 logger = logging.getLogger(__name__)
 
 
-class VisualDifference(object):
-    def __init__(self, data_type, content, source):
-        self._data_type = data_type
-        self._content = content
-        self._source = source
-
-    @property
-    def data_type(self):
-        return self._data_type
-
-    @property
-    def content(self):
-        return self._content
-
-    @property
-    def source(self):
-        return self._source
-
-    def size(self):
-        return len(self.data_type) + len(self.content) + len(self.source)
-
-
 class Difference(object):
     def __init__(self, unified_diff, path1, path2, source=None, comment=None, has_internal_linenos=False, details=None):
+        self._unified_diff = unified_diff
+
         self._comments = []
         if comment:
             if type(comment) is list:
                 self._comments.extend(comment)
             else:
                 self._comments.append(comment)
-        self._unified_diff = unified_diff
-        # allow to override declared file paths, useful when comparing
+
+        # Allow to override declared file paths, useful when comparing
         # tempfiles
         if source:
             if type(source) is list:
@@ -75,11 +55,13 @@ class Difference(object):
         else:
             self._source1 = path1
             self._source2 = path2
+
         # Ensure renderable types
         if not isinstance(self._source1, str):
             raise TypeError("path1/source[0] is not a string")
         if not isinstance(self._source2, str):
             raise TypeError("path2/source[1] is not a string")
+
         # Whether the unified_diff already contains line numbers inside itself
         self._has_internal_linenos = has_internal_linenos
         self._details = details or []
@@ -87,20 +69,32 @@ class Difference(object):
         self._size_cache = None
 
     def __repr__(self):
-        return '<Difference %s -- %s %s>' % (self._source1, self._source2, self._details)
+        return "<Difference %s -- %s %s>" % (
+            self._source1,
+            self._source2,
+            self._details,
+        )
 
     def get_reverse(self):
-        logger.debug('reverse orig %s %s', self.source1, self.source2)
+        logger.debug("Reverse orig %s %s", self.source1, self.source2)
+
         if self._visuals:
-            raise NotImplementedError("reversing VisualDifference is not yet implemented")
-        difference = Difference(
-            None if self.unified_diff is None else reverse_unified_diff(self.unified_diff),
+            raise NotImplementedError(
+                "Reversing VisualDifference is not yet implemented",
+            )
+
+        diff = self.unified_diff
+        if diff is not None:
+            diff = reverse_unified_diff(self.unified_diff)
+
+        return Difference(
+            diff,
             self.source2,
             self.source1,
-            comment = self.comments,
-            has_internal_linenos = self.has_internal_linenos,
-            details = [d.get_reverse() for d in self._details])
-        return difference
+            comment=self.comments,
+            has_internal_linenos=self.has_internal_linenos,
+            details=[d.get_reverse() for d in self._details],
+        )
 
     def equals(self, other):
         return self == other or (
@@ -122,9 +116,12 @@ class Difference(object):
         return self._size_cache
 
     def has_children(self):
-        """Whether there are children.
+        """
+        Whether there are children.
 
-        Useful for e.g. choosing whether to display [+]/[-] controls."""
+        Useful for e.g. choosing whether to display [+]/[-] controls.
+        """
+
         return self._unified_diff is not None or self._details or self._visuals
 
     @staticmethod
@@ -133,31 +130,47 @@ class Difference(object):
             unified_diff = diff(feeder1, feeder2)
             if not unified_diff:
                 return None
-            return Difference(unified_diff, path1, path2, source, comment, **kwargs)
+            return Difference(
+                unified_diff,
+                path1,
+                path2,
+                source,
+                comment,
+                **kwargs
+            )
         except RequiredToolNotFound:
             difference = Difference(None, path1, path2, source)
-            difference.add_comment('diff is not available!')
+            difference.add_comment("diff is not available")
             if comment:
                 difference.add_comment(comment)
             return difference
 
     @staticmethod
     def from_text(content1, content2, *args, **kwargs):
-        return Difference.from_feeder(make_feeder_from_text(content1),
-                                      make_feeder_from_text(content2),
-                                      *args, **kwargs)
+        return Difference.from_feeder(
+            make_feeder_from_text(content1),
+            make_feeder_from_text(content2),
+            *args,
+            **kwargs
+        )
 
     @staticmethod
     def from_raw_readers(file1, file2, *args, **kwargs):
-        return Difference.from_feeder(make_feeder_from_raw_reader(file1),
-                                      make_feeder_from_raw_reader(file2),
-                                      *args, **kwargs)
+        return Difference.from_feeder(
+            make_feeder_from_raw_reader(file1),
+            make_feeder_from_raw_reader(file2),
+            *args,
+            **kwargs
+        )
 
     @staticmethod
     def from_text_readers(file1, file2, *args, **kwargs):
-        return Difference.from_feeder(make_feeder_from_text_reader(file1),
-                                      make_feeder_from_text_reader(file2),
-                                      *args, **kwargs)
+        return Difference.from_feeder(
+            make_feeder_from_text_reader(file1),
+            make_feeder_from_text_reader(file2),
+            *args,
+            **kwargs
+        )
 
     @staticmethod
     def from_command(klass, path1, path2, *args, **kwargs):
@@ -187,15 +200,28 @@ class Difference(object):
             source_cmd = command1 or command2
             kwargs['source'] = source_cmd.shell_cmdline()
 
-        difference = Difference.from_feeder(feeder1, feeder2, path1, path2, *args, **kwargs)
+        difference = Difference.from_feeder(
+            feeder1,
+            feeder2,
+            path1,
+            path2,
+            *args,
+            **kwargs
+        )
         if not difference:
             return None
+
         if command1 and command1.stderr_content:
-            difference.add_comment('stderr from `%s`:' % ' '.join(command1.cmdline()))
+            difference.add_comment("stderr from `{}`:".format(
+                ' '.join(command1.cmdline()),
+            ))
             difference.add_comment(command1.stderr_content)
         if command2 and command2.stderr_content:
-            difference.add_comment('stderr from `%s`:' % ' '.join(command2.cmdline()))
+            difference.add_comment("stderr from `{}`:".format(
+                ' '.join(command2.cmdline()),
+            ))
             difference.add_comment(command2.stderr_content)
+
         return difference
 
     @property
@@ -247,22 +273,55 @@ class Difference(object):
         self._visuals.extend(visuals)
         self._size_cache = None
 
+
+class VisualDifference(object):
+    def __init__(self, data_type, content, source):
+        self._data_type = data_type
+        self._content = content
+        self._source = source
+
+    @property
+    def data_type(self):
+        return self._data_type
+
+    @property
+    def content(self):
+        return self._content
+
+    @property
+    def source(self):
+        return self._source
+
+    def size(self):
+        return len(self.data_type) + len(self.content) + len(self.source)
+
+
 def make_feeder_from_text_reader(in_file, filter=lambda text_buf: text_buf):
     def encoding_filter(text_buf):
         return filter(text_buf).encode('utf-8')
     return make_feeder_from_raw_reader(in_file, encoding_filter)
 
+
 def make_feeder_from_command(command):
     def feeder(out_file):
         with profile('command', command.cmdline()[0]):
-            end_nl = make_feeder_from_raw_reader(command.stdout, command.filter)(out_file)
+            feeder = make_feeder_from_raw_reader(
+                command.stdout,
+                command.filter,
+            )
+            end_nl = feeder(out_file)
             if command.poll() is None:
                 command.terminate()
             returncode = command.wait()
         if returncode not in (0, -signal.SIGTERM):
-            raise subprocess.CalledProcessError(returncode, command.cmdline(), output=command.stderr.getvalue())
+            raise subprocess.CalledProcessError(
+                returncode,
+                command.cmdline(),
+                output=command.stderr.getvalue(),
+            )
         return end_nl
     return feeder
+
 
 def make_feeder_from_raw_reader(in_file, filter=lambda buf: buf):
     def feeder(out_file):
@@ -270,7 +329,7 @@ def make_feeder_from_raw_reader(in_file, filter=lambda buf: buf):
         line_count = 0
         end_nl = False
         h = None
-        if max_lines < float("inf"):
+        if max_lines < float('inf'):
             h = hashlib.sha1()
         for buf in in_file:
             line_count += 1
@@ -281,10 +340,13 @@ def make_feeder_from_raw_reader(in_file, filter=lambda buf: buf):
                 out_file.write(out)
             end_nl = buf[-1] == '\n'
         if h and line_count >= max_lines:
-            out_file.write('[ Too much input for diff (SHA1: {}) ]\n'.format(h.hexdigest()).encode('utf-8'))
+            out_file.write("[ Too much input for diff (SHA1: {}) ]\n".format(
+                h.hexdigest(),
+            ).encode('utf-8'))
             end_nl = True
         return end_nl
     return feeder
+
 
 def make_feeder_from_text(content):
     def feeder(f):
@@ -292,6 +354,7 @@ def make_feeder_from_text(content):
             f.write(content[offset:offset + DIFF_CHUNK].encode('utf-8'))
         return content and content[-1] == '\n'
     return feeder
+
 
 def empty_file_feeder():
     def feeder(f):
