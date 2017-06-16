@@ -17,18 +17,12 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
-import signal
-import hashlib
 import logging
-import subprocess
 
+from . import feeders
 from .exc import RequiredToolNotFound
 from .diff import diff, reverse_unified_diff
-from .config import Config
 from .excludes import command_excluded
-from .profiling import profile
-
-DIFF_CHUNK = 4096
 
 logger = logging.getLogger(__name__)
 
@@ -148,8 +142,8 @@ class Difference(object):
     @staticmethod
     def from_text(content1, content2, *args, **kwargs):
         return Difference.from_feeder(
-            make_feeder_from_text(content1),
-            make_feeder_from_text(content2),
+            feeders.from_text(content1),
+            feeders.from_text(content2),
             *args,
             **kwargs
         )
@@ -157,8 +151,8 @@ class Difference(object):
     @staticmethod
     def from_raw_readers(file1, file2, *args, **kwargs):
         return Difference.from_feeder(
-            make_feeder_from_raw_reader(file1),
-            make_feeder_from_raw_reader(file2),
+            feeders.from_raw_reader(file1),
+            feeders.from_raw_reader(file2),
             *args,
             **kwargs
         )
@@ -166,8 +160,8 @@ class Difference(object):
     @staticmethod
     def from_text_readers(file1, file2, *args, **kwargs):
         return Difference.from_feeder(
-            make_feeder_from_text_reader(file1),
-            make_feeder_from_text_reader(file2),
+            feeders.from_text_reader(file1),
+            feeders.from_text_reader(file2),
             *args,
             **kwargs
         )
@@ -182,10 +176,10 @@ class Difference(object):
         def command_and_feeder(path):
             command = None
             if path == '/dev/null':
-                feeder = empty_file_feeder()
+                feeder = feeders.empty()
             else:
                 command = klass(path, *command_args)
-                feeder = make_feeder_from_command(command)
+                feeder = feeders.from_command(command)
                 if command_excluded(command.shell_cmdline()):
                     return None, None
                 command.start()
@@ -294,69 +288,3 @@ class VisualDifference(object):
 
     def size(self):
         return len(self.data_type) + len(self.content) + len(self.source)
-
-
-def make_feeder_from_text_reader(in_file, filter=lambda text_buf: text_buf):
-    def encoding_filter(text_buf):
-        return filter(text_buf).encode('utf-8')
-    return make_feeder_from_raw_reader(in_file, encoding_filter)
-
-
-def make_feeder_from_command(command):
-    def feeder(out_file):
-        with profile('command', command.cmdline()[0]):
-            feeder = make_feeder_from_raw_reader(
-                command.stdout,
-                command.filter,
-            )
-            end_nl = feeder(out_file)
-            if command.poll() is None:
-                command.terminate()
-            returncode = command.wait()
-        if returncode not in (0, -signal.SIGTERM):
-            raise subprocess.CalledProcessError(
-                returncode,
-                command.cmdline(),
-                output=command.stderr.getvalue(),
-            )
-        return end_nl
-    return feeder
-
-
-def make_feeder_from_raw_reader(in_file, filter=lambda buf: buf):
-    def feeder(out_file):
-        max_lines = Config().max_diff_input_lines
-        line_count = 0
-        end_nl = False
-        h = None
-        if max_lines < float('inf'):
-            h = hashlib.sha1()
-        for buf in in_file:
-            line_count += 1
-            out = filter(buf)
-            if h:
-                h.update(out)
-            if line_count < max_lines:
-                out_file.write(out)
-            end_nl = buf[-1] == '\n'
-        if h and line_count >= max_lines:
-            out_file.write("[ Too much input for diff (SHA1: {}) ]\n".format(
-                h.hexdigest(),
-            ).encode('utf-8'))
-            end_nl = True
-        return end_nl
-    return feeder
-
-
-def make_feeder_from_text(content):
-    def feeder(f):
-        for offset in range(0, len(content), DIFF_CHUNK):
-            f.write(content[offset:offset + DIFF_CHUNK].encode('utf-8'))
-        return content and content[-1] == '\n'
-    return feeder
-
-
-def empty_file_feeder():
-    def feeder(f):
-        return False
-    return feeder
