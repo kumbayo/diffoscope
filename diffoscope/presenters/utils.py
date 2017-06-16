@@ -105,8 +105,11 @@ def create_limited_print_func(print_func, max_page_size):
 
 
 class Formatter(string.Formatter):
-    def arg_of_field_name(self, field_name):
-        return _string.formatter_field_name_split(field_name)[0]
+    def get_value(self, key, args, kwargs):
+        return args[key] if isinstance(key, int) else args[int(key)]
+    def arg_of_field_name(self, field_name, args):
+        x = int(_string.formatter_field_name_split(field_name)[0])
+        return x if x >= 0 else len(args) + x
 
 
 class FormatPlaceholder(object):
@@ -195,7 +198,7 @@ class PartialString(object):
         # Ensure the format string is valid, and figure out some basic stats
         fmt = self.formatter
         pieces = [(len(l), f) for l, f, _, _ in fmt.parse(fmtstr)]
-        used_args = set(fmt.arg_of_field_name(f) for _, f in pieces if f is not None)
+        used_args = set(fmt.arg_of_field_name(f, holes) for _, f in pieces if f is not None)
         self.num_holes = sum(1 for _, f in pieces if f is not None)
         self.base_len = sum(l for l, _ in pieces)
 
@@ -203,7 +206,7 @@ class PartialString(object):
         seen = collections.OrderedDict()
         mapping = tuple(FormatPlaceholder(seen.setdefault(k, len(seen))) if i in used_args else None
             for i, k in enumerate(holes))
-        self._fmtstr = fmt.vformat(fmtstr, mapping, {})
+        self._fmtstr = fmt.vformat(fmtstr, mapping, None)
         self.holes = tuple(seen.keys())
 
     def __eq__(self, other):
@@ -259,9 +262,33 @@ class PartialString(object):
         """
         return cls("{0}", obj)
 
+    @classmethod
+    def cont(cls):
+        r"""Create a new empty partial string with a continuation token.
+
+        Construct a larger partial string from smaller pieces, without having
+        to keep explicit track of a global index in between pieces. Instead,
+        you can use per-piece local indexes, plus the special index {-1} to
+        refer to where the next piece will go - or omit it to end the sequence.
+
+        >>> t, cont = PartialString.cont()
+        >>> t = cont(t, "x: {0}\ny: {1}\n{-1}", object(), object())
+        >>> t = cont(t, "z: {0}\n{-1}", object())
+        >>> t = cont(t, "")
+        >>> key = t.holes
+        >>> t.format({key[0]: "line1", key[1]: "line2", key[2]: "line3"})
+        'x: line1\ny: line2\nz: line3\n'
+        >>> t.size(hole_size=5)
+        27
+        """
+        def cont(t, fmtstr, *holes):
+            return t.pformat({cont: cls(fmtstr, *(holes + (cont,)))})
+        return cls("{0}", cont), cont
+
 
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags=doctest.ELLIPSIS)
     a, b = object(), object()
     tmpl = PartialString("{0} {1}", a, b)
+    t, cont = PartialString.cont()

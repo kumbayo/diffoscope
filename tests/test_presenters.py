@@ -168,3 +168,13 @@ def test_partial_string():
     PartialString("{1}", a, b)
     with pytest.raises(IndexError):
         PartialString("{0} {1} {2}", a, b)
+
+def test_partial_string_cont():
+    t, cont = PartialString.cont()
+    t = cont(t, "x: {0}\ny: {1}\n{-1}", object(), object())
+    t = cont(t, "z: {0}\n{-1}", object())
+    t = cont(t, "")
+    key = t.holes
+    assert (t.format({key[0]: "line1", key[1]: "line2", key[2]: "line3"})
+            == 'x: line1\ny: line2\nz: line3\n')
+    assert t.size(hole_size=5) == 27
