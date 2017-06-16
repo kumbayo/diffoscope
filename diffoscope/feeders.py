@@ -33,24 +33,32 @@ DIFF_CHUNK = 4096
 def from_raw_reader(in_file, filter=lambda buf: buf):
     def feeder(out_file):
         max_lines = Config().max_diff_input_lines
-        line_count = 0
         end_nl = False
+        line_count = 0
+
+        # If we have a maximum size, hash the content as we go along so we can
+        # display a nicer message.
         h = None
         if max_lines < float('inf'):
             h = hashlib.sha1()
+
         for buf in in_file:
             line_count += 1
             out = filter(buf)
-            if h:
+
+            if h is not None:
                 h.update(out)
+
             if line_count < max_lines:
                 out_file.write(out)
             end_nl = buf[-1] == '\n'
-        if h and line_count >= max_lines:
+
+        if h is not None and line_count >= max_lines:
             out_file.write("[ Too much input for diff (SHA1: {}) ]\n".format(
                 h.hexdigest(),
             ).encode('utf-8'))
             end_nl = True
+
         return end_nl
     return feeder
 
