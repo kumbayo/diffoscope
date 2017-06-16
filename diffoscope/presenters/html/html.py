@@ -43,7 +43,7 @@ import contextlib
 
 from diffoscope import VERSION
 from diffoscope.config import Config
-from diffoscope.difference import SideBySideDiff, DIFFON, DIFFOFF
+from diffoscope.diff import SideBySideDiff, DIFFON, DIFFOFF
 
 from ..icon import FAVICON_BASE64
 from ..utils import PrintLimitReached, DiffBlockLimitReached, \
