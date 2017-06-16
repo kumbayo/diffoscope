@@ -22,7 +22,7 @@ import re
 import pytest
 
 from diffoscope.main import main
-from diffoscope.presenters.utils import create_limited_print_func, PrintLimitReached
+from diffoscope.presenters.utils import create_limited_print_func, PrintLimitReached, PartialString
 
 from .utils.data import cwd_data, get_data
 
@@ -152,3 +152,19 @@ def test_limited_print():
     p = create_limited_print_func(fake, 5)
     p("123")
     p("456", force=True)
+
+def test_partial_string():
+    a, b = object(), object()
+    tmpl = PartialString("{0} {1}", a, b)
+    assert tmpl.holes == (a, b)
+    assert tmpl.format({a: "Hello,", b: "World!"}) == 'Hello, World!'
+    assert tmpl.pformat({a: "Hello,"}) == PartialString('Hello, {0}', b)
+    assert tmpl.pformat({b: "World!"}) == PartialString('{0} World!', a)
+    assert tmpl.base_len, tmpl.num_holes == (1, 2)
+    assert tmpl.size(hole_size=33) == 67
+    assert tmpl.pformat({a: PartialString('{0}', b)}) == PartialString('{0} {0}', b)
+    assert tmpl.pformat({a: tmpl}) == PartialString('{0} {1} {1}', a, b)
+    assert tmpl.pformat({b: tmpl}) == PartialString('{0} {0} {1}', a, b)
+    PartialString("{1}", a, b)
+    with pytest.raises(IndexError):
+        PartialString("{0} {1} {2}", a, b)

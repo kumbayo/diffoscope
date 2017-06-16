@@ -19,7 +19,10 @@
 
 import sys
 import codecs
+import collections
 import contextlib
+import string
+import _string
 
 
 class Presenter(object):
@@ -99,3 +102,166 @@ def create_limited_print_func(print_func, max_page_size):
             raise PrintLimitReached()
 
     return fn
+
+
+class Formatter(string.Formatter):
+    def arg_of_field_name(self, field_name):
+        return _string.formatter_field_name_split(field_name)[0]
+
+
+class FormatPlaceholder(object):
+    def __init__(self, ident):
+        self.ident = str(ident)
+    def __repr__(self):
+        return "%s(%r)" % (self.__class__.__name__, self.ident)
+    def __format__(self, spec):
+        result = self.ident
+        if spec:
+            result += ":" + spec
+        return "{" + result + "}"
+    def __getitem__(self, key):
+        return FormatPlaceholder(self.ident + "[" + str(key) + "]")
+    def __getattr__(self, attr):
+        return FormatPlaceholder(self.ident + "." + str(attr))
+
+
+class PartialString(object):
+    """A format string where the "holes" are indexed by arbitrary python
+    objects instead of string names or integer indexes. This is useful when you
+    need to compose these objects together, but don't want users of the partial
+    string to have to deal with artificial "indexes" for the holes.
+
+    For example:
+
+    >>> a, b = object(), object()
+    >>> tmpl = PartialString("{0} {1}", a, b)
+    >>> tmpl
+    PartialString('{0} {1}', <object object at ...>, <object object at ...>)
+    >>> tmpl.holes == (a, b)
+    True
+    >>> tmpl.format({a: "Hello,", b: "World!"})
+    'Hello, World!'
+
+    You can partially fill up the holes:
+
+    >>> tmpl.pformat({a: "Hello,"}) == PartialString('Hello, {0}', b)
+    True
+    >>> tmpl.pformat({b: "World!"}) == PartialString('{0} World!', a)
+    True
+
+    You can estimate the size of the filled-up string:
+
+    >>> tmpl.base_len, tmpl.num_holes
+    (1, 2)
+    >>> tmpl.size(hole_size=33)
+    67
+
+    You can also partially fill up the holes using more PartialStrings,
+    even recursively:
+
+    >>> tmpl.pformat({a: PartialString('{0}', b)}) == PartialString('{0} {0}', b)
+    True
+    >>> tmpl.pformat({a: tmpl}) == PartialString('{0} {1} {1}', a, b)
+    True
+    >>> tmpl.pformat({b: tmpl}) == PartialString('{0} {0} {1}', a, b)
+    True
+
+    Finally, the holes have to match what's in the format string:
+
+    >>> tmpl = PartialString("{0} {1} {2}", a, b)
+    Traceback (most recent call last):
+    ...
+    IndexError: tuple index out of range
+
+    CAVEATS:
+
+    Filling up holes using other PartialStrings, does not play very nicely with
+    format specifiers. For example:
+
+    >>> tmpl = PartialString("{0:20} {1.child}", a, b)
+    >>> tmpl.pformat({a: tmpl})
+    PartialString('{0:20} {1.child}     {1.child}', <object ...>, <object ...>)
+    >>> tmpl.pformat({b: tmpl})
+    Traceback (most recent call last):
+    ...
+    AttributeError: ... has no attribute 'child'
+
+    So you probably want to avoid such usages. The exact behaviour of these
+    might change in the future, too.
+    """
+    formatter = Formatter()
+
+    def __init__(self, fmtstr="", *holes):
+        # Ensure the format string is valid, and figure out some basic stats
+        fmt = self.formatter
+        pieces = [(len(l), f) for l, f, _, _ in fmt.parse(fmtstr)]
+        used_args = set(fmt.arg_of_field_name(f) for _, f in pieces if f is not None)
+        self.num_holes = sum(1 for _, f in pieces if f is not None)
+        self.base_len = sum(l for l, _ in pieces)
+
+        # Remove unused and duplicates in the holes objects
+        seen = collections.OrderedDict()
+        mapping = tuple(FormatPlaceholder(seen.setdefault(k, len(seen))) if i in used_args else None
+            for i, k in enumerate(holes))
+        self._fmtstr = fmt.vformat(fmtstr, mapping, {})
+        self.holes = tuple(seen.keys())
+
+    def __eq__(self, other):
+        return (self is other or isinstance(other, PartialString) and
+                other._fmtstr == self._fmtstr and
+                other.holes == self.holes)
+
+    def __repr__(self):
+        return "%s%r" % (self.__class__.__name__, (self._fmtstr,) + self.holes)
+
+    def _offset_fmtstr(self, offset):
+        return self._fmtstr.format(*(FormatPlaceholder(i + offset) for i in range(len(self.holes))))
+
+    def _pformat(self, mapping):
+        new_holes = []
+        real_mapping = []
+        for i, k in enumerate(self.holes):
+            if k in mapping:
+                v = mapping[k]
+                if isinstance(v, PartialString):
+                    out = v._offset_fmtstr(len(new_holes))
+                    new_holes.extend(v.holes)
+                else:
+                    out = v
+            else:
+                out = FormatPlaceholder(len(new_holes))
+                new_holes.append(k)
+            real_mapping.append(out)
+        return self._fmtstr.format(*real_mapping), new_holes
+
+    def size(self, hole_size=1):
+        return self.base_len + hole_size * self.num_holes
+
+    def pformat(self, mapping):
+        """Partially apply a mapping, returning a new PartialString."""
+        new_fmtstr, new_holes = self._pformat(mapping)
+        return self.__class__(new_fmtstr, *new_holes)
+
+    def format(self, mapping):
+        """Fully apply a mapping, returning a string."""
+        new_fmtstr, new_holes = self._pformat(mapping)
+        if new_holes:
+            raise ValueError("not all holes filled: %r" % new_holes)
+        return new_fmtstr
+
+    @classmethod
+    def of(cls, obj):
+        """Create a partial string for a single object.
+
+        >>> e = PartialString.of(None)
+        >>> e.pformat({None: e}) == e
+        True
+        """
+        return cls("{0}", obj)
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod(optionflags=doctest.ELLIPSIS)
+    a, b = object(), object()
+    tmpl = PartialString("{0} {1}", a, b)
