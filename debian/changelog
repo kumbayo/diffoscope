@@ -1,3 +1,84 @@
+diffoscope (83) unstable; urgency=medium
+
+  [ Chris Lamb ]
+  * New features:
+    * Add comparator for Fontconfig cache files.
+  * Bug fixes:
+    - Don't fail when run under perversely recursive input files. See
+      <https://research.swtch.com/zip> for more information. (Closes: #780761)
+    - Prevent a traceback when using --new-file with containers by passing
+      progress_name of the Member and not the member itself. (Closes: #861286)
+    - Drop passing has_differences around, fixing an issue with generating
+      files called '-'.
+  * Cleanups & refactoring:
+    - Reorder and rename FIFOFeeder arguments to prevent tools incorrectly
+      parsing as a SyntaxError.
+    - Refactor HTML and text presenters so they fit the same interface.
+    - Refactor Presenter to a singleton manager.
+    - Split output and configuration of presenters.
+    - Prevent abstraction-level violation by defining visual diff support on
+      the Presenter classes.
+    - Split diffoscope.difference into a feeders module.
+    - Document various variables.
+    - PEP8-ify and tidy a lot of files.
+
+  [ Ximin Luo ]
+  * New features:
+    - Add --max-container-depth CLI option.
+    - Add various traverse_* methods to Difference.
+    - Weigh elements in progress bar by their size.
+    - Add a reader for the JSON format.
+    - Add a --exclude-command CLI for filtering out long-running commands like
+      "readelf --debug-dump=info".
+    - Don't show +/- controls for differences with no children.
+    - Use unicode chars for the +/- controls instead of punctuation.
+  * Bug fixes:
+    - Fix --exclude control.tar.gz.
+    - Make the progress bar play nicely with --debug.
+    - When enforcing max-container-depth, show which internal files differ,
+      without showing details.
+    - Fix JSON presenter to handle recursion properly.
+    - Avoid a ZeroDivisionError in the progress bar
+    - Fix create_limited_print_func.
+  * Tests:
+    - Fix failing tests due to logging global state.
+    - Add tips about running with TMPDIR=/run/shm.
+  * Cleanups & refactoring:
+    - Remove unnecessary "dest" args to argparse.
+    - Refactor DirectoryContainer to be more similar to Container.
+    - Refactor Container abstract method names.
+    - Remove unused imports and tidy up Container.comparisons().
+    - rename get_{filtered => adjusted}_members_sizes for consistency.
+    - Move tests/comparators/utils up one directory.
+    - html-dir: show/hide diff comments which can be very large.
+    - Refactor html-dir presenter to a class instance avoiding global state.
+    - Move side-by-side and linediff algorithms to difference.py.
+    - difference: has_children -> has_visible_children, and take into account
+      comments.
+    - Move ydiff/linediff from diffoscope.{difference => diff} to group
+      unified_diff-related things together
+
+  [ Maria Glukhova ]
+  * New features:
+    - Add visual comparisons for JPEG, ICO, PNG and static GIF images.
+  * Test improvements:
+    - Test that external tools providers are being returned when tool is not
+      found.
+    - Add tests for OutputParserError and ContainerExtractionError.
+  * Cleanups & refactoring:
+    * Ignore text difference if we have a visual one.
+    * Fix link formatting and typo in README.
+    * Rename html_output to compute_visual_diffs and explain its purpose.
+    * Removed duplicated functions from diff.py.
+
+  [ Mattia Rizzolo ]
+  * Export junit-xml style test report when building on Jenkins.
+
+  [ anthraxx ]
+  * Extend external Arch Linux tools list.
+
+ -- Chris Lamb <lamby@debian.org>  Sun, 18 Jun 2017 15:34:59 +0800
+
 diffoscope (82) experimental; urgency=medium
 
   [ Chris Lamb ]
