@@ -23,8 +23,8 @@ from diffoscope.comparators.binary import FilesystemFile
 from diffoscope.comparators.device import Device
 from diffoscope.comparators.utils.specialize import specialize
 
-from utils.data import load_fixture, get_data, normalize_zeros
-from utils.tools import skip_unless_tools_exist
+from ..utils.data import load_fixture, get_data, normalize_zeros
+from ..utils.tools import skip_unless_tools_exist
 
 
 text_ascii1 = load_fixture('text_ascii1')

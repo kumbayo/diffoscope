@@ -23,9 +23,9 @@ from diffoscope.comparators import ComparatorManager
 from diffoscope.comparators.binary import FilesystemFile
 from diffoscope.comparators.utils.specialize import specialize
 
-from utils.data import load_fixture, data, get_data, normalize_zeros
-from utils.tools import skip_unless_tools_exist, skip_unless_module_exists
-from utils.nonexisting import assert_non_existing
+from ..utils.data import load_fixture, data, get_data, normalize_zeros
+from ..utils.tools import skip_unless_tools_exist, skip_unless_module_exists
+from ..utils.nonexisting import assert_non_existing
 
 
 try:

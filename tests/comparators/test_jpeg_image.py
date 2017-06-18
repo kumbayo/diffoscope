@@ -24,8 +24,8 @@ from diffoscope.config import Config
 from diffoscope.comparators.image import JPEGImageFile
 from diffoscope.comparators.missing_file import MissingFile
 
-from utils.data import load_fixture, get_data
-from utils.tools import skip_unless_tools_exist, skip_unless_tool_is_at_least
+from ..utils.data import load_fixture, get_data
+from ..utils.tools import skip_unless_tools_exist, skip_unless_tool_is_at_least
 
 
 image1 = load_fixture('test1.jpg')
@@ -34,10 +34,12 @@ image1_meta = load_fixture('test1_meta.jpg')
 image2_meta = load_fixture('test2_meta.jpg')
 
 def identify_version():
-    out = subprocess.check_output(['identify', '-version'])
+    out = subprocess.check_output(['identify', '-version']).decode('utf-8')
     # First line is expected to look like
     # "Version: ImageMagick 6.9.6-6 Q16 x86_64 20161125 ..."
-    return out.decode('utf-8').splitlines()[0].split()[2].strip()
+    if not out.startswith("Version: ImageMagick "):
+        return '0.0.0'
+    return out.splitlines()[0].split()[2].strip()
 
 def test_identification(image1):
     assert isinstance(image1, JPEGImageFile)
@@ -71,3 +73,12 @@ def differences_meta(image1_meta, image2_meta):
 def test_diff_meta(differences_meta):
     expected_diff = get_data('jpeg_image_meta_expected_diff')
     assert differences_meta[-1].unified_diff == expected_diff
+
+@skip_unless_tools_exist('img2txt', 'compose', 'convert', 'identify')
+def test_has_visuals(monkeypatch, image1, image2):
+    monkeypatch.setattr(Config(), 'compute_visual_diffs', True)
+    jpg_diff = image1.compare(image2)
+    assert len(jpg_diff.details) == 2
+    assert len(jpg_diff.details[0].visuals) == 2
+    assert jpg_diff.details[0].visuals[0].data_type == 'image/png;base64'
+    assert jpg_diff.details[0].visuals[1].data_type == 'image/gif;base64'

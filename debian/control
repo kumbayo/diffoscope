@@ -17,13 +17,18 @@ Build-Depends:
  debhelper (>= 10),
  default-jdk-headless <!nocheck> | default-jdk <!nocheck>,
  dh-python (>= 2.20160818~),
+ docx2txt <!nocheck>,
  dpkg-dev (>= 1.17.14),
+ device-tree-compiler (>= 1.4.2) <!nocheck>,
  enjarify <!nocheck>,
  fontforge-extras <!nocheck>,
  fp-utils <!nocheck>,
  ghc <!nocheck>,
  ghostscript <!nocheck>,
+ giflib-tools <!nocheck>,
  imagemagick <!nocheck>,
+ jsbeautifier <!nocheck>,
+ libarchive-tools <!nocheck>,
  libjs-jquery <!nocheck>,
  libjs-jquery-hotkeys <!nocheck>,
  libjs-jquery-isonscreen <!nocheck>,
@@ -31,11 +36,13 @@ Build-Depends:
  libjs-jquery-throttle-debounce <!nocheck>,
  llvm <!nocheck>,
  mono-utils <!nocheck>,
+ odt2txt <!nocheck>,
+ oggvideotools <!nocheck>,
  openssh-client <!nocheck>,
  pdftk <!nocheck>,
+ pgpdump <!nocheck>,
  poppler-utils <!nocheck>,
  python-argcomplete,
- jsbeautifier <!nocheck>,
  python3-all,
  python3-debian <!nocheck>,
  python3-docutils,
@@ -48,15 +55,17 @@ Build-Depends:
  python3-rpm <!nocheck>,
  python3-setuptools,
  python3-tlsh (>= 3.4.1) <!nocheck>,
+ r-base-core <!nocheck>,
  rpm2cpio <!nocheck>,
  sng <!nocheck>,
  sqlite3 <!nocheck>,
  squashfs-tools <!nocheck>,
+ tcpdump <!nocheck>,
  unzip <!nocheck>,
  xxd <!nocheck> | vim-common <!nocheck>,
 Standards-Version: 3.9.8
 Homepage: https://diffoscope.org/
-Vcs-Git: https://anonscm.debian.org/git/reproducible/diffoscope.git
+Vcs-Git: https://anonscm.debian.org/git/reproducible/diffoscope.git -b experimental
 Vcs-Browser: https://anonscm.debian.org/git/reproducible/diffoscope.git
 
 Package: diffoscope

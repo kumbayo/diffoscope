@@ -1,0 +1,71 @@
+@@ -1,18 +1,18 @@
+ /dts-v1/;
+ // magic:		0xd00dfeed
+-// totalsize:		0x10aa4 (68260)
++// totalsize:		0x10ae3 (68323)
+ // off_dt_struct:	0x38
+-// off_dt_strings:	0x10234
++// off_dt_strings:	0x10264
+ // off_mem_rsvmap:	0x28
+ // version:		17
+ // last_comp_version:	16
+ // boot_cpuid_phys:	0x0
+-// size_dt_strings:	0x870
+-// size_dt_struct:	0x101fc
++// size_dt_strings:	0x87f
++// size_dt_struct:	0x1022c
+ 
+ / {
+     compatible = "openpandora,omap3-pandora-1ghz", "ti,omap36xx", "ti,omap3";
+     interrupt-parent = <0x00000001>;
+     #address-cells = <0x00000001>;
+     #size-cells = <0x00000001>;
+     model = "Pandora Handheld Console 1GHz";
+@@ -82,14 +82,15 @@
+                 #size-cells = <0x00000001>;
+                 ranges = <0x00000000 0x00002000 0x00002000>;
+                 pinmux@30 {
+                     compatible = "ti,omap3-padconf", "pinctrl-single";
+                     reg = <0x00000030 0x00000238>;
+                     #address-cells = <0x00000001>;
+                     #size-cells = <0x00000000>;
++                    #pinctrl-cells = <0x00000001>;
+                     #interrupt-cells = <0x00000001>;
+                     interrupt-controller;
+                     pinctrl-single,register-width = <0x00000010>;
+                     pinctrl-single,function-mask = <0x0000ff1f>;
+                     linux,phandle = <0x000000e4>;
+                     phandle = <0x000000e4>;
+                     pinmux_mmc1_pins {
+@@ -240,14 +241,15 @@
+                 clockdomains {
+                 };
+                 pinmux@a00 {
+                     compatible = "ti,omap3-padconf", "pinctrl-single";
+                     reg = <0x00000a00 0x0000005c>;
+                     #address-cells = <0x00000001>;
+                     #size-cells = <0x00000000>;
++                    #pinctrl-cells = <0x00000001>;
+                     #interrupt-cells = <0x00000001>;
+                     interrupt-controller;
+                     pinctrl-single,register-width = <0x00000010>;
+                     pinctrl-single,function-mask = <0x0000ff1f>;
+                     pinmux_twl4030_vpins {
+                         pinctrl-single,pins = <0x00000000 0x00000100 0x00000002 0x00000100 0x00000006 0x00000000 0x00000018 0x00000000>;
+                         linux,phandle = <0x000000e7>;
+@@ -3500,14 +3502,15 @@
+             ti,abb_info = <0x000f7314 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00124f80 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x001437c8 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x0014fb18 0x00000001 0x00000000 0x00000000 0x00000000 0x00000000>;
+         };
+         pinmux@480025a0 {
+             compatible = "ti,omap3-padconf", "pinctrl-single";
+             reg = <0x480025a0 0x0000005c>;
+             #address-cells = <0x00000001>;
+             #size-cells = <0x00000000>;
++            #pinctrl-cells = <0x00000001>;
+             #interrupt-cells = <0x00000001>;
+             interrupt-controller;
+             pinctrl-single,register-width = <0x00000010>;
+             pinctrl-single,function-mask = <0x0000ff1f>;
+             pinctrl-names = "default";
+             pinctrl-0 = <0x00000106 0x00000107>;
+             pinmux_hsusb2_2_pins {

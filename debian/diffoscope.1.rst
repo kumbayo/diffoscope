@@ -14,7 +14,9 @@ in-depth comparison of files, archives, and directories
 SYNOPSIS
 ========
 
-  diffoscope [-h] [--version] [--debug] [--html output] [--text output] [--max-report-size bytes] [--css url] file1 file2
+  diffoscope [-h] [--json output] [OPTIONS] file1 file2
+  diffoscope [-h] [OPTIONS] diff_file
+  diffoscope [-h] [OPTIONS] < diff_file
 
 DESCRIPTION
 ===========
@@ -36,13 +38,16 @@ project and was formerly known as “debbindiff”.
 OPTIONS
 =======
 
--h, --help               show this help message and exit
+-h, --help               show a detailed help message and exit
 --version                show program's version number and exit
 --debug                  display debug messages
---html output            write HTML report to given file
+--json output            write JSON report to given file
                          (use - for standard output)
 --text output            write plain text report to given file
                          (use - for standard output)
+--html output            write HTML report to given file
+                         (use - for standard output)
+--html-dir output        write multi-HTML report to given directory
 --max-report-size BYTES
                          maximum bytes written in report (default: 2048000)
 --max-diff-block-lines MAX_DIFF_BLOCK_LINES

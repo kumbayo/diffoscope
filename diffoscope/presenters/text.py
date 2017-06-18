@@ -18,11 +18,16 @@
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
 import re
+import sys
+import logging
 
 from diffoscope.diff import color_unified_diff
 from diffoscope.config import Config
 
-from .utils import Presenter, create_limited_print_func, PrintLimitReached
+from .utils import Presenter, create_limited_print_func, PrintLimitReached, \
+    make_printer
+
+logger = logging.getLogger(__name__)
 
 
 class TextPresenter(Presenter):
@@ -37,6 +42,26 @@ class TextPresenter(Presenter):
         self.color = color
 
         super().__init__()
+
+    @classmethod
+    def run(cls, data, difference, parsed_args):
+        with make_printer(data['target']) as fn:
+            color = {
+                'auto': fn.output.isatty(),
+                'never': False,
+                'always': True,
+            }[parsed_args.text_color]
+
+            presenter = cls(fn, color)
+
+            try:
+                presenter.start(difference)
+            except UnicodeEncodeError:
+                logger.critical(
+                    "Console is unable to print Unicode characters. Set e.g. "
+                    "PYTHONIOENCODING=utf-8"
+                )
+                sys.exit(2)
 
     def start(self, difference):
         try:

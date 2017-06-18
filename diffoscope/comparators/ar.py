@@ -37,18 +37,17 @@ logger = logging.getLogger(__name__)
 # the __.PKGDEF member which is just a text file containing the Go interface.
 
 class ArContainer(LibarchiveContainer):
-    def get_members(self):
-        members = LibarchiveContainer.get_members(self)
-        cls = members.__class__
+    def get_adjusted_members(self):
+        members = list(super().get_adjusted_members())
         known_ignores = {
             "/" : "this is the symbol table, already accounted for in other output",
             "//" : "this is the table for GNU long names, already accounted for in the archive filelist",
         }
-        filtered_out = cls([p for p in members.items() if p[0] in known_ignores])
+        filtered_out = [p for p in members if p[0] in known_ignores]
         if filtered_out:
-            for k, v in filtered_out.items():
+            for k, v in filtered_out:
                 logger.debug("ignored ar member '%s' because %s", k, known_ignores[k])
-        return cls([p for p in members.items() if p[0] not in known_ignores])
+        return [p for p in members if p[0] not in known_ignores]
 
 class ArSymbolTableDumper(Command):
     @tool_required('nm')

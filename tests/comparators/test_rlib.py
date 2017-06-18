@@ -23,11 +23,11 @@ import subprocess
 
 from diffoscope.comparators.ar import ArFile
 
-from utils import diff_ignore_line_numbers
-from utils.data import load_fixture, get_data
-from utils.tools import skip_unless_tools_exist, skip_unless_tool_is_at_least, \
+from ..utils import diff_ignore_line_numbers
+from ..utils.data import load_fixture, get_data
+from ..utils.tools import skip_unless_tools_exist, skip_unless_tool_is_at_least, \
     skip_if_binutils_does_not_support_x86
-from utils.nonexisting import assert_non_existing
+from ..utils.nonexisting import assert_non_existing
 
 
 

@@ -34,6 +34,7 @@ def get_named_temporary_file(*args, **kwargs):
 
     return f
 
+
 def get_temporary_directory(*args, **kwargs):
     kwargs['suffix'] = kwargs.pop('suffix', '_diffoscope')
 
@@ -41,6 +42,7 @@ def get_temporary_directory(*args, **kwargs):
     _DIRS.append(d)
 
     return d
+
 
 def clean_all_temp_files():
     logger.debug("Cleaning %d temp files", len(_FILES))

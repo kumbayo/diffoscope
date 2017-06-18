@@ -21,6 +21,12 @@ EXTERNAL_TOOLS = {
     'apktool': {
         'debian': 'apktool',
     },
+    'bsdtar': {
+        'debian': 'libarchive-tools',
+        'arch': 'libarchive',
+        'Fedora': 'bsdtar',
+        'FreeBSD': 'libarchive',
+    },
     'bzip2': {
         'debian': 'bzip2',
         'arch': 'bzip2',
@@ -36,6 +42,10 @@ EXTERNAL_TOOLS = {
         'debian': 'diffutils',
         'arch': 'diffutils',
     },
+    'compare': {
+        'debian': 'imagemagick',
+        'arch': 'imagemagick',
+    },
     'cpio': {
         'debian': 'cpio',
         'arch': 'cpio',
@@ -44,9 +54,17 @@ EXTERNAL_TOOLS = {
         'debian': 'diffutils',
         'arch': 'diffutils',
     },
+    'docx2txt': {
+        'debian': 'docx2txt',
+        'arch': 'docx2txt',
+    },
     'enjarify': {
         'debian': 'enjarify',
         'arch': 'enjarify',
+    },
+    'fdtdump': {
+        'debian': 'device-tree-compiler',
+        'arch': 'dtc',
     },
     'file': {
         'debian': 'file',
@@ -59,6 +77,10 @@ EXTERNAL_TOOLS = {
     'getfacl': {
         'debian': 'acl',
         'arch': 'acl',
+    },
+    'gifbuild': {
+        'debian': 'giflib-tools',
+        'arch': 'giflib',
     },
     'ghc': {
         'debian': 'ghc',
@@ -94,6 +116,7 @@ EXTERNAL_TOOLS = {
     },
     'js-beautify': {
         'debian': 'jsbeautifier',
+        'arch': 'python-jsbeautifier',
     },
     'llvm-bcanalyzer': {
         'debian': 'llvm',
@@ -133,6 +156,17 @@ EXTERNAL_TOOLS = {
         'debian': 'binutils-multiarch',
         'arch': 'binutils',
     },
+    'odt2txt': {
+        'debian': 'odt2txt',
+        'arch': 'odt2txt',
+    },
+    'oggDump': {
+        'debian': 'oggvideotools',
+    },
+    'pgpdump': {
+        'debian': 'pgpdump',
+        'arch': 'pgpdump',
+    },
     'pdftk': {
         'debian': 'pdftk',
         'FreeBSD': 'pdftk',
@@ -166,6 +200,10 @@ EXTERNAL_TOOLS = {
         'arch': 'rpmextract',
         'FreeBSD': 'rpm2cpio',
     },
+    'Rscript': {
+        'debian': 'r-base-core',
+        'arch': 'r',
+    },
     'showttf': {
         'debian': 'fontforge-extras',
     },
@@ -188,6 +226,10 @@ EXTERNAL_TOOLS = {
     'tar': {
         'debian': 'tar',
         'arch': 'tar',
+    },
+    'tcpdump': {
+        'debian': 'tcpdump',
+        'arch': 'tcpdump',
     },
     'unsquashfs': {
         'debian': 'squashfs-tools',

@@ -1,3 +1,87 @@
+diffoscope (82) experimental; urgency=medium
+
+  [ Chris Lamb ]
+  * New features:
+    - Add support for comparing Pcap files. (Closes: #858867)
+    - Add support for .docx and .odt files via docx2txt & odt2txt.
+      (Closes: #859056)
+    - Add support for PGP files via pgpdump. (Closes: #859034)
+    - Add support for comparing Ogg Vorbis files.
+  * Bug fixes:
+    - Don't crash on invalid archives; print a useful error instead.
+      (Closes: #833697)
+    - Ensure tests and the runtime environment can locate binaries in
+      /usr/sbin (eg. tcpdump)
+  * Tests:
+    - Ensure that PATH is modified.
+    - Ensure @tool_required raises RequiredToolNotFound.
+    - Don't assume that /sbin/init exists; locate any /sbin binary manually and
+      then test for that. This should prevent FTBFS on travis-ci.org.
+    - Show packages installed in report output.
+  * Misc:
+    - comparators.bzip2: Don't print error output from bzip2 call.
+    - comparators.pcap: Show the delta, not the absolute time.
+    - Use /usr/share/dpkg/pkg-info.mk over manual calls to dpkg-parsechangelog
+      in debian/rules.
+    - Document PYTHONPATH usage when running tests in README.Source.
+    - Add internal documentation for @tool_required decorator.
+
+  [ beuc@beuc.net ]
+  * Display differences in zip platform-specific timestamps. (Closes: #859117)
+
+  [ Ximin Luo ]
+  * Add support for R .rds and .rdb object files.
+
+  [ Vagrant Cascadian ]
+  * Add support for .dtb (device tree blob) files (Closes: #861109).
+
+ -- Chris Lamb <lamby@debian.org>  Wed, 26 Apr 2017 16:17:57 +0200
+
+diffoscope (81) experimental; urgency=medium
+
+  [ Chris Lamb ]
+  * Correct meaningless "1234-content" metadata when introspecting files
+    within archives. This was a regression since #854723 due to the use of
+    auto-incrementing on-disk filenames. (Closes: #858223)
+  * Refactor get_compressed_content_name.
+
+  [ Ximin Luo ]
+  * Improve ISO9660/DOS/MBR check.
+
+ -- Chris Lamb <lamby@debian.org>  Mon, 27 Mar 2017 16:21:17 +0100
+
+diffoscope (80) experimental; urgency=medium
+
+  * Ensure that we really are using ImageMagick and not, for example, the
+    GraphicsMagick compatibility layer installed by
+    graphicsmagick-imagemagick-compat. (Closes: #857940)
+  * Factor out the unicode decoding of the identify -version output.
+  * travis.yml: Don't build tags.
+
+ -- Chris Lamb <lamby@debian.org>  Thu, 16 Mar 2017 17:06:45 +0100
+
+diffoscope (79) experimental; urgency=medium
+
+  [ Chris Lamb ]
+  * Extract SquashFS images in one go rather than per-file, speeding up (eg.)
+    Tails ISO comparison by ~10x.
+  * Support newer versions of cbfstool to avoid test failures.
+    (Closes: #856446)
+  * Skip icc test that varies on endian if the Debian-specific patch is not
+    present. (Closes: #856447)
+  * Compare GIF images using gifbuild. (Closes: #857610)
+  * Also interpret "DOS/MBR boot sector" files as ISO images as they may have
+    been processed by isohybrid.
+  * Progress bar:
+    - Hide bar if we are running with --debug mode.
+    - Update prior to working on an item so the displayed filename is correct.
+
+  [ Maria Glukhova ]
+  * Improve AndroidManifest.xml comparison for APK files.
+    - Indicate the AndroidManifest.xml type. (Closes: #850758)
+
+ -- Chris Lamb <lamby@debian.org>  Thu, 16 Mar 2017 09:38:16 +0100
+
 diffoscope (78) unstable; urgency=medium
 
   [ Brett Smith ]

@@ -2,7 +2,8 @@
 #
 # diffoscope: in-depth comparison of files, archives, and directories
 #
-# Copyright © 2016 Chris Lamb <lamby@debian.org>
+# Copyright © 2016 Emanuel Bronshtein <e3amn2l@gmx.com>
+# Copyright © 2016 Vagrant Cascadian <vagrant@debian.org>
 #
 # diffoscope is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,13 +18,22 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
-import os
+import re
+
+from diffoscope.tools import tool_required
+from diffoscope.difference import Difference
+
+from .utils.file import File
+from .utils.command import Command
 
 
-def get_compressed_content_name(path, expected_extension):
-    basename = os.path.basename(path)
-    if basename.endswith(expected_extension):
-        name = basename[:-len(expected_extension)]
-    else:
-        name = "%s-content" % basename
-    return name
+class DeviceTreeContents(Command):
+    @tool_required('fdtdump')
+    def cmdline(self):
+        return ['fdtdump', self.path]
+
+class DeviceTreeFile(File):
+    RE_FILE_TYPE = re.compile(r'^Device Tree Blob')
+
+    def compare_details(self, other, source=None):
+        return [Difference.from_command(DeviceTreeContents, self.path, other.path)]

@@ -18,13 +18,19 @@
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
 import re
+import logging
 import functools
+import subprocess
 
+from diffoscope.config import Config
 from diffoscope.tools import tool_required
 from diffoscope.difference import Difference
 
+from .image import pixel_difference, flicker_difference, same_size
 from .utils.file import File
 from .utils.command import Command
+
+logger = logging.getLogger(__name__)
 
 
 class Sng(Command):
@@ -42,4 +48,29 @@ class PngFile(File):
     RE_FILE_TYPE = re.compile(r'^PNG image data\b')
 
     def compare_details(self, other, source=None):
-        return [Difference.from_command(Sng, self.path, other.path, source='sng')]
+        sng_diff = Difference.from_command(Sng, self.path, other.path, source='sng')
+        differences = [sng_diff]
+
+        if sng_diff is not None and Config().compute_visual_diffs and \
+                same_size(self, other):
+            try:
+                logger.debug(
+                    "Generating visual difference for %s and %s",
+                    self.path,
+                    other.path,
+                )
+                content_diff = Difference(
+                    None,
+                    self.path,
+                    other.path,
+                    source="Image content",
+                )
+                content_diff.add_visuals([
+                    pixel_difference(self.path, other.path),
+                    flicker_difference(self.path, other.path),
+                ])
+                differences.append(content_diff)
+            except subprocess.CalledProcessError:  # noqa
+                pass
+
+        return differences

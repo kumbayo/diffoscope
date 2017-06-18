@@ -20,10 +20,11 @@
 import pytest
 
 from diffoscope.comparators.image import ICOImageFile
+from diffoscope.config import Config
 
-from utils.data import load_fixture, get_data
-from utils.tools import skip_unless_tools_exist, skip_unless_tool_is_at_least
-from test_jpeg_image import identify_version
+from ..utils.data import load_fixture, get_data
+from ..utils.tools import skip_unless_tools_exist, skip_unless_tool_is_at_least
+from .test_jpeg_image import identify_version
 
 
 image1 = load_fixture('test1.ico')
@@ -56,3 +57,12 @@ def differences_meta(image1_meta, image2_meta):
 def test_diff_meta(differences_meta):
     expected_diff = get_data('ico_image_meta_expected_diff')
     assert differences_meta[-1].unified_diff == expected_diff
+
+@skip_unless_tools_exist('img2txt', 'compose', 'convert', 'identify')
+def test_has_visuals(monkeypatch, image1, image2):
+    monkeypatch.setattr(Config(), 'compute_visual_diffs', True)
+    ico_diff = image1.compare(image2)
+    assert len(ico_diff.details) == 2
+    assert len(ico_diff.details[0].visuals) == 2
+    assert ico_diff.details[0].visuals[0].data_type == 'image/png;base64'
+    assert ico_diff.details[0].visuals[1].data_type == 'image/gif;base64'

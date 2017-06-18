@@ -3,6 +3,7 @@
 # diffoscope: in-depth comparison of files, archives, and directories
 #
 # Copyright © 2016 Brett Smith <debbug@brettcsmith.org>
+# Copyright © 2017 Chris Lamb <lamby@debian.org>
 #
 # diffoscope is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,14 +19,24 @@
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
+import subprocess
 
+from diffoscope.path import set_path
 from diffoscope.locale import set_locale
 from diffoscope.progress import ProgressManager
 from diffoscope.comparators import ComparatorManager
 
 
-# Ensure set_locale fixture runs before all tests.
-set_locale = pytest.fixture(autouse=True, scope='session')(set_locale)
+def pytest_configure(config):
+    # Ensure set_path fixture runs before all tests.
+    set_path()
+
+
+@pytest.fixture(autouse=True, scope='session')
+def locale():
+    # Ensure set_locale fixture runs before each test.
+    set_locale()
+
 
 @pytest.fixture(autouse=True)
 def reload_comparators():
@@ -33,6 +44,21 @@ def reload_comparators():
     # state
     ComparatorManager().reload()
 
+
 @pytest.fixture(autouse=True)
 def reset_progress():
     ProgressManager().reset()
+
+
+def pytest_report_header(config):
+    if config.option.verbose == 0:
+        return
+
+    try:
+        return ["", "Installed Debian packages:", "", subprocess.check_output((
+            'dpkg-query',
+            '-W',
+            '-f', '${db:Status-Abbrev}\t${binary:Package} (${Version})\n'
+        ))]
+    except:
+        pass

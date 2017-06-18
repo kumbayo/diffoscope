@@ -26,7 +26,7 @@ from diffoscope.comparators.binary import FilesystemFile
 from diffoscope.comparators.directory import compare_directories
 from diffoscope.comparators.utils.specialize import specialize
 
-from utils.data import data, get_data
+from ..utils.data import data, get_data
 
 
 TEST_FILE1_PATH = data('text_ascii1')

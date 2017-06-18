@@ -21,13 +21,14 @@ import pytest
 
 from diffoscope.comparators.zip import ZipFile, MozillaZipFile
 
-from utils.data import load_fixture, get_data
-from utils.tools import skip_unless_tools_exist
-from utils.nonexisting import assert_non_existing
+from ..utils.data import load_fixture, get_data
+from ..utils.tools import skip_unless_tools_exist
+from ..utils.nonexisting import assert_non_existing
 
 
 zip1 = load_fixture('test1.zip')
 zip2 = load_fixture('test2.zip')
+zip3 = load_fixture('test3.zip')
 mozzip1 = load_fixture('test1.mozzip')
 mozzip2 = load_fixture('test2.mozzip')
 
@@ -43,6 +44,10 @@ def test_no_differences(zip1):
 def differences(zip1, zip2):
     return zip1.compare(zip2).details
 
+@pytest.fixture
+def differences2(zip1, zip3):
+    return zip1.compare(zip3).details
+
 @skip_unless_tools_exist('zipinfo')
 def test_metadata(differences):
     expected_diff = get_data('zip_zipinfo_expected_diff')
@@ -54,6 +59,11 @@ def test_compressed_files(differences):
     assert differences[1].source2 == 'dir/text'
     expected_diff = get_data('text_ascii_expected_diff')
     assert differences[1].unified_diff == expected_diff
+
+@skip_unless_tools_exist('zipinfo', 'bsdtar')
+def test_extra_fields(differences2):
+    expected_diff = get_data('zip_bsdtar_expected_diff')
+    assert differences2[0].unified_diff == expected_diff
 
 @skip_unless_tools_exist('zipinfo')
 def test_compare_non_existing(monkeypatch, zip1):

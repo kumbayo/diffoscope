@@ -22,7 +22,6 @@ import os.path
 import hashlib
 import logging
 import functools
-import collections
 
 from debian.deb822 import Dsc
 
@@ -87,11 +86,9 @@ class DebControlContainer(Container):
 
         return re.compile(re.escape(version))
 
-    def get_members(self):
-        return collections.OrderedDict([
-            (self._trim_version_number(name), self.get_member(name))
-            for name in self.get_member_names()
-        ])
+    def get_adjusted_members(self):
+        for name in self.get_member_names():
+            yield self._trim_version_number(name), self.get_member(name)
 
     def get_member_names(self):
         field = self.source.deb822.get('Files') or \
@@ -181,8 +178,8 @@ class DotChangesFile(DebControlFile):
 
         return True
 
-    def compare(self, other, source=None):
-        differences = super().compare(other, source)
+    def compare(self, other, *args, **kwargs):
+        differences = super().compare(other, *args, **kwargs)
 
         if differences is None:
             return None

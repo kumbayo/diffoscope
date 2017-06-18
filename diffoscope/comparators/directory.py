@@ -17,15 +17,16 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
+import itertools
 import os
 import re
 import logging
 import subprocess
+from collections import OrderedDict
 
 from diffoscope.exc import RequiredToolNotFound
 from diffoscope.tools import tool_required
 from diffoscope.progress import Progress
-from diffoscope.excludes import filter_excludes
 from diffoscope.difference import Difference
 
 from .binary import FilesystemFile
@@ -131,7 +132,7 @@ class Directory(object):
         return file.is_directory()
 
 
-class FilesystemDirectory(object):
+class FilesystemDirectory(Directory):
     def __init__(self, path):
         self._path = path
 
@@ -157,8 +158,6 @@ class FilesystemDirectory(object):
         return False
 
     def compare(self, other, source=None):
-        from .utils.compare import compare_files
-
         differences = []
         try:
             listing_diff = Difference.from_text('\n'.join(list_files(self.path)),
@@ -169,25 +168,10 @@ class FilesystemDirectory(object):
         except RequiredToolNotFound:
             logger.info("Unable to find 'getfacl'.")
         differences.extend(compare_meta(self.name, other.name))
+
         my_container = DirectoryContainer(self)
         other_container = DirectoryContainer(other)
-        my_names = my_container.get_member_names()
-        other_names = other_container.get_member_names()
-        to_compare = set(my_names).intersection(other_names)
-        to_compare = set(filter_excludes(to_compare))
-        with Progress(len(to_compare)) as p:
-            for name in sorted(to_compare):
-                my_file = my_container.get_member(name)
-                other_file = other_container.get_member(name)
-                inner_difference = compare_files(
-                                       my_file, other_file, source=name)
-                meta_differences = compare_meta(my_file.name, other_file.name)
-                if meta_differences and not inner_difference:
-                    inner_difference = Difference(None, my_file.path, other_file.path)
-                if inner_difference:
-                    inner_difference.add_details(meta_differences)
-                    differences.append(inner_difference)
-                p.step(msg=name)
+        differences.extend(my_container.compare(other_container))
         if not differences:
             return None
         difference = Difference(None, self.path, other.path, source)
@@ -205,3 +189,31 @@ class DirectoryContainer(Container):
             return FilesystemDirectory(member_path)
         else:
             return FilesystemFile(os.path.join(self.source.path, member_name), container=self)
+
+    def comparisons(self, other):
+        my_members = OrderedDict(self.get_adjusted_members_sizes())
+        other_members = OrderedDict(other.get_adjusted_members_sizes())
+        total_size = sum(x[1] for x in my_members.values()) + sum(x[1] for x in other_members.values())
+
+        to_compare = set(my_members.keys()).intersection(other_members.keys())
+        with Progress(total_size) as p:
+            for name in sorted(to_compare):
+                my_file, my_size = my_members[name]
+                other_file, other_size = other_members[name]
+                p.begin_step(my_size + other_size, msg=name)
+                yield my_file, other_file, name
+
+    def compare(self, other, source=None):
+        from .utils.compare import compare_files
+
+        def compare_pair(file1, file2, source):
+            inner_difference = compare_files(
+                                   file1, file2, source=source)
+            meta_differences = compare_meta(file1.name, file2.name)
+            if meta_differences and not inner_difference:
+                inner_difference = Difference(None, file1.path, file2.path)
+            if inner_difference:
+                inner_difference.add_details(meta_differences)
+            return inner_difference
+
+        return filter(None, itertools.starmap(compare_pair, self.comparisons(other)))

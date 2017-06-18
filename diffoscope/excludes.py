@@ -19,24 +19,32 @@
 
 import fnmatch
 import logging
+import re
 
 from diffoscope.config import Config
 
 logger = logging.getLogger(__name__)
 
 
-def filter_excludes(filenames):
-    result = []
+def command_excluded(command):
+    for y in Config().exclude_commands:
+        if re.search(y, command):
+            logger.debug("Excluding command '%s' as it matches pattern '%s'", command, y)
+            return True
+    return False
 
+def filter_excludes(filenames):
     for x in filenames:
         for y in Config().excludes:
             if fnmatch.fnmatchcase(x, y):
                 logger.debug("Excluding %s as it matches pattern '%s'", x, y)
                 break
         else:
-            result.append(x)
-
-    return result
+            yield x
 
 def any_excluded(*filenames):
-    return len(filter_excludes(filenames)) != len(filenames)
+    for x in filenames:
+        for y in Config().excludes:
+            if fnmatch.fnmatchcase(x, y):
+                return True
+    return False

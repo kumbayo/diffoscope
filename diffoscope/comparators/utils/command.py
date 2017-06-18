@@ -20,6 +20,7 @@
 import io
 import abc
 import logging
+import shlex
 import subprocess
 import threading
 
@@ -29,7 +30,9 @@ logger = logging.getLogger(__name__)
 class Command(object, metaclass=abc.ABCMeta):
     def __init__(self, path):
         self._path = path
-        logger.debug("Executing %s", ' '.join(self.cmdline()))
+
+    def start(self):
+        logger.debug("Executing %s", ' '.join([shlex.quote(x) for x in self.cmdline()]))
         self._process = subprocess.Popen(self.cmdline(),
                                          shell=False, close_fds=True,
                                          env=self.env(),
@@ -56,6 +59,9 @@ class Command(object, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def cmdline(self):
         raise NotImplementedError()
+
+    def shell_cmdline(self):
+        return ' '.join(map(lambda x: '{}' if x == self.path else shlex.quote(x), self.cmdline()))
 
     def env(self):
         return None # inherit parent environment by default
@@ -86,7 +92,7 @@ class Command(object, metaclass=abc.ABCMeta):
         returncode = self._process.wait()
         logger.debug(
             "%s returned (exit code: %d)",
-            ' '.join(self.cmdline()),
+            ' '.join([shlex.quote(x) for x in self.cmdline()]),
             returncode,
         )
         return returncode

@@ -18,14 +18,17 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
+import os
 import re
 import stat
 import logging
+import functools
 import subprocess
 import collections
 
 from diffoscope.tools import tool_required
 from diffoscope.difference import Difference
+from diffoscope.tempfiles import get_temporary_directory
 
 from .utils.file import File
 from .device import Device
@@ -44,7 +47,11 @@ class SquashfsSuperblock(Command):
 
     def filter(self, line):
         # strip filename
-        return re.sub(r'^(Found a valid .*) on .*', '\\1', line.decode('utf-8')).encode('utf-8')
+        return re.sub(
+            r'^(Found a valid .*) on .*',
+            '\\1',
+            line.decode('utf-8'),
+        ).encode('utf-8')
 
 
 class SquashfsListing(Command):
@@ -66,6 +73,17 @@ class SquashfsMember(ArchiveMember):
 
     def is_device(self):
         return False
+
+    @property
+    def path(self):
+        # Use our extracted version and also avoid creating a temporary
+        # directory per-file in ArchiveMember.path.
+        return os.path.join(self.container._temp_dir, self._name)
+
+    @property
+    def name(self):
+        # Don't include the leading "." in the output  (eg. "./etc/shadow")
+        return self._name[1:]
 
 
 class SquashfsRegularFile(SquashfsMember):
@@ -122,7 +140,9 @@ class SquashfsDirectory(Directory, SquashfsMember):
 class SquashfsSymlink(Symlink, SquashfsMember):
     # Example line:
     # lrwxrwxrwx user/group   6 2015-06-24 14:47 squashfs-root/link -> broken
-    LINE_RE = re.compile(r'^\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+(?P<member_name>.*)\s+->\s+(?P<destination>.*)$')
+    LINE_RE = re.compile(
+        r'^\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+(?P<member_name>.*)\s+->\s+(?P<destination>.*)$',
+    )
 
     @staticmethod
     def parse(line):
@@ -146,31 +166,41 @@ class SquashfsSymlink(Symlink, SquashfsMember):
 class SquashfsDevice(Device, SquashfsMember):
     # Example line:
     # crw-r--r-- root/root  1,  3 2015-06-24 14:47 squashfs-root/null
-    LINE_RE = re.compile(r'^(?P<kind>c|b)\S+\s+\S+\s+(?P<major>\d+),\s*(?P<minor>\d+)\s+\S+\s+\S+\s+(?P<member_name>.*)$')
+    LINE_RE = re.compile(
+        r'^(?P<kind>c|b)\S+\s+\S+\s+(?P<major>\d+),\s*(?P<minor>\d+)\s+\S+\s+\S+\s+(?P<member_name>.*)$',
+    )
 
-    KIND_MAP = { 'c': stat.S_IFCHR,
-                 'b': stat.S_IFBLK,
-               }
+    KIND_MAP = {
+        'c': stat.S_IFCHR,
+        'b': stat.S_IFBLK,
+    }
 
     @staticmethod
     def parse(line):
         m = SquashfsDevice.LINE_RE.match(line)
         if not m:
             raise SquashfsInvalidLineFormat("invalid line format")
+
         d = m.groupdict()
         try:
             d['mode'] = SquashfsDevice.KIND_MAP[d['kind']]
             del d['kind']
         except KeyError:
             raise SquashfsInvalidLineFormat("unknown device kind %s" % d['kind'])
+
         try:
             d['major'] = int(d['major'])
         except ValueError:
-            raise SquashfsInvalidLineFormat("unable to parse major number %s" % d['major'])
+            raise SquashfsInvalidLineFormat(
+                "unable to parse major number %s" % d['major'],
+            )
+
         try:
             d['minor'] = int(d['minor'])
         except ValueError:
-            raise SquashfsInvalidLineFormat("unable to parse minor number %s" % d['minor'])
+            raise SquashfsInvalidLineFormat(
+                "unable to parse minor number %s" % d['minor'],
+            )
         return d
 
     def __init__(self, archive, member_name, mode, major, minor):
@@ -186,7 +216,8 @@ class SquashfsDevice(Device, SquashfsMember):
         return True
 
 
-SQUASHFS_LS_MAPPING = {
+class SquashfsContainer(Archive):
+    MEMBER_CLASS = {
         'd': SquashfsDirectory,
         'l': SquashfsSymlink,
         'c': SquashfsDevice,
@@ -194,50 +225,75 @@ SQUASHFS_LS_MAPPING = {
         '-': SquashfsRegularFile
     }
 
-
-class SquashfsContainer(Archive):
-    @tool_required('unsquashfs')
-    def entries(self, path):
-        # We pass `-d ''` in order to get a listing with the names we actually
-        # need to use when extracting files
-        cmd = ['unsquashfs', '-d', '', '-lls', path]
-        output = subprocess.check_output(cmd, shell=False).decode('utf-8')
-        header = True
-        for line in output.rstrip('\n').split('\n'):
-            if header:
-                if line == '':
-                    header = False
-                continue
-            if len(line) > 0 and line[0] in SQUASHFS_LS_MAPPING:
-                try:
-                    cls = SQUASHFS_LS_MAPPING[line[0]]
-                    yield cls, cls.parse(line)
-                except SquashfsInvalidLineFormat:
-                    logger.warning('Invalid squashfs entry: %s', line)
-            else:
-                logger.warning('Unknown squashfs entry: %s', line)
-
     def open_archive(self):
-        return collections.OrderedDict([(kwargs['member_name'], (cls, kwargs)) for cls, kwargs in self.entries(self.source.path)])
+        return True
 
     def close_archive(self):
         pass
 
-    def get_member_names(self):
-        return self.archive.keys()
-
-    @tool_required('unsquashfs')
-    def extract(self, member_name, dest_dir):
-        if '..' in member_name.split('/'):
-            raise ValueError("relative path in squashfs")
-        cmd = ['unsquashfs', '-n', '-f', '-d', dest_dir, self.source.path, member_name]
-        logger.debug("unsquashfs %s into %s", member_name, dest_dir)
-        subprocess.check_call(cmd, shell=False, stdout=subprocess.PIPE)
-        return '%s%s' % (dest_dir, member_name)
-
     def get_member(self, member_name):
-        cls, kwargs = self.archive[member_name]
-        return cls(self, **kwargs)
+        self.ensure_unpacked()
+        cls, kwargs = self._members[member_name]
+        return cls(self, member_name, **kwargs)
+
+    def extract(self, member_name, destdir):
+        # Ignore destdir argument and use our unpacked path
+        self.ensure_unpacked()
+        return member_name
+
+    def get_member_names(self):
+        self.ensure_unpacked()
+        return self._members.keys()
+
+    def ensure_unpacked(self):
+        if hasattr(self, '_members'):
+            return
+
+        self._members = collections.OrderedDict()
+        self._temp_dir = get_temporary_directory().name
+
+        logger.debug("Extracting %s to %s", self.source.path, self._temp_dir)
+
+        output = subprocess.check_output((
+            'unsquashfs',
+            '-n',
+            '-f',
+            '-no',
+            '-li',
+            '-d', '.',
+            self.source.path,
+        ), stderr=subprocess.PIPE, cwd=self._temp_dir)
+
+        output = iter(output.decode('utf-8').rstrip('\n').split('\n'))
+
+        # Skip headers
+        for _ in iter(functools.partial(next, output), ''):
+            pass
+
+        for line in output:
+            if not line:
+                continue
+
+            try:
+                cls = self.MEMBER_CLASS[line[0]]
+            except KeyError:
+                logger.debug("Unknown squashfs entry: %s", line)
+                continue
+
+            try:
+                kwargs = cls.parse(line)
+            except SquashfsInvalidLineFormat:
+                continue
+
+            # Pop to avoid duplicating member name in the key and the value
+            member_name = kwargs.pop('member_name')
+
+            self._members[member_name] = (cls, kwargs)
+
+        logger.debug(
+            "Extracted %d entries from %s to %s",
+            len(self._members), self.source.path, self._temp_dir,
+        )
 
 
 class SquashfsFile(File):
@@ -245,5 +301,7 @@ class SquashfsFile(File):
     RE_FILE_TYPE = re.compile(r'^Squashfs filesystem\b')
 
     def compare_details(self, other, source=None):
-        return [Difference.from_command(SquashfsSuperblock, self.path, other.path),
-                Difference.from_command(SquashfsListing, self.path, other.path)]
+        return [
+            Difference.from_command(SquashfsSuperblock, self.path, other.path),
+            Difference.from_command(SquashfsListing, self.path, other.path),
+        ]

@@ -21,8 +21,8 @@ import pytest
 
 from diffoscope.comparators.json import JSONFile
 
-from utils.data import load_fixture, get_data
-from utils.nonexisting import assert_non_existing
+from ..utils.data import load_fixture, get_data
+from ..utils.nonexisting import assert_non_existing
 
 
 json1 = load_fixture('test1.json')

@@ -20,13 +20,16 @@
 import abc
 import logging
 import itertools
-import collections
+from collections import OrderedDict
 
 from diffoscope.config import Config
+from diffoscope.difference import Difference
+from diffoscope.excludes import filter_excludes
 from diffoscope.progress import Progress
 
 from ..missing_file import MissingFile
 
+from .file import path_apparent_size
 from .fuzzy import perform_fuzzy_matching
 
 NO_COMMENT = None
@@ -46,17 +49,41 @@ class Container(object, metaclass=abc.ABCMeta):
     def __init__(self, source):
         self._source = source
 
+        # Keep a count of how "nested" we are
+        self.depth = 0
+        if hasattr(source, 'container') and source.container is not None:
+            self.depth = source.container.depth + 1
+
     @property
     def source(self):
         return self._source
 
-    def get_members(self):
-        """
-        Returns a dictionary. The key is what is used to match when comparing
-        containers.
-        """
+    @abc.abstractmethod
+    def get_member_names(self):
+        raise NotImplementedError()
 
-        return collections.OrderedDict(self.get_all_members())
+    @abc.abstractmethod
+    def get_member(self, member_name):
+        raise NotImplementedError()
+
+    def get_filtered_members(self):
+        # If your get_member implementation is O(n) then this will be O(n^2)
+        # cost. In such cases it is HIGHLY RECOMMENDED to override this as well
+        for name in filter_excludes(self.get_member_names()):
+            yield name, self.get_member(name)
+
+    def get_adjusted_members(self):
+        """
+        Returns an iterable of pairs. The key is what is used to match when
+        comparing containers. This may be used to e.g. strip off version
+        numbers, hashes, etc, efficiently for known file formats, so that we
+        don't need to use the expensive tlsh "fuzzy-hashing" logic.
+
+        Note that containers with 1 element are already force-compared against
+        other containers with 1 element, so you don't need to override this
+        method for those cases.
+        """
+        return self.get_filtered_members()
 
     def lookup_file(self, *names):
         """
@@ -82,57 +109,66 @@ class Container(object, metaclass=abc.ABCMeta):
 
         return container.lookup_file(*remainings)
 
-    @abc.abstractmethod
-    def get_member_names(self):
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def get_member(self, member_name):
-        raise NotImplementedError()
-
-    def get_all_members(self):
-        # If your get_member implementation is O(n) then this will be O(n^2)
-        # cost. In such cases it is HIGHLY RECOMMENDED to override this as well
-        for name in self.get_member_names():
-            yield name, self.get_member(name)
+    def get_adjusted_members_sizes(self):
+        for name, member in self.get_adjusted_members():
+            if member.is_directory():
+                size = 4096 # default "size" of a directory
+            else:
+                size = path_apparent_size(member.path)
+            yield name, (member, size)
 
     def comparisons(self, other):
-        my_members = self.get_members()
-        my_reminders = collections.OrderedDict()
-        other_members = other.get_members()
+        my_members = OrderedDict(self.get_adjusted_members_sizes())
+        other_members = OrderedDict(other.get_adjusted_members_sizes())
+        total_size = sum(x[1] for x in itertools.chain(my_members.values(), other_members.values()))
+        # TODO: progress could be a bit more accurate here, give more weight to fuzzy-hashed files
+        # TODO: merge DirectoryContainer.comparisons() into this
 
-        with Progress(max(len(my_members), len(other_members))) as p:
-            # keep it sorted like my members
-            while my_members:
-                my_member_name, my_member = my_members.popitem(last=False)
-                if my_member_name in other_members:
-                    yield my_member, other_members.pop(my_member_name), NO_COMMENT
-                    p.step(msg=my_member.progress_name)
-                else:
-                    my_reminders[my_member_name] = my_member
+        with Progress(total_size) as p:
+            def prep_yield(my_name, other_name, comment=NO_COMMENT):
+                my_member, my_size = my_members.pop(my_name)
+                other_member, other_size = other_members.pop(other_name)
+                p.begin_step(my_size + other_size, msg=my_member.progress_name)
+                return my_member, other_member, comment
 
-            my_members = my_reminders
+            # if both containers contain 1 element, compare these
+            if len(my_members) == 1 and len(other_members) == 1:
+                yield prep_yield(next(iter(my_members.keys())),
+                                 next(iter(other_members.keys())))
+                return
+
+            other_names = set(other_members.keys())
+            # keep it sorted like my_members
+            both_names = [name for name in my_members.keys() if name in other_names]
+            for name in both_names:
+                yield prep_yield(name, name)
+
             for my_name, other_name, score in perform_fuzzy_matching(my_members, other_members):
-                comment = 'Files similar despite different names (difference score: %d)' % score
-                yield my_members.pop(my_name), other_members.pop(other_name), comment
-                p.step(2, msg=my_name)
+                comment = "Files similar despite different names" \
+                    " (difference score: {})".format(score)
+                yield prep_yield(my_name, other_name, comment)
 
             if Config().new_file:
-                for my_member in my_members.values():
+                for my_member, my_size in my_members.values():
+                    p.begin_step(my_size, msg=my_member.progress_name)
                     yield my_member, MissingFile('/dev/null', my_member), NO_COMMENT
-                    p.step(msg=my_member)
 
-                for other_member in other_members.values():
+                for other_member, other_size in other_members.values():
+                    p.begin_step(other_size, msg=other_member.progress_name)
                     yield MissingFile('/dev/null', other_member), other_member, NO_COMMENT
-                    p.step(msg=other_member)
 
-    def compare(self, other, source=None):
-        from .compare import compare_commented_files
+    def compare(self, other, source=None, no_recurse=False):
+        from .compare import compare_files
 
-        return itertools.starmap(
-            compare_commented_files,
-            self.comparisons(other),
-        )
+        def compare_pair(file1, file2, comment):
+            difference = compare_files(file1, file2, source=None, diff_content_only=no_recurse)
+            if comment:
+                if difference is None:
+                    difference = Difference(None, file1.name, file2.name)
+                difference.add_comment(comment)
+            return difference
+
+        return filter(None, itertools.starmap(compare_pair, self.comparisons(other)))
 
 
 class MissingContainer(Container):

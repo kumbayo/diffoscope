@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
+import contextlib
 import os
 import re
 import pytest
@@ -39,7 +40,6 @@ def init_fixture(filename):
 def data(filename):
     return os.path.join(
         os.path.dirname(os.path.dirname(__file__)),
-        '..',
         'data',
         filename,
     )
@@ -48,6 +48,20 @@ def data(filename):
 def get_data(filename):
     with open(data(filename), encoding='utf-8') as f:
         return f.read()
+
+
+# https://code.activestate.com/recipes/576620-changedirectory-context-manager/#c3
+@contextlib.contextmanager
+def cwd_data():
+    """A context manager which changes the working directory to the given
+    path, and then changes it back to its previous value on exit.
+    """
+    prev_cwd = os.getcwd()
+    os.chdir(data(""))
+    try:
+        yield
+    finally:
+        os.chdir(prev_cwd)
 
 
 def load_fixture(filename):

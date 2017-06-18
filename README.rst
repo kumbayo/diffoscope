@@ -42,6 +42,16 @@ To get all possible options, run::
 
     $ bin/diffoscope --help
 
+If you have enough RAM, you can improve performance by running::
+
+    $ TMPDIR=/run/shm bin/diffoscope very-big-input-0/ very-big-input-1/
+
+By default this allowed to use up half of RAM; for more add something like::
+
+    tmpfs   /run/shm    tmpfs   size=80%    0   0
+
+to your ``/etc/fstab``; see ``man mount`` for details.
+
 External dependencies
 ---------------------
 
@@ -73,13 +83,12 @@ as follows:
 
 
 There are `more detailed instructions available
-<https://www.debian.org/Bugs/Reporting>`__ more detailed instructions
-available] about reporting a bug in the Debian bug tracker.
+<https://www.debian.org/Bugs/Reporting>`__ about reporting a bug in the Debian bug tracker.
 
 If you're on a Debian-based system, you can install and use the ``reportbug``
 package to help walk you through the process.
 
-You can also submit patches to the Debian bug tracke. Start by cloning the `Git
+You can also submit patches to the Debian bug tracker. Start by cloning the `Git
 repository <https://anonscm.debian.org/git/reproducible/diffoscope.git/>`__,
 make your changes and commit them as you normally would. You can then use
 Git's ``format-patch`` command to save your changes as a series of patches that
@@ -129,10 +138,10 @@ Once the tracker.debian.org entry appears, consider tweeting the release on
 Contributors
 ------------
 
-Lunar, Reiner Herrmann, Chris Lamb, Helmut Grohne, Holger Levsen,
-Mattia Rizzolo, Daniel Kahn Gillmor, Paul Gevers, Peter De Wachter,
-Yasushi SHOJI, Clemens Lang, Ed Maste, Joachim Breitner, Mike McQuaid.
-Baptiste Daroussin, Levente Polyak.
+Lunar, Reiner Herrmann, Chris Lamb, Mattia Rizzolo, Ximin Luo, Helmut Grohne,
+Holger Levsen, Daniel Kahn Gillmor, Paul Gevers, Peter De Wachter, Yasushi
+SHOJI, Clemens Lang, Ed Maste, Joachim Breitner, Mike McQuaid. Baptiste
+Daroussin, Levente Polyak.
 
 Contact
 -------

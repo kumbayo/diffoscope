@@ -25,6 +25,7 @@ import logging
 import libarchive
 import collections
 
+from diffoscope.exc import ContainerExtractionError
 from diffoscope.excludes import any_excluded
 from diffoscope.tempfiles import get_temporary_directory
 
@@ -172,10 +173,6 @@ class LibarchiveContainer(Archive):
         self.ensure_unpacked()
         return self._members.keys()
 
-    def extract(self, member_name, dest_dir):
-        self.ensure_unpacked()
-        return self._members[member_name]
-
     def get_member(self, member_name):
         with libarchive.file_reader(self.source.path) as archive:
             for entry in archive:
@@ -183,10 +180,16 @@ class LibarchiveContainer(Archive):
                     return self.get_subclass(entry)
         raise KeyError('%s not found in archive', member_name)
 
-    def get_all_members(self):
+    def get_filtered_members(self):
         with libarchive.file_reader(self.source.path) as archive:
             for entry in archive:
+                if any_excluded(entry.pathname):
+                    continue
                 yield entry.pathname, self.get_subclass(entry)
+
+    def extract(self, member_name, dest_dir):
+        self.ensure_unpacked()
+        return self._members[member_name]
 
     def get_subclass(self, entry):
         if entry.isdir:
@@ -227,11 +230,20 @@ class LibarchiveContainer(Archive):
                 logger.debug("Extracting %s to %s", entry.pathname, dst)
 
                 os.makedirs(os.path.dirname(dst), exist_ok=True)
-                with open(dst, 'wb') as f:
-                    for block in entry.get_blocks():
-                        f.write(block)
+                try:
+                    with open(dst, 'wb') as f:
+                        for block in entry.get_blocks():
+                            f.write(block)
+                except Exception as exc:
+                    raise ContainerExtractionError(entry.pathname, exc)
 
         logger.debug(
             "Extracted %d entries from %s to %s",
             len(self._members), self.source.path, tmpdir,
         )
+
+    def comparisons(self, other):
+        def hide_trivial_dirs(item):
+            file1, file2, comment = item
+            return not (isinstance(file1, Directory) and isinstance(file2, Directory) and comment is None)
+        return filter(hide_trivial_dirs, super().comparisons(other))

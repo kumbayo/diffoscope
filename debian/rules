@@ -1,15 +1,15 @@
 #!/usr/bin/make -f
 
-MANPAGES = $(patsubst %.1.rst,%.1,$(wildcard debian/*.1.rst))
-VERSION_dch := $(shell dpkg-parsechangelog --show-field Version)
-VERSION_py := $(shell awk '/^VERSION = / {gsub(/"/, "", $$3); print $$3}' diffoscope/__init__.py )
-DIST := $(shell dpkg-parsechangelog --show-field Distribution)
+include /usr/share/dpkg/pkg-info.mk
 
-ifneq ($(VERSION_dch),$(VERSION_py))
- ifneq ($(DIST),UNRELEASED)
-  ifneq (,$(filter %-backports,$(DIST)))
-    ifeq ($(VERSION_dch:~bpo8+1=),$(VERSION_py))
-     $(info Building a Debian backport, accepting version mismatch $(VERSION_py) <-> $(VERSION_dch))
+MANPAGES = $(patsubst %.1.rst,%.1,$(wildcard debian/*.1.rst))
+PY_VERSION := $(shell awk '/^VERSION = / {gsub(/"/, "", $$3); print $$3}' diffoscope/__init__.py )
+
+ifneq ($(DEB_VERSION),$(PY_VERSION))
+ ifneq ($(DEB_DISTRIBUTION),UNRELEASED)
+  ifneq (,$(filter %-backports,$(DEB_DISTRIBUTION)))
+    ifeq ($(DEB_VERSION:~bpo8+1=),$(PY_VERSION))
+     $(info Building a Debian backport, accepting version mismatch $(PY_VERSION) <-> $(DEB_VERSION))
     else
      $(error Version in debian/changelog does not match diffoscope version or backport policy)
     endif
@@ -25,24 +25,14 @@ export PYBUILD_TEST_ARGS = -vv -r sxX -l --cov=diffoscope --cov-report=term-miss
 export PYBUILD_AFTER_TEST = debian/tests/basic-command-line
 export PYBUILD_AFTER_INSTALL = rm -rvf '{destdir}/{install_dir}/htmlcov' '{destdir}/{install_dir}/.coverage'
 
+ifneq ($(JENKINS_EXPORTS_DIR),)
+  export PYBUILD_BEFORE_TEST = mkdir -pv $(JENKINS_EXPORTS_DIR)/test-results
+  export PYBUILD_TEST_ARGS += --junit-xml=$(JENKINS_EXPORTS_DIR)/test-results/tests.xml
+endif
+
+
 %:
 	dh $@ --with python3 --with bash-completion --buildsystem=pybuild
-
-override_dh_python3:
-	dh_python3 -p diffoscope \
-		--recommends=python-debian \
-		--recommends=rpm-python \
-		--recommends=tlsh \
-		--recommends=guestfs \
-		--recommends=argcomplete \
-		--recommends=progressbar
-
-override_dh_gencontrol:
-	TOOLS="$$(bin/diffoscope --list-tools=debian | awk -F': ' '/Available-in-Debian-packages/ { print $$2 }' | \
-		sed -e 's/\(^\| \)\(coreutils\|diffutils\|e2fsprogs\|findutils\|gzip\|tar\)\(,\|$$\)//g')"; \
-		[ -n "$$TOOLS" ] || { echo '--list-tools failed' >&2; exit 1; }; \
-		echo "diffoscope:Recommends=$$TOOLS" >> debian/diffoscope.substvars
-	dh_gencontrol -O--buildsystem=pybuild
 
 debian/%.1: debian/%.1.rst
 	rst2man $< $@
@@ -56,8 +46,21 @@ override_dh_auto_build: debian/diffoscope.bash-completion $(MANPAGES)
 override_dh_installman: $(MANPAGES)
 	dh_installman -O--buildsystem=pybuild
 
+override_dh_python3:
+	dh_python3 -p diffoscope \
+		--recommends=python-debian \
+		--recommends=rpm-python \
+		--recommends=tlsh \
+		--recommends=guestfs \
+		--recommends=argcomplete \
+		--recommends=progressbar
+
+override_dh_gencontrol:
+	bin/diffoscope --list-debian-substvars >> debian/diffoscope.substvars
+	dh_gencontrol -O--buildsystem=pybuild
+
 diffoscope/presenters/icon.py: favicon.png
-	(echo '# Generated from favicon.png'; \
+	(echo '# Generated from $@'; \
 	 echo 'FAVICON_BASE64 = """'; \
 	 base64 $<; \
 	 echo '""".replace("\\n", "")'; \

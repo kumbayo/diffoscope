@@ -18,10 +18,11 @@ class PyTest(TestCommand):
         super().finalize_options()
 
     def run_tests(self):
-        #import here, cause outside the eggs aren't loaded
+        # Inline import, otherwise the eggs aren't loaded
         import pytest
         errno = pytest.main(self.pytest_args)
         sys.exit(errno)
+
 
 setup(
     name='diffoscope',
@@ -32,9 +33,9 @@ setup(
     author_email='lunar@debian.org',
     license='GPL-3+',
     url='https://diffoscope.org/',
-    packages=find_packages(),
+    packages=find_packages(exclude=['tests', 'tests.*']),
     tests_require=['pytest'],
-    cmdclass = {'test': PyTest},
+    cmdclass={'test': PyTest},
     entry_points={
         'console_scripts': [
                 'diffoscope=diffoscope.main:main'

@@ -21,7 +21,6 @@ import re
 import os.path
 import logging
 import subprocess
-import collections
 
 from diffoscope.tools import tool_required
 from diffoscope.difference import Difference
@@ -29,7 +28,6 @@ from diffoscope.difference import Difference
 
 from .utils.file import File
 from .utils.archive import Archive
-from .utils.filenames import get_compressed_content_name
 
 logger = logging.getLogger(__name__)
 
@@ -41,11 +39,8 @@ class GzipContainer(Archive):
     def close_archive(self):
         pass
 
-    def get_members(self):
-        return collections.OrderedDict({'gzip-content': self.get_member(self.get_member_names()[0])})
-
     def get_member_names(self):
-        return [get_compressed_content_name(self.source.path, '.gz')]
+        return [self.get_compressed_content_name('.gz')]
 
     @tool_required('gzip')
     def extract(self, member_name, dest_dir):

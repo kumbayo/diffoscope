@@ -22,7 +22,7 @@ import os
 from diffoscope.comparators.binary import FilesystemFile
 from diffoscope.comparators.utils.specialize import specialize
 
-from utils.data import get_data
+from ..utils.data import get_data
 
 
 def test_destination(tmpdir):

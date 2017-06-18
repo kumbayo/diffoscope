@@ -27,8 +27,8 @@ from diffoscope.comparators.directory import FilesystemDirectory
 from diffoscope.comparators.missing_file import MissingFile
 from diffoscope.comparators.utils.specialize import specialize
 
-from utils.data import data, load_fixture, get_data
-from utils.tools import skip_unless_tools_exist, \
+from ..utils.data import data, load_fixture, get_data
+from ..utils.tools import skip_unless_tools_exist, \
     skip_if_binutils_does_not_support_x86, skip_unless_module_exists
 
 obj1 = load_fixture('test1.o')

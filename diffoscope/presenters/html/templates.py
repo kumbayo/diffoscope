@@ -119,14 +119,14 @@ HEADER = """<!DOCTYPE html>
       background: #faa;
       cursor: pointer;
     }
-    .diffoscope .diffcontrol {
+    .diffoscope .diffcontrol, .diffoscope .diffcontrol-nochildren {
       float: left;
       margin-right: 0.3em;
       cursor: pointer;
       display: none; /* currently, only available in html-dir output where jquery is enabled */
     }
     .diffoscope .diffcontrol-double {
-      line-height: 200%%;
+      line-height: 250%%;
     }
     .diffoscope .colines {
       width: 3em;
@@ -173,23 +173,25 @@ $(function() {
   var diffcontrols = $(".diffcontrol");
   diffcontrols.on('click', function(evt) {
     var control = $(this);
-    var target = control.parent().siblings('table.diff, div.difference');
+    var parent = control.parent();
+    var target = $.merge(parent.siblings('table.diff, div.difference'), parent.find('div.comment'));
     var orig = target;
     if (evt.shiftKey) {
-        var parent = control.parent().parent();
-        control = parent.find('.diffcontrol');
-        target = parent.find('table.diff, div.difference');
+        var gparent = parent.parent();
+        control = gparent.find('.diffcontrol');
+        target = gparent.find('table.diff, div.difference, div.comment');
     }
     if (orig.is(":visible")) {
         target.hide();
-        control.text("[+]");
+        control.text("⊞");
     } else {
         target.show();
-        control.text("[−]");
+        control.text("⊟");
     }
   });
   diffcontrols.attr('title','shift-click to show/hide all children too.');
   diffcontrols.show();
+  $(".diffcontrol-nochildren").show();
 });
 </script>
 """

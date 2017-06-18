@@ -24,8 +24,10 @@ import magic
 import logging
 import subprocess
 
-from diffoscope.exc import RequiredToolNotFound, OutputParsingError
+from diffoscope.exc import RequiredToolNotFound, OutputParsingError, \
+    ContainerExtractionError
 from diffoscope.tools import tool_required
+from diffoscope.config import Config
 from diffoscope.profiling import profile
 from diffoscope.difference import Difference
 
@@ -37,6 +39,22 @@ except ImportError:  # noqa
 SMALL_FILE_THRESHOLD = 65536 # 64 kiB
 
 logger = logging.getLogger(__name__)
+
+
+def path_apparent_size(path=".", visited=None):
+    # should output the same as `du --apparent-size -bs "$path"`
+    if not visited:
+        stat = os.stat(path, follow_symlinks=False)
+        visited = { stat.st_ino: stat.st_size }
+    if os.path.isdir(path) and not os.path.islink(path):
+        for entry in os.scandir(path):
+            inode = entry.inode()
+            if inode in visited:
+                continue
+            visited[inode] = entry.stat(follow_symlinks=False).st_size
+            if entry.is_dir(follow_symlinks=False):
+                folder_size(entry.path, visited)
+    return sum(visited.values())
 
 
 class File(object, metaclass=abc.ABCMeta):
@@ -188,14 +206,25 @@ class File(object, metaclass=abc.ABCMeta):
 
     def _compare_using_details(self, other, source):
         details = []
+        difference = Difference(None, self.name, other.name, source=source)
+
         if hasattr(self, 'compare_details'):
-            details.extend(filter(None, self.compare_details(other, source)))
+            details.extend(self.compare_details(other, source))
         if self.as_container:
-            details.extend(filter(None, self.as_container.compare(other.as_container)))
+            # Don't recursve forever on archive quines, etc.
+            depth = self._as_container.depth
+            no_recurse = (depth >= Config().max_container_depth)
+            if no_recurse:
+                msg = "Reached max container depth ({})".format(depth)
+                logger.debug(msg)
+                difference.add_comment(msg)
+            details.extend(self.as_container.compare(other.as_container, no_recurse=no_recurse))
+
+        details = [x for x in details if x]
         if not details:
             return None
-        difference = Difference(None, self.name, other.name, source=source)
         difference.add_details(details)
+
         return difference
 
     def has_same_content_as(self, other):
@@ -270,6 +299,12 @@ class File(object, metaclass=abc.ABCMeta):
                     return None
                 difference.add_comment("Error parsing output of `%s` for %s" %
                         (e.command, e.object_class))
+            except ContainerExtractionError as e:
+                difference = self.compare_bytes(other, source=source)
+                if difference is None:
+                    return None
+                difference.add_comment("Error extracting '{}', falling back to "
+                    "binary comparison ('{}')".format(e.pathname, e.wrapped_exc))
             return difference
         return self.compare_bytes(other, source)
 

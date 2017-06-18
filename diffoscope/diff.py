@@ -22,7 +22,6 @@ import io
 import os
 import errno
 import fcntl
-import hashlib
 import logging
 import threading
 import subprocess
@@ -147,13 +146,17 @@ class DiffParser(object):
         if self._remaining_hunk_lines == 0 or line[0] != self._direction:
             removed = self._block_len - Config().max_diff_block_lines_saved
             if removed:
-                self._diff.write('%s[ %d lines removed ]\n' % (self._direction, removed))
+                self._diff.write('%s[ %d lines removed ]\n' % (
+                    self._direction,
+                    removed,
+                ))
             return self.read_hunk(line)
 
         self._block_len += 1
         self._remaining_hunk_lines -= 1
 
         return self.skip_block
+
 
 @tool_required('diff')
 def run_diff(fifo1, fifo2, end_nl_q1, end_nl_q2):
@@ -186,8 +189,9 @@ def run_diff(fifo1, fifo2, end_nl_q1, end_nl_q2):
 
     return parser.diff
 
+
 class FIFOFeeder(threading.Thread):
-    def __init__(self, feeder, fifo_path, end_nl_q=None, *, daemon=True):
+    def __init__(self, feeder, fifo_path, end_nl_q=None, daemon=True, *args):
         os.mkfifo(fifo_path)
         super().__init__(daemon=daemon)
         self.feeder = feeder
@@ -210,7 +214,7 @@ class FIFOFeeder(threading.Thread):
             # more need for the FIFO, so stop the thread.
             while True:
                 try:
-                    fifo_fd = os.open(self.fifo_path, os.O_WRONLY | os.O_NONBLOCK)
+                    fd = os.open(self.fifo_path, os.O_WRONLY | os.O_NONBLOCK)
                 except OSError as error:
                     if error.errno != errno.ENXIO:
                         raise
@@ -220,8 +224,9 @@ class FIFOFeeder(threading.Thread):
                     break
 
             # Now clear the fd's nonblocking flag to let writes block normally.
-            fcntl.fcntl(fifo_fd, fcntl.F_SETFL, 0)
-            with open(fifo_fd, 'wb') as fifo:
+            fcntl.fcntl(fd, fcntl.F_SETFL, 0)
+
+            with open(fd, 'wb') as fifo:
                 # The queue works around a unified diff limitation: if there's
                 # no newlines in both don't make it a difference
                 end_nl = self.feeder(fifo)
@@ -236,51 +241,19 @@ class FIFOFeeder(threading.Thread):
             raise self._exception
 
 
-def empty_file_feeder():
-    def feeder(f):
-        return False
-    return feeder
-
-def make_feeder_from_raw_reader(in_file, filter=lambda buf: buf):
-    def feeder(out_file):
-        h = None
-        end_nl = False
-        max_lines = Config().max_diff_input_lines
-        line_count = 0
-
-        if max_lines < float("inf"):
-            h = hashlib.sha1()
-
-        for buf in in_file:
-            line_count += 1
-            out = filter(buf)
-            if h:
-                h.update(out)
-            if line_count < max_lines:
-                out_file.write(out)
-            end_nl = buf[-1] == '\n'
-
-        if h and line_count >= max_lines:
-            out_file.write("[ Too much input for diff (SHA1: {}) ]\n".format(
-                h.hexdigest(),
-            ).encode('utf-8'))
-            end_nl = True
-
-        return end_nl
-    return feeder
-
 def diff(feeder1, feeder2):
     tmpdir = get_temporary_directory().name
 
     fifo1_path = os.path.join(tmpdir, 'fifo1')
     fifo2_path = os.path.join(tmpdir, 'fifo2')
     with FIFOFeeder(feeder1, fifo1_path) as fifo1, \
-         FIFOFeeder(feeder2, fifo2_path) as fifo2:
+            FIFOFeeder(feeder2, fifo2_path) as fifo2:
         return run_diff(fifo1_path, fifo2_path, fifo1.end_nl_q, fifo2.end_nl_q)
+
 
 def reverse_unified_diff(diff):
     res = []
-    for line in diff.splitlines(True): # keepends=True
+    for line in diff.splitlines(keepends=True):
         found = DiffParser.RANGE_RE.match(line)
 
         if found:
@@ -303,6 +276,7 @@ def reverse_unified_diff(diff):
             res.append(line)
     return ''.join(res)
 
+
 def color_unified_diff(diff):
     RESET = '\033[0m'
     RED, GREEN, CYAN = '\033[31m', '\033[32m', '\033[0;36m'
@@ -315,3 +289,255 @@ def color_unified_diff(diff):
         }[m.group(1)], m.group(0), RESET)
 
     return re_diff_change.sub(repl, diff)
+
+DIFFON = "\x01"
+DIFFOFF = "\x02"
+
+def _linediff_sane(x):
+    r = ""
+    for i in x:
+        j = ord(i)
+        if i not in ['\t', '\n'] and (j < 32):
+            r = r + "."
+        else:
+            r = r + i
+    return r
+
+def linediff(s, t, diffon, diffoff):
+    '''
+    Original line diff algorithm of diff2html. It's character based.
+    '''
+    if len(s):
+        s = ''.join([ _linediff_sane(c) for c in s ])
+    if len(t):
+        t = ''.join([ _linediff_sane(c) for c in t ])
+
+    m, n = len(s), len(t)
+    d = [[(0, 0) for i in range(n+1)] for i in range(m+1)]
+
+
+    d[0][0] = (0, (0, 0))
+    for i in range(m+1)[1:]:
+        d[i][0] = (i,(i-1, 0))
+    for j in range(n+1)[1:]:
+        d[0][j] = (j,(0, j-1))
+
+    for i in range(m+1)[1:]:
+        for j in range(n+1)[1:]:
+            if s[i-1] == t[j-1]:
+                cost = 0
+            else:
+                cost = 1
+            d[i][j] = min((d[i-1][j][0] + 1, (i-1, j)),
+                          (d[i][j-1][0] + 1, (i, j-1)),
+                          (d[i-1][j-1][0] + cost, (i-1, j-1)))
+
+    l = []
+    coord = (m, n)
+    while coord != (0, 0):
+        l.insert(0, coord)
+        x, y = coord
+        coord = d[x][y][1]
+
+    l1 = []
+    l2 = []
+
+    for coord in l:
+        cx, cy = coord
+        child_val = d[cx][cy][0]
+
+        father_coord = d[cx][cy][1]
+        fx, fy = father_coord
+        father_val = d[fx][fy][0]
+
+        diff = (cx-fx, cy-fy)
+
+        if diff == (0, 1):
+            l1.append("")
+            l2.append(diffon + t[fy] + diffoff)
+        elif diff == (1, 0):
+            l1.append(diffon + s[fx] + diffoff)
+            l2.append("")
+        elif child_val-father_val == 1:
+            l1.append(diffon + s[fx] + diffoff)
+            l2.append(diffon + t[fy] + diffoff)
+        else:
+            l1.append(s[fx])
+            l2.append(t[fy])
+
+    return ''.join(l1).replace(diffoff + diffon, ''), ''.join(l2).replace(diffoff + diffon, '')
+
+
+class SideBySideDiff(object):
+    """Calculates a side-by-side diff from a unified diff."""
+
+    def __init__(self, unified_diff, diffon=DIFFON, diffoff=DIFFOFF):
+        self.unified_diff = unified_diff
+        self.diffon = diffon
+        self.diffoff = diffoff
+        self.reset()
+
+    def reset(self):
+        self.buf = []
+        self.add_cpt = 0
+        self.del_cpt = 0
+        self.line1 = 0
+        self.line2 = 0
+        self.hunk_off1 = 0
+        self.hunk_size1 = 0
+        self.hunk_off2 = 0
+        self.hunk_size2 = 0
+        self._bytes_processed = 0
+
+    @property
+    def bytes_processed(self):
+        return self._bytes_processed
+
+    def empty_buffer(self):
+        if self.del_cpt == 0 or self.add_cpt == 0:
+            for l in self.buf:
+                yield from self.yield_line(l[0], l[1])
+
+        elif self.del_cpt != 0 and self.add_cpt != 0:
+            l0, l1 = [], []
+            for l in self.buf:
+                if l[0] != None:
+                    l0.append(l[0])
+                if l[1] != None:
+                    l1.append(l[1])
+            max_len = (len(l0) > len(l1)) and len(l0) or len(l1)
+            for i in range(max_len):
+                s0, s1 = "", ""
+                if i < len(l0):
+                    s0 = l0[i]
+                if i < len(l1):
+                    s1 = l1[i]
+                yield from self.yield_line(s0, s1)
+
+    def yield_line(self, s1, s2):
+        orig1 = s1
+        orig2 = s2
+
+        if s1 == None and s2 == None:
+            type_name = "unmodified"
+        elif s1 == "" and s2 == "":
+            type_name = "unmodified"
+        elif s1 == None or s1 == "":
+            type_name = "added"
+        elif s2 == None or s2 == "":
+            type_name = "deleted"
+        elif orig1 == orig2 and not s1.endswith('lines removed ]') and not s2.endswith('lines removed ]'):
+            type_name = "unmodified"
+        else:
+            type_name = "changed"
+            s1, s2 = linediff(s1, s2, self.diffon, self.diffoff)
+
+        yield "L", (type_name, s1, self.line1, s2, self.line2)
+
+        m = orig1 and re.match(r"^\[ (\d+) lines removed \]$", orig1)
+        if m:
+            self.line1 += int(m.group(1))
+        elif orig1:
+            self.line1 += 1
+        m = orig2 and re.match(r"^\[ (\d+) lines removed \]$", orig2)
+        if m:
+            self.line2 += int(m.group(1))
+        elif orig2:
+            self.line2 += 1
+
+        self.add_cpt = 0
+        self.del_cpt = 0
+        self.buf = []
+
+    def items(self):
+        """Yield the items that form the side-by-side diff.
+
+        Each item is a (type, value) tuple, as follows:
+
+        type == "H", value is a tuple representing a hunk header
+            hunk_offset1, hunk_size1, hunk_offset2, hunk_size2 = value
+            all ints
+
+        type == "L", value is a tuple representing a line of a hunk
+            mode, line1, lineno1, line2, lineno2 = value
+            where mode is one of {"unmodified", "added", "deleted", "changed"}
+            line* are strings
+            lineno* are ints
+
+        type == "C", value is a comment
+            comment = value
+            a string
+        """
+        self.reset()
+
+        for l in self.unified_diff.splitlines():
+            self._bytes_processed += len(l) + 1
+            m = re.match(r'^--- ([^\s]*)', l)
+            if m:
+                yield from self.empty_buffer()
+                continue
+            m = re.match(r'^\+\+\+ ([^\s]*)', l)
+            if m:
+                yield from self.empty_buffer()
+                continue
+
+            m = re.match(r"@@ -(\d+),?(\d*) \+(\d+),?(\d*)", l)
+            if m:
+                yield from self.empty_buffer()
+                hunk_data = map(lambda x:x=="" and 1 or int(x), m.groups())
+                self.hunk_off1, self.hunk_size1, self.hunk_off2, self.hunk_size2 = hunk_data
+                self.line1, self.line2 = self.hunk_off1, self.hunk_off2
+                yield "H", (self.hunk_off1, self.hunk_size1, self.hunk_off2, self.hunk_size2)
+                continue
+
+            if re.match(r'^\[', l):
+                yield from self.empty_buffer()
+                yield "C", l
+
+            if re.match(r"^\\ No newline", l):
+                if self.hunk_size2 == 0:
+                    self.buf[-1] = (self.buf[-1][0], self.buf[-1][1] + '\n' + l[2:])
+                else:
+                    self.buf[-1] = (buf[-1][0] + '\n' + l[2:], self.buf[-1][1])
+                continue
+
+            if self.hunk_size1 <= 0 and self.hunk_size2 <= 0:
+                yield from self.empty_buffer()
+                continue
+
+            m = re.match(r"^\+\[ (\d+) lines removed \]$", l)
+            if m:
+                self.add_cpt += int(m.group(1))
+                self.hunk_size2 -= int(m.group(1))
+                self.buf.append((None, l[1:]))
+                continue
+
+            if re.match(r"^\+", l):
+                self.add_cpt += 1
+                self.hunk_size2 -= 1
+                self.buf.append((None, l[1:]))
+                continue
+
+            m = re.match(r"^-\[ (\d+) lines removed \]$", l)
+            if m:
+                self.del_cpt += int(m.group(1))
+                self.hunk_size1 -= int(m.group(1))
+                self.buf.append((l[1:], None))
+                continue
+
+            if re.match(r"^-", l):
+                self.del_cpt += 1
+                self.hunk_size1 -= 1
+                self.buf.append((l[1:], None))
+                continue
+
+            if re.match(r"^ ", l) and self.hunk_size1 and self.hunk_size2:
+                yield from self.empty_buffer()
+                self.hunk_size1 -= 1
+                self.hunk_size2 -= 1
+                self.buf.append((l[1:], l[1:]))
+                continue
+
+            yield from self.empty_buffer()
+
+        yield from self.empty_buffer()

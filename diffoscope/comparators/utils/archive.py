@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
+import os
 import abc
 import logging
 
@@ -69,6 +70,14 @@ class Archive(Container, metaclass=abc.ABCMeta):
 
     def get_member(self, member_name):
         return ArchiveMember(self, member_name)
+
+    def get_compressed_content_name(self, expected_extension):
+        basename = os.path.basename(self.source.name)
+
+        if not basename.endswith(expected_extension):
+            return "%s-content" % basename
+
+        return basename[:-len(expected_extension)]
 
 
 class ArchiveMember(File):

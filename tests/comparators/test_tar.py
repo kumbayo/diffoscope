@@ -23,8 +23,8 @@ from diffoscope.config import Config
 from diffoscope.comparators.tar import TarFile
 from diffoscope.comparators.missing_file import MissingFile
 
-from utils.data import load_fixture, get_data
-from utils.nonexisting import assert_non_existing
+from ..utils.data import load_fixture, get_data
+from ..utils.nonexisting import assert_non_existing
 
 
 tar1 = load_fixture('test1.tar')

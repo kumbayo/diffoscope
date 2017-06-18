@@ -20,7 +20,6 @@
 import re
 import logging
 import os.path
-import collections
 
 from diffoscope.difference import Difference
 
@@ -58,9 +57,6 @@ class FsImageContainer(Archive):
             return None
         self.g.umount_all()
         self.g.close()
-
-    def get_members(self):
-        return collections.OrderedDict({'fsimage-content': self.get_member(self.get_member_names()[0])})
 
     def get_member_names(self):
         return [os.path.basename(self.source.path) + '.tar']

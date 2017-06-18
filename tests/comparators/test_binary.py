@@ -32,8 +32,8 @@ from diffoscope.comparators.utils.file import File
 from diffoscope.comparators.missing_file import MissingFile
 from diffoscope.comparators.utils.compare import Xxd
 
-from utils.data import data, init_fixture, get_data, normalize_zeros
-from utils.tools import skip_unless_tools_exist
+from ..utils.data import data, init_fixture, get_data, normalize_zeros
+from ..utils.tools import skip_unless_tools_exist
 
 
 TEST_FILE1_PATH = data('binary1')
@@ -135,8 +135,42 @@ def test_with_compare_details_and_failed_process():
     assert normalize_zeros(difference.unified_diff) == expected_diff
 
 @skip_unless_tools_exist('xxd')
+def test_with_compare_details_and_parsing_error():
+    from diffoscope.exc import OutputParsingError
+    class MockFile(FilesystemFile):
+        def compare_details(self, other, source=None):
+            subprocess.check_output(['sh', '-c', 'exit 0'], shell=False)
+            raise OutputParsingError('sh', self)
+    difference = MockFile(TEST_FILE1_PATH).compare(MockFile(TEST_FILE2_PATH))
+    expected_diff = get_data('../data/binary_expected_diff')
+    assert 'Error parsing output' in difference.comment
+    assert normalize_zeros(difference.unified_diff) == expected_diff
+
+@skip_unless_tools_exist('xxd')
+def test_with_compare_details_and_extraction_error():
+    from diffoscope.exc import ContainerExtractionError
+    class MockFile(FilesystemFile):
+        def compare_details(self, other, source=None):
+            subprocess.check_output(['sh', '-c', 'exit 0'], shell=False)
+            raise ContainerExtractionError(self.path, Exception())
+    difference = MockFile(TEST_FILE1_PATH).compare(MockFile(TEST_FILE2_PATH))
+    expected_diff = get_data('../data/binary_expected_diff')
+    assert 'Error extracting' in difference.comment
+    assert normalize_zeros(difference.unified_diff) == expected_diff
+
+@skip_unless_tools_exist('xxd')
 def test_with_compare_details_and_tool_not_found(monkeypatch):
-    monkeypatch.setattr('diffoscope.exc.RequiredToolNotFound.get_package', lambda _: 'some-package')
+    from diffoscope.external_tools import EXTERNAL_TOOLS
+    monkeypatch.setitem(
+        EXTERNAL_TOOLS,
+        'nonexistent',
+        {
+            'debian': 'some-package',
+            'arch': 'some-package',
+            'Fedora': 'some-package',
+            'FreeBSD': 'some-package'
+        }
+    )
     class MockFile(FilesystemFile):
         @tool_required('nonexistent')
         def compare_details(self, other, source=None):
