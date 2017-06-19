@@ -37,9 +37,11 @@ import re
 import sys
 import html
 import codecs
+import contextlib
 import hashlib
 import logging
 import contextlib
+from urllib.parse import urlparse
 
 from diffoscope import VERSION
 from diffoscope.config import Config
@@ -47,7 +49,7 @@ from diffoscope.diff import SideBySideDiff, DIFFON, DIFFOFF
 
 from ..icon import FAVICON_BASE64
 from ..utils import PrintLimitReached, DiffBlockLimitReached, \
-    create_limited_print_func, Presenter, make_printer
+    create_limited_print_func, Presenter, make_printer, PartialString
 
 from . import templates
 
@@ -67,6 +69,30 @@ logger = logging.getLogger(__name__)
 re_anchor_prefix = re.compile(r'^[^A-Za-z]')
 re_anchor_suffix = re.compile(r'[^A-Za-z-_:\.]')
 
+
+def md5(s):
+    return hashlib.md5(s.encode('utf-8')).hexdigest()
+
+def escape_anchor(val):
+    """
+    ID and NAME tokens must begin with a letter ([A-Za-z]) and may be followed
+    by any number of letters, digits ([0-9]), hyphens ("-"), underscores ("_"),
+    colons (":"), and periods (".").
+    """
+
+    for pattern, repl in (
+        (re_anchor_prefix, 'D'),
+        (re_anchor_suffix, '-'),
+    ):
+        val = pattern.sub(repl, val)
+
+    return val
+
+def output_diff_path(path):
+    return '/'.join(n.source1 for n in path[1:])
+
+def output_anchor(path):
+    return escape_anchor(output_diff_path(path))
 
 def convert(s, ponct=0, tag=''):
     i = 0
@@ -105,52 +131,100 @@ def convert(s, ponct=0, tag=''):
 
     return t.getvalue()
 
-def output_visual(print_func, visual, parents):
+def output_visual(visual, path, indentstr, indentnum):
     logger.debug('including image for %s', visual.source)
-    sources = parents + [visual.source]
-    print_func(u'<div class="difference">')
-    print_func(u'<div class="diffheader">')
-    print_func(u'<div class="diffcontrol">⊟</div>')
-    print_func(u'<div><span class="source">%s</span>'
-               % html.escape(visual.source))
-    anchor = escape_anchor('/'.join(sources[1:]))
-    print_func(
-        u' <a class="anchor" href="#%s" name="%s">\xb6</a>' % (anchor, anchor))
-    print_func(u"</div>")
-    print_func(u"</div>")
-    print_func(u'<div class="difference">'
-               u'<img src=\"data:%s,%s\" alt=\"compared images\" /></div>' %
-               (visual.data_type, visual.content))
-    print_func(u"</div>", force=True)
+    indent = tuple(indentstr * (indentnum + x) for x in range(3))
+    anchor = output_anchor(path)
+    return u"""{0[0]}<div class="difference">
+{0[1]}<div class="diffheader">
+{0[1]}<div class="diffcontrol">⊟</div>
+{0[1]}<div><span class="source">{1}</span>
+{0[2]}<a class="anchor" href="#{2}" name="{2}">\xb6</a>
+{0[1]}</div>
+{0[1]}</div>
+{0[1]}<div class="difference"><img src=\"data:{3},{4}\" alt=\"compared images\" /></div>
+{0[0]}</div>""".format(indent, html.escape(visual.source), anchor, visual.data_type, visual.content)
 
-def escape_anchor(val):
-    """
-    ID and NAME tokens must begin with a letter ([A-Za-z]) and may be followed
-    by any number of letters, digits ([0-9]), hyphens ("-"), underscores ("_"),
-    colons (":"), and periods (".").
-    """
+def output_node_frame(difference, path, indentstr, indentnum, body):
+    indent = tuple(indentstr * (indentnum + x) for x in range(3))
+    anchor = output_anchor(path)
+    dctrl_class, dctrl = ("diffcontrol", u'⊟') if difference.has_visible_children() else ("diffcontrol-nochildren", u'⊡')
+    if difference.source1 == difference.source2:
+        header = u"""{0[1]}<div class="{1}">{2}</div>
+{0[1]}<div><span class="source">{4}</span>
+{0[2]}<a class="anchor" href="#{3}" name="{3}">\xb6</a>
+{0[1]}</div>
+""".format(indent, dctrl_class, dctrl, anchor,
+        html.escape(difference.source1))
+    else:
+        header = u"""{0[1]}<div class="{1} diffcontrol-double">{2}</div>
+{0[1]}<div><span class="source">{4}</span> vs.</div>
+{0[1]}<div><span class="source">{5}</span>
+{0[2]}<a class="anchor" href="#{3}" name="{3}">\xb6</a>
+{0[1]}</div>
+""".format(indent, dctrl_class, dctrl, anchor,
+        html.escape(difference.source1),
+        html.escape(difference.source2))
 
-    for pattern, repl in (
-        (re_anchor_prefix, 'D'),
-        (re_anchor_suffix, '-'),
-    ):
-        val = pattern.sub(repl, val)
+    return u"""{0[1]}<div class="diffheader">
+{1}{0[1]}</div>
+{2}""".format(indent, header, body)
 
-    return val
+def output_node(difference, path, indentstr, indentnum, css_url, directory):
+    indent = tuple(indentstr * (indentnum + x) for x in range(3))
+    t, cont = PartialString.cont()
 
-def output_header(css_url, print_func):
+    if difference.comments:
+        comments = u'{0[1]}<div class="comment">\n{1}{0[1]}</div>\n'.format(
+            indent, "".join(u"{0[2]}{1}<br/>\n".format(indent, html.escape(x)) for x in difference.comments))
+    else:
+        comments = u""
+
+    visuals = u""
+    for visual in difference.visuals:
+        visuals += output_visual(visual, path, indentstr, indentnum+1)
+
+    udiff = io.StringIO()
+    if difference.unified_diff:
+        def print_func(x, force=False):
+            udiff.write(x)
+        HTMLPresenter().output_unified_diff(print_func, css_url, directory, difference.unified_diff, difference.has_internal_linenos)
+
+    # Construct a PartialString for this node
+    # {3} gets mapped to {-1}, a continuation hole for later child nodes
+    body = u"{0}{1}{2}{3}".format(comments, visuals, udiff.getvalue(), "{-1}")
+    if len(path) == 1:
+        # root node, frame it
+        t = cont(t, output_node_frame(difference, path, indentstr, indentnum, body))
+    else:
+        t = cont(t, body)
+
+    # Add holes for child nodes
+    for d in difference.details:
+        # {0} hole, for the child node's contents
+        # {-1} continuation hole, for later child nodes
+        t = cont(t, u"""{0[1]}<div class="difference">
+{1}{0[1]}</div>
+{{-1}}""".format(indent, output_node_frame(d, path + [d], indentstr, indentnum+1, "{0}")), d)
+
+    return cont(t, u"")
+
+def output_header(css_url):
     if css_url:
         css_link = '<link href="%s" type="text/css" rel="stylesheet" />' % css_url
     else:
         css_link = ''
-    print_func(templates.HEADER % {'title': html.escape(' '.join(sys.argv)),
-                         'favicon': FAVICON_BASE64,
-                         'css_link': css_link,
-                        })
+    return templates.HEADER % {
+        'title': html.escape(' '.join(sys.argv)),
+        'favicon': FAVICON_BASE64,
+        'css_link': css_link,
+    }
 
-def output_footer(print_func):
-    print_func(templates.FOOTER % {'version': VERSION}, force=True)
-
+def output_footer(jquery_url=None):
+    footer = templates.FOOTER % {'version': VERSION}
+    if jquery_url:
+        return templates.SCRIPTS % {'jquery_url': html.escape(jquery_url)} + footer
+    return footer
 
 @contextlib.contextmanager
 def file_printer(directory, filename):
@@ -219,14 +293,14 @@ class HTMLPresenter(Presenter):
         self.spl_print_func = print_context.__enter__()
         _, _, css_url = rotation_params
         # Print file and table headers
-        output_header(css_url, self.spl_print_func)
+        self.spl_print_func(output_header(css_url))
 
     def spl_had_entered_child(self):
         return self.spl_print_ctrl and self.spl_print_ctrl[1] and self.spl_current_page > 0
 
     def spl_print_exit(self, *exc_info):
         if not self.spl_had_entered_child(): return False
-        output_footer(self.spl_print_func)
+        self.spl_print_func(output_footer(), force=True)
         _exit, _ = self.spl_print_ctrl
         self.spl_print_func = None
         self.spl_print_ctrl = None
@@ -294,6 +368,7 @@ class HTMLPresenter(Presenter):
                 u'<tr class="error">'
                 u'<td colspan="4">Max diff block lines reached; %s/%s bytes (%.2f%%) of diff not shown.'
                 u"</td></tr>" % (bytes_left, total, frac*100), force=True)
+            logger.debug('diff-block print limit reached')
             return False
         except PrintLimitReached:
             assert not self.spl_had_entered_child() # limit reached on the parent page
@@ -306,7 +381,7 @@ class HTMLPresenter(Presenter):
         self.new_unified_diff()
         rotation_params = None
         if directory:
-            mainname = hashlib.md5(unified_diff.encode('utf-8')).hexdigest()
+            mainname = md5(unified_diff)
             rotation_params = directory, mainname, css_url
         try:
             self.spl_print_func = print_func
@@ -325,70 +400,121 @@ class HTMLPresenter(Presenter):
             text = "load diff (%s %s%s)" % (self.spl_current_page, noun, (", truncated" if truncated else ""))
             print_func(templates.UD_TABLE_FOOTER % {"filename": html.escape("%s-1.html" % mainname), "text": text}, force=True)
 
-    def output_difference(self, difference, print_func, css_url, directory, parents):
-        logger.debug('html output for %s', difference.source1)
-        sources = parents + [difference.source1]
-        print_func(u'<div class="difference">')
-        try:
-            print_func(u'<div class="diffheader">')
-            diffcontrol = ("diffcontrol", u'⊟') if difference.has_visible_children() else ("diffcontrol-nochildren", u'⊡')
-            if difference.source1 == difference.source2:
-                print_func(u'<div class="%s">%s</div>' % diffcontrol)
-                print_func(u'<div><span class="source">%s</span>'
-                           % html.escape(difference.source1))
+    def output_node_placeholder(self, anchor, lazy_load):
+        if lazy_load:
+            return templates.DIFFNODE_LAZY_LOAD % anchor
+        else:
+            return '<div class="error">Max report size reached</div>\n'
+
+    def output_difference(self, target, difference, css_url, jquery_url, single_page=False):
+        outputs = {} # nodes to their partial output
+        ancestors = {} # child nodes to ancestor nodes
+        placeholder_len = len(self.output_node_placeholder("XXXXXXXXXXXXXXXX", not single_page))
+
+        printers = {} # nodes to their printers
+        def maybe_print(node):
+            if outputs[node].holes:
+                return
+            printer_args = printers[node]
+            with printer_args[0](*printer_args[1:]) as printer:
+                printer(outputs[node].format())
+            del outputs[node]
+            del printers[node]
+
+        def smallest_first(node, parscore):
+            depth = parscore[0] + 1 if parscore else 0
+            parents = parscore[3] if parscore else []
+            # Difference is not comparable so use memory address in event of a tie
+            return depth, node.size_self(), id(node), parents + [node]
+
+        for node, score in difference.traverse_heapq(smallest_first, yield_score=True):
+            ancestor = ancestors.pop(node, None)
+            path = score[3]
+            diff_path = output_diff_path(path)
+            pagename = md5(diff_path)
+            logger.debug('html output for %s', diff_path)
+            node_output = output_node(node, path, "  ", len(path)-1, css_url, None if single_page else target)
+
+            if ancestor:
+                limit = Config().max_report_child_size
+                logger.debug("output size: %s, %s",
+                    outputs[ancestor].size(placeholder_len), node_output.size(placeholder_len))
             else:
-                print_func(u'<div class="%s diffcontrol-double">%s</div>' % diffcontrol)
-                print_func(u'<div><span class="source">%s</span> vs.</div>'
-                           % html.escape(difference.source1))
-                print_func(u'<div><span class="source">%s</span>'
-                           % html.escape(difference.source2))
-            anchor = escape_anchor('/'.join(sources[1:]))
-            print_func(u' <a class="anchor" href="#%s" name="%s">\xb6</a>' % (anchor, anchor))
-            print_func(u"</div>")
-            if difference.comments:
-                print_func(u'<div class="comment">%s</div>'
-                           % u'<br />'.join(map(html.escape, difference.comments)))
-            print_func(u"</div>")
-            if len(difference.visuals) > 0:
-                for visual in difference.visuals:
-                    output_visual(print_func, visual, sources)
-            elif difference.unified_diff:
-                self.output_unified_diff(print_func, css_url, directory, difference.unified_diff, difference.has_internal_linenos)
-            for detail in difference.details:
-                self.output_difference(detail, print_func, css_url, directory, sources)
-        except PrintLimitReached:
-            logger.debug('print limit reached')
-            raise
-        finally:
-            print_func(u"</div>", force=True)
+                limit = Config().max_report_size
 
-    def output_html(self, difference, css_url=None, print_func=None):
-        """
-        Default presenter, all in one HTML file
-        """
-        if print_func is None:
-            print_func = print
-        print_func = create_limited_print_func(print_func, Config().max_report_size)
-        try:
-            output_header(css_url, print_func)
-            self.output_difference(difference, print_func, css_url, None, [])
-        except PrintLimitReached:
-            logger.debug('print limit reached')
-            print_func(u'<div class="error">Max output size reached.</div>',
-                       force=True)
-        output_footer(print_func)
+            if ancestor and outputs[ancestor].size(placeholder_len) + node_output.size(placeholder_len) < limit:
+                # under limit, add it to an existing page
+                outputs[ancestor] = outputs[ancestor].pformat({node: node_output})
+                stored = ancestor
 
-    @classmethod
-    def run(cls, data, difference, parsed_args):
-        with make_printer(parsed_args.html_output) as fn:
-            cls().output_html(
-                difference,
-                css_url=parsed_args.css_url,
-                print_func=fn,
-            )
+            else:
+                # over limit (or root), new subpage
+                if ancestor:
+                    placeholder = self.output_node_placeholder(pagename, not single_page)
+                    outputs[ancestor] = outputs[ancestor].pformat({node: placeholder})
+                    maybe_print(ancestor)
+                    footer = output_footer()
+                    if single_page:
+                        if not outputs:
+                            # already output a single page, don't iterate through any more children
+                            break
+                        else:
+                            continue
+                else:
+                    assert node is difference
+                    footer = output_footer(jquery_url)
+                    pagename = "index"
 
+                outputs[node] = node_output.frame(
+                    output_header(css_url) + u'<div class="difference">\n',
+                    u'</div>\n' + footer)
+                printers[node] = (make_printer, target) if single_page else (file_printer, target, "%s.html" % pagename)
+                stored = node
 
-class HTMLDirectoryPresenter(HTMLPresenter):
+            for child in node.details:
+                ancestors[child] = stored
+
+            maybe_print(stored)
+
+        if outputs:
+            import pprint
+            pprint.pprint(outputs, indent=4)
+        assert not outputs
+
+    def ensure_jquery(self, jquery_url, basedir, default_override):
+        if jquery_url is None:
+            jquery_url = default_override
+            default_override = None # later, we can detect jquery_url was None
+        if jquery_url == 'disable' or not jquery_url:
+            return None
+
+        url = urlparse(jquery_url)
+        if url.scheme or url.netloc:
+            # remote path
+            return jquery_url
+
+        # local path
+        if os.path.isabs(url.path):
+            check_path = url.path
+        else:
+            check_path = os.path.join(basedir, url.path)
+
+        if os.path.lexists(check_path):
+            return url.path
+
+        for path in JQUERY_SYSTEM_LOCATIONS:
+            if os.path.exists(path):
+                os.symlink(path, check_path)
+                logger.debug('jquery found at %s and symlinked to %s', path, check_path)
+                return url.path
+
+        if default_override is None:
+            # if no jquery_url was given, and we can't find it, don't use it
+            return None
+
+        logger.warning('--jquery given, but jQuery was not found. Using it regardless.')
+        logger.debug('Locations searched: %s', ', '.join(JQUERY_SYSTEM_LOCATIONS))
+        return url.path
 
     def output_html_directory(self, directory, difference, css_url=None, jquery_url=None):
         """
@@ -405,37 +531,28 @@ class HTMLDirectoryPresenter(HTMLPresenter):
         if not os.path.isdir(directory):
             raise ValueError("%s is not a directory" % directory)
 
-        if not jquery_url:
-            jquery_symlink = os.path.join(directory, "jquery.js")
-            if os.path.exists(jquery_symlink):
-                jquery_url = "./jquery.js"
-            else:
-                if os.path.lexists(jquery_symlink):
-                    os.unlink(jquery_symlink)
-                for path in JQUERY_SYSTEM_LOCATIONS:
-                    if os.path.exists(path):
-                        os.symlink(path, jquery_symlink)
-                        jquery_url = "./jquery.js"
-                        break
-                if not jquery_url:
-                    logger.warning('--jquery was not specified and jQuery was not found in any known location. Disabling on-demand inline loading.')
-                    logger.debug('Locations searched: %s', ', '.join(JQUERY_SYSTEM_LOCATIONS))
-        if jquery_url == 'disable':
-            jquery_url = None
+        jquery_url = self.ensure_jquery(jquery_url, directory, "jquery.js")
+        self.output_difference(directory, difference, css_url, jquery_url)
 
-        with file_printer(directory, "index.html") as print_func:
-            print_func = create_limited_print_func(print_func, Config().max_report_size)
-            try:
-                output_header(css_url, print_func)
-                self.output_difference(difference, print_func, css_url, directory, [])
-            except PrintLimitReached:
-                logger.debug('print limit reached')
-                print_func(u'<div class="error">Max output size reached.</div>',
-                           force=True)
-            if jquery_url:
-                print_func(templates.SCRIPTS % {'jquery_url': html.escape(jquery_url)}, force=True)
-            output_footer(print_func)
 
+    def output_html(self, target, difference, css_url=None, jquery_url=None):
+        """
+        Default presenter, all in one HTML file
+        """
+        jquery_url = self.ensure_jquery(jquery_url, os.getcwd(), None)
+        self.output_difference(target, difference, css_url, jquery_url, single_page=True)
+
+    @classmethod
+    def run(cls, data, difference, parsed_args):
+        cls().output_html(
+            parsed_args.html_output,
+            difference,
+            css_url=parsed_args.css_url,
+            jquery_url=parsed_args.jquery_url,
+        )
+
+
+class HTMLDirectoryPresenter(HTMLPresenter):
     @classmethod
     def run(cls, data, difference, parsed_args):
         cls().output_html_directory(

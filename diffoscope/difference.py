@@ -136,7 +136,7 @@ class Difference(object):
             queue.extend(top._details)
             yield from self.traverse_breadth(queue)
 
-    def traverse_heapq(self, scorer, queue=None):
+    def traverse_heapq(self, scorer, yield_score=False, queue=None):
         """Traverse the difference tree using a priority queue, where each node
         is scored according to a user-supplied function, and nodes with smaller
         scores are traversed first (after they have been added to the queue).
@@ -148,7 +148,7 @@ class Difference(object):
         queue = queue if queue is not None else [(scorer(self, None), self)]
         while queue:
             val, top = heapq.heappop(queue)
-            yield top
+            yield ((top, val) if yield_score else top)
             for d in top._details:
                 heapq.heappush(queue, (scorer(d, val), d))
 

@@ -97,10 +97,12 @@ def create_parser():
     group1.add_argument('--css', metavar='URL', dest='css_url',
                         help='Link to an extra CSS for the HTML report')
     group1.add_argument('--jquery', metavar='URL', dest='jquery_url',
-                        help='Link to the jQuery url, with --html-dir. Specify '
-                        '"disable" to disable JavaScript. When omitted '
-                        'diffoscope will try to create a symlink to a system '
-                        'installation. Known locations: %s' % ', '.join(JQUERY_SYSTEM_LOCATIONS))
+                        help='URL link to jQuery, for --html and --html-dir output. '
+                        'If this is a non-existent relative URL, diffoscope will create a '
+                        'symlink to a system installation. (Paths searched: %s.) '
+                        'If not given, --html output will not use JS but --html-dir will '
+                        'if it can be found; give "disable" to disable JS on all outputs.' %
+                        ', '.join(JQUERY_SYSTEM_LOCATIONS))
     group1.add_argument('--json', metavar='OUTPUT_FILE', dest='json_output',
                         help='Write JSON text output to given file (use - for stdout)')
     group1.add_argument('--markdown', metavar='OUTPUT_FILE', dest='markdown_output',
