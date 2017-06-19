@@ -125,6 +125,13 @@ HEADER = """<!DOCTYPE html>
       cursor: pointer;
       display: none; /* currently, only available in html-dir output where jquery is enabled */
     }
+    .diffoscope .diffheader {
+      cursor: pointer;
+    }
+    .diffoscope .diffheader:hover .diffcontrol {
+      color: #080;
+      font-weight: bold;
+    }
     .diffoscope .diffcontrol-double {
       line-height: 250%%;
     }
@@ -177,15 +184,15 @@ $(function() {
   $(".ondemand-details").on('click', load_generic("div.difference > *"));
   // activate [+]/[-] controls
   var diffcontrols = $(".diffcontrol");
-  diffcontrols.on('click', function(evt) {
-    var control = $(this);
+  $(".diffheader").on('click', function(evt) {
+    var control = $(this).find(".diffcontrol");
     var parent = control.parent();
     var target = parent.siblings('table.diff, div.difference, div.comment');
     var orig = target;
     if (evt.shiftKey) {
         var gparent = parent.parent();
-        control = gparent.find('.diffcontrol');
-        target = gparent.find('table.diff, div.difference, div.comment');
+        target = gparent.find('table.diff, div.comment, div.difference');
+        control = target.parent().not(gparent).find('.diffcontrol');
     }
     if (orig.is(":visible")) {
         target.hide();
