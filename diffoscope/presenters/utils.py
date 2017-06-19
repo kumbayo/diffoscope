@@ -104,12 +104,19 @@ def create_limited_print_func(print_func, max_page_size):
     return fn
 
 
-class Formatter(string.Formatter):
+class PartialFormatter(string.Formatter):
+    @staticmethod
+    def escape(x):
+        return x.replace("}", "}}").replace("{", "{{")
     def get_value(self, key, args, kwargs):
         return args[key] if isinstance(key, int) else args[int(key)]
     def arg_of_field_name(self, field_name, args):
         x = int(_string.formatter_field_name_split(field_name)[0])
         return x if x >= 0 else len(args) + x
+    def parse(self, *args, **kwargs):
+        # Preserve {{ and }} escapes when formatting
+        return map(lambda x: (self.escape(x[0]),) + x[1:], super().parse(*args, **kwargs))
+    parse_no_escape = string.Formatter.parse
 
 
 class FormatPlaceholder(object):
@@ -186,10 +193,41 @@ class PartialString(object):
     >>> tmpl.pformatl("(first hole)", "(second hole)", "(object hole)")
     PartialString('(first hole) (second hole) (object hole)',)
 
+    CORNER CASES:
+
+    1. If you need to include a literal '{' or '}' in the resulting formatted
+    string, you need to give them as "{{" or "}}" respectively in the fmtstr
+    parameter of PartialString.__init__. PartialString.escape() might help to
+    make this a bit easier:
+
+    >>> tmpl = PartialString.numl("find {0} -name {1} " +
+    ...            PartialString.escape("-exec ls -la {} \;"), 2)
+    >>> tmpl
+    PartialString('find {0} -name {1} -exec ls -la {{}} \\;', ...)
+    >>> tmpl.size(), tmpl.size(4)
+    (33, 39)
+
+    When using pformat, any string arguments will be escaped automatically. You
+    can take advantage of this to simplify the above example:
+
+    >>> tmpl2 = PartialString.numl("find {0} -name {1} -exec ls -la {2} \;", 3)
+    >>> tmpl2 = tmpl2.pformat({2: "{}"})
+    >>> tmpl2 == tmpl
+    True
+
+    As long as you only use pformat, any "{{" "}}" literals will remain escaped
+    in the resulting PartialString. They only become unescaped after going
+    through a full format.
+
+    >>> tmpl.pformatl("my{}path", "my{}file")
+    PartialString('find my{{}}path -name my{{}}file -exec ls -la {{}} \\;',)
+    >>> tmpl.formatl("my{}path", "my{}file")
+    'find my{}path -name my{}file -exec ls -la {} \\;'
+
     CAVEATS:
 
-    Filling up holes using other PartialStrings, does not play very nicely with
-    format specifiers. For example:
+    1. Filling up holes using other PartialStrings, does not play very nicely
+    with format specifiers. For example:
 
     >>> tmpl = PartialString("{0:20} {1.child}", a, b)
     >>> tmpl.pformat({a: tmpl})
@@ -202,12 +240,14 @@ class PartialString(object):
     So you probably want to avoid such usages. The exact behaviour of these
     might change in the future, too.
     """
-    formatter = Formatter()
+    formatter = PartialFormatter()
+    escape = staticmethod(PartialFormatter.escape)
 
     def __init__(self, fmtstr="", *holes):
         # Ensure the format string is valid, and figure out some basic stats
         fmt = self.formatter
-        pieces = [(len(l), f) for l, f, _, _ in fmt.parse(fmtstr)]
+        # use parse_no_escape so lengths are preserved
+        pieces = [(len(l), f) for l, f, _, _ in fmt.parse_no_escape(fmtstr)]
         used_args = set(fmt.arg_of_field_name(f, holes) for _, f in pieces if f is not None)
         self.num_holes = sum(1 for _, f in pieces if f is not None)
         self.base_len = sum(l for l, _ in pieces)
@@ -227,10 +267,14 @@ class PartialString(object):
     def __repr__(self):
         return "%s%r" % (self.__class__.__name__, (self._fmtstr,) + self.holes)
 
-    def _offset_fmtstr(self, offset):
-        return self._fmtstr.format(*(FormatPlaceholder(i + offset) for i in range(len(self.holes))))
+    def _format(self, *mapping):
+        # format a string but preserve {{ and }} escapes
+        return self.formatter.vformat(self._fmtstr, mapping, None)
 
-    def _pformat(self, mapping):
+    def _offset_fmtstr(self, offset):
+        return self._format(*(FormatPlaceholder(i + offset) for i in range(len(self.holes))))
+
+    def _pformat(self, mapping, escapestr):
         new_holes = []
         real_mapping = []
         for i, k in enumerate(self.holes):
@@ -239,32 +283,34 @@ class PartialString(object):
                 if isinstance(v, PartialString):
                     out = v._offset_fmtstr(len(new_holes))
                     new_holes.extend(v.holes)
+                elif isinstance(v, str) and escapestr:
+                    out = PartialString.escape(v)
                 else:
                     out = v
             else:
                 out = FormatPlaceholder(len(new_holes))
                 new_holes.append(k)
             real_mapping.append(out)
-        return self._fmtstr.format(*real_mapping), new_holes
+        return real_mapping, new_holes
 
     def size(self, hole_size=1):
         return self.base_len + hole_size * self.num_holes
 
-    def pformat(self, mapping):
+    def pformat(self, mapping={}):
         """Partially apply a mapping, returning a new PartialString."""
-        new_fmtstr, new_holes = self._pformat(mapping)
-        return self.__class__(new_fmtstr, *new_holes)
+        real_mapping, new_holes = self._pformat(mapping, True)
+        return self.__class__(self._format(*real_mapping), *new_holes)
 
     def pformatl(self, *args):
         """Partially apply a list, implicitly mapped from self.holes."""
         return self.pformat(dict(zip(self.holes, args)))
 
-    def format(self, mapping):
+    def format(self, mapping={}):
         """Fully apply a mapping, returning a string."""
-        new_fmtstr, new_holes = self._pformat(mapping)
+        real_mapping, new_holes = self._pformat(mapping, False)
         if new_holes:
             raise ValueError("not all holes filled: %r" % new_holes)
-        return new_fmtstr
+        return self._fmtstr.format(*real_mapping)
 
     def formatl(self, *args):
         """Fully apply a list, implicitly mapped from self.holes."""

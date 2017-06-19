@@ -184,3 +184,21 @@ def test_partial_string_numl():
     assert tmpl.holes[:2] == (0, 1)
     assert tmpl.pformatl("(1)", "(2)", "(o)") == PartialString('(1) (2) (o)')
 
+def test_partial_string_escape():
+    tmpl = PartialString.numl("find {0} -name {1} " +
+               PartialString.escape("-exec ls -la {} \;"), 2)
+    assert tmpl == PartialString('find {0} -name {1} -exec ls -la {{}} \\;', *tmpl.holes)
+    assert tmpl.size() == 33
+    assert tmpl.size(4) == 39
+    assert tmpl == PartialString.numl("find {0} -name {1} -exec ls -la {2} \;", 3).pformat({2: "{}"})
+
+    assert (tmpl.pformatl("my{}path", "my{}file") ==
+        PartialString('find my{{}}path -name my{{}}file -exec ls -la {{}} \\;'))
+    assert (tmpl.formatl("my{}path", "my{}file") ==
+        'find my{}path -name my{}file -exec ls -la {} \\;')
+
+    esc = PartialString("{{}} {0}", None)
+    assert esc.pformat({None: PartialString.of(None)}) == esc
+    assert esc.format({None: "0"}) == "{} 0"
+    with pytest.raises(ValueError):
+        PartialString("{}")
