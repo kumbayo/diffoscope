@@ -8,7 +8,7 @@ PY_VERSION := $(shell awk '/^VERSION = / {gsub(/"/, "", $$3); print $$3}' diffos
 ifneq ($(DEB_VERSION),$(PY_VERSION))
  ifneq ($(DEB_DISTRIBUTION),UNRELEASED)
   ifneq (,$(filter %-backports,$(DEB_DISTRIBUTION)))
-    ifeq ($(DEB_VERSION:~bpo8+1=),$(PY_VERSION))
+    ifeq ($(DEB_VERSION:~bpo9+1=),$(PY_VERSION))
      $(info Building a Debian backport, accepting version mismatch $(PY_VERSION) <-> $(DEB_VERSION))
     else
      $(error Version in debian/changelog does not match diffoscope version or backport policy)
