@@ -20,16 +20,21 @@
 
 
 class Config(object):
-    max_diff_block_lines = 256
-    max_diff_block_lines_parent = 50
-    max_diff_block_lines_saved = float("inf")
-    # html-dir output uses ratio * max-diff-block-lines as its limit
-    max_diff_block_lines_html_dir_ratio = 4
     # GNU diff cannot process arbitrary large files :(
-    max_diff_input_lines = 2 ** 20
-    max_report_size = 2000 * 2 ** 10 # 2000 kB
+    max_diff_input_lines = 2 ** 22
+    max_diff_block_lines_saved = float("inf")
+
+    # hard limits, restricts single-file and multi-file formats
+    max_report_size = 40 * 2 ** 20 # 40 MB
+    max_diff_block_lines = 2 ** 10 # 1024 lines
+    # structural limits, restricts single-file formats
+    # semi-restricts multi-file formats
+    max_page_size = 400 * 2 ** 10 # 400 kB
+    max_page_size_child = 200 * 2 ** 10 # 200 kB
+    max_page_diff_block_lines = 2 ** 7 # 128 lines
+
     max_text_report_size = 0
-    max_report_child_size = 500 * 2 ** 10
+
     new_file = False
     fuzzy_threshold = 60
     enforce_constraints = True
@@ -47,21 +52,13 @@ class Config(object):
     def __setattr__(self, k, v):
         super(Config, self).__setattr__(k, v)
 
-        if self.enforce_constraints:
-            self.check_constraints()
+    def check_ge(self, a, b):
+        va = getattr(self, a)
+        vb = getattr(self, b)
+        if va < vb:
+            raise ValueError("{0} ({1}) cannot be smaller than {2} ({3})".format(a, va, b, vb))
 
     def check_constraints(self):
-        if self.max_diff_block_lines < self.max_diff_block_lines_parent:  # noqa
-            raise ValueError("max_diff_block_lines ({0.max_diff_block_lines}) "
-                "cannot be smaller than max_diff_block_lines_parent "
-                "({0.max_diff_block_lines_parent})".format(self),
-            )
-
-        max_ = self.max_diff_block_lines_html_dir_ratio * \
-            self.max_diff_block_lines
-        if self.max_diff_block_lines_saved < max_:  # noqa
-            raise ValueError("max_diff_block_lines_saved "
-                "({0.max_diff_block_lines_saved}) cannot be smaller than "
-                "{0.max_diff_block_lines_html_dir_ratio} * "
-                "max_diff_block_lines ({1})".format(self, max_),
-            )
+        self.check_ge("max_diff_block_lines", "max_page_diff_block_lines")
+        self.check_ge("max_report_size", "max_page_size")
+        self.check_ge("max_report_size", "max_page_size_child")

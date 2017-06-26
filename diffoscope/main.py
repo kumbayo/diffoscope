@@ -78,6 +78,8 @@ def create_parser():
                         const=True, help='Show an approximate progress bar')
     parser.add_argument('--no-progress', dest='progress', action='store_const',
                         const=False, help='Do not show any progress bar')
+    parser.add_argument('--no-default-limits', action='store_true', default=False,
+                        help='Disable most default output limits and diff calculation limits.')
 
     group1 = parser.add_argument_group('output types')
     group1.add_argument('--text', metavar='OUTPUT_FILE', dest='text_output',
@@ -114,49 +116,44 @@ def create_parser():
                         help='Write profiling info to given file (use - for stdout)')
 
     group2 = parser.add_argument_group('output limits')
-    group2.add_argument('--no-default-limits', action='store_true', default=False,
-                        help='Disable most default limits. Note that text '
-                        'output already ignores most of these.')
+    # everything marked with default=None below is affected by no-default-limits
     group2.add_argument('--max-text-report-size', metavar='BYTES', type=int,
                         help='Maximum bytes written in --text report. (0 to '
-                        'disable)', default=None).completer=RangeCompleter(0,
-                        Config().max_text_report_size, 200000)
+                        'disable, default: %d)' % Config().max_text_report_size,
+                        default=None)
     group2.add_argument('--max-report-size', metavar='BYTES', type=int,
-                        help='Maximum bytes written in report. In html-dir '
-                        'output, this is the max bytes of the parent page. '
-                        '(0 to disable, default: %d)' %
-                        Config().max_report_size,
-                        default=None).completer=RangeCompleter(0,
-                        Config().max_report_size, 200000)
-    group2.add_argument('--max-report-child-size', metavar='BYTES', type=int,
-                        help='In --html-dir output, this is the max bytes of '
-                        'each child page (0 to disable, default: %(default)s, '
-                        'remaining in effect even with --no-default-limits)',
-                        default=Config().max_report_child_size).completer=RangeCompleter(0,
-                        Config().max_report_child_size, 50000)
+                        help='Maximum bytes of a report in a given format, '
+                        'across all of its pages. Note that some formats, such '
+                        'as --html, may be restricted by even smaller limits '
+                        'such as --max-page-size. (0 to disable, default: %d)' %
+                        Config().max_report_size, default=None).completer=RangeCompleter(
+                        Config().max_report_size)
     group2.add_argument('--max-diff-block-lines', metavar='LINES', type=int,
-                        help='Maximum number of lines output per diff block. '
-                        'In --html-dir output, we use %d times this number instead, '
-                        'taken over all pages. (0 to disable, default: %d)' %
-                        (Config().max_diff_block_lines_html_dir_ratio,
-                        Config().max_diff_block_lines),
-                        default=None).completer=RangeCompleter(0,
-                        Config().max_diff_block_lines, 5)
-    group2.add_argument('--max-diff-block-lines-parent', metavar='LINES', type=int,
-                        help='In --html-dir output, this is maximum number of '
-                        'lines output per diff block on the parent page '
-                        'before spilling it into child pages (0 to disable, '
-                        'default: %(default)s, remaining in effect even with '
-                        '--no-default-limits)',
-                        default=Config().max_diff_block_lines_parent).completer=RangeCompleter(0,
-                        Config().max_diff_block_lines_parent, 200)
-    group2.add_argument('--max-diff-block-lines-saved', metavar='LINES', type=int,
-                        help='Maximum number of lines saved per diff block. '
-                        'Most users should not need this, unless you run out '
-                        'of memory. This truncates diff(1) output before even '
-                        'trying to emit it in a report. This also affects --text '
-                        'output. (0 to disable, default: 0)',
-                        default=0).completer=RangeCompleter(0, 0, 200)
+                        help='Maximum number of lines output per unified-diff '
+                        'block, across all pages. (0 to disable, default: %d)' %
+                        Config().max_diff_block_lines, default=None).completer=RangeCompleter(
+                        Config().max_diff_block_lines)
+    group2.add_argument('--max-page-size', metavar='BYTES', type=int,
+                        help='Maximum bytes of the top-level (--html-dir) or sole '
+                        '(--html) page. (default: %(default)s, remains in effect '
+                        'even with --no-default-limits)', default=
+                        Config().max_page_size).completer=RangeCompleter(
+                        Config().max_page_size)
+    group2.add_argument('--max-page-size-child', metavar='BYTES', type=int,
+                        help='In --html-dir output, this is the maximum bytes of '
+                        'each child page (default: %(default)s, remains in '
+                        'effect even with --no-default-limits)', default=
+                        Config().max_page_size_child).completer=RangeCompleter(
+                        Config().max_page_size_child)
+    group2.add_argument('--max-page-diff-block-lines', metavar='LINES', type=int,
+                        help='Maximum number of lines output per unified-diff block '
+                        'on the top-level (--html-dir) or sole (--html) page, before '
+                        'spilling it into child pages (--html-dir) or skipping the '
+                        'rest of the diff block. Child pages are limited instead by '
+                        '--max-page-size-child. (default: %(default)s, remains in '
+                        'effect even with --no-default-limits)', default=
+                        Config().max_page_diff_block_lines).completer=RangeCompleter(
+                        Config().max_page_diff_block_lines)
 
     group3 = parser.add_argument_group('diff calculation')
     group3.add_argument('--new-file', action='store_true',
@@ -185,19 +182,25 @@ def create_parser():
     group3.add_argument('--fuzzy-threshold', type=int,
                         help='Threshold for fuzzy-matching '
                         '(0 to disable, %(default)s is default, 400 is high fuzziness)',
-                        default=Config().fuzzy_threshold).completer=RangeCompleter(0,
-                        400, 20)
+                        default=Config().fuzzy_threshold).completer=RangeCompleter(400)
     group3.add_argument('--max-diff-input-lines', metavar='LINES', type=int,
                         help='Maximum number of lines fed to diff(1) '
                         '(0 to disable, default: %d)' %
                         Config().max_diff_input_lines,
-                        default=None).completer=RangeCompleter(0,
-                        Config().max_diff_input_lines, 5000)
+                        default=None).completer=RangeCompleter(
+                        Config().max_diff_input_lines)
     group3.add_argument('--max-container-depth', metavar='DEPTH', type=int,
                         help='Maximum depth to recurse into containers. '
                         '(Cannot be disabled for security reasons, default: '
                         '%(default)s)',
                         default=Config().max_container_depth)
+    group3.add_argument('--max-diff-block-lines-saved', metavar='LINES', type=int,
+                        help='Maximum number of lines saved per diff block. '
+                        'Most users should not need this, unless you run out '
+                        'of memory. This truncates diff(1) output before emitting '
+                        'it in a report, and affects all types of output, '
+                        'including --text and --json. (0 to disable, default: '
+                        '%(default)s)', default=0)
 
     group4 = parser.add_argument_group('information commands')
     group4.add_argument('--help', '-h', action='help',
@@ -226,8 +229,12 @@ def create_parser():
 
 
 class RangeCompleter(object):
-    def __init__(self, start, end, step):
-        self.choices = range(start, end + 1, step)
+    def __init__(self, start, end=0, divisions=16):
+        if end < start:
+            tmp = end
+            end = start
+            start = tmp
+        self.choices = range(start, end + 1, int((end-start+1)/divisions))
 
     def __call__(self, prefix, **kwargs):
         return (str(i) for i in self.choices if str(i).startswith(prefix))
@@ -284,6 +291,7 @@ class ListDebianSubstvarsAction(argparse._StoreTrueAction):
         sys.exit(0)
 
 def maybe_set_limit(config, parsed_args, key):
+    # apply limits affected by "no-default-limits"
     v = getattr(parsed_args, key)
     if v is not None:
         setattr(config, key, float("inf") if v == 0 else v)
@@ -301,11 +309,12 @@ def run_diffoscope(parsed_args):
         logger.warning('Fuzzy-matching is currently disabled as the "tlsh" module is unavailable.')
     maybe_set_limit(Config(), parsed_args, "max_report_size")
     maybe_set_limit(Config(), parsed_args, "max_text_report_size")
-    maybe_set_limit(Config(), parsed_args, "max_report_child_size")
-    # need to set them in this order due to Config._check_constraints
-    maybe_set_limit(Config(), parsed_args, "max_diff_block_lines_saved")
-    maybe_set_limit(Config(), parsed_args, "max_diff_block_lines_parent")
     maybe_set_limit(Config(), parsed_args, "max_diff_block_lines")
+    Config().max_page_size = parsed_args.max_page_size
+    Config().max_page_size_child = parsed_args.max_page_size_child
+    Config().max_page_diff_block_lines = parsed_args.max_page_diff_block_lines
+
+    maybe_set_limit(Config(), parsed_args, "max_diff_block_lines_saved")
     maybe_set_limit(Config(), parsed_args, "max_diff_input_lines")
     Config().max_container_depth = parsed_args.max_container_depth
     Config().fuzzy_threshold = parsed_args.fuzzy_threshold
@@ -314,6 +323,7 @@ def run_diffoscope(parsed_args):
     Config().exclude_commands = parsed_args.exclude_commands
     Config().exclude_directory_metadata = parsed_args.exclude_directory_metadata
     Config().compute_visual_diffs = PresenterManager().compute_visual_diffs()
+    Config().check_constraints()
     set_path()
     set_locale()
     path1, path2 = parsed_args.path1, parsed_args.path2
