@@ -146,12 +146,11 @@ class Difference(object):
         return the score of the input node.
         """
         queue = queue if queue is not None else [(scorer(self, None), self)]
-        if queue:
+        while queue:
             val, top = heapq.heappop(queue)
             yield top
             for d in top._details:
                 heapq.heappush(queue, (scorer(d, val), d))
-            yield from self.traverse_heapq(scorer, queue)
 
     @staticmethod
     def from_feeder(feeder1, feeder2, path1, path2, source=None, comment=None, **kwargs):
