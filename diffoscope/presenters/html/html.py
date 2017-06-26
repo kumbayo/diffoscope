@@ -31,16 +31,17 @@
 # Dave Burt <dave (at) burt.id.au> (mainly for html theme)
 #
 
+import base64
+import codecs
+import collections
+import contextlib
+import hashlib
+import html
 import io
+import logging
 import os
 import re
 import sys
-import html
-import codecs
-import contextlib
-import hashlib
-import logging
-import contextlib
 from urllib.parse import urlparse
 
 from diffoscope import VERSION
@@ -184,7 +185,7 @@ def output_node_frame(difference, path, indentstr, indentnum, body):
 {1}{0[1]}</div>
 {2}""", 3).pformatl(indent, header, body)
 
-def output_node(difference, path, indentstr, indentnum, css_url, directory):
+def output_node(ctx, difference, path, indentstr, indentnum):
     """Returns a tuple (parent, continuation) where
 
     - parent is a PartialString representing the body of the node, including
@@ -210,8 +211,7 @@ def output_node(difference, path, indentstr, indentnum, css_url, directory):
     ud_cont = None
     if difference.unified_diff:
         ud_cont = HTMLSideBySidePresenter().output_unified_diff(
-            css_url, directory, difference.unified_diff,
-            difference.has_internal_linenos)
+            ctx, difference.unified_diff, difference.has_internal_linenos)
         udiff = next(ud_cont)
         if isinstance(udiff, PartialString):
             ud_cont = ud_cont.send
@@ -238,15 +238,24 @@ def output_node(difference, path, indentstr, indentnum, css_url, directory):
     assert len(t.holes) >= len(difference.details) + 1 # there might be extra holes for the unified diff continuation
     return cont(t, u""), ud_cont
 
-def output_header(css_url):
+def output_header(css_url, our_css_url=False, icon_url=None):
     if css_url:
-        css_link = '<link href="%s" type="text/css" rel="stylesheet" />' % css_url
+        css_link = u'  <link href="%s" type="text/css" rel="stylesheet" />\n' % css_url
     else:
-        css_link = ''
+        css_link = u''
+    if our_css_url:
+        css_style = u'  <link href="%s" type="text/css" rel="stylesheet" />\n' % our_css_url
+    else:
+        css_style = u'<style type="text/css">\n' + templates.STYLES + u'</style>\n'
+    if icon_url:
+        favicon = icon_url
+    else:
+        favicon = u'data:image/png;base64,' + FAVICON_BASE64
     return templates.HEADER % {
         'title': html.escape(' '.join(sys.argv)),
-        'favicon': FAVICON_BASE64,
+        'favicon': favicon,
         'css_link': css_link,
+        'css_style': css_style
     }
 
 def output_footer(jquery_url=None):
@@ -270,6 +279,13 @@ def spl_file_printer(directory, filename, accum):
             accum.bytes_written += len(s)
         recording_print_func.bytes_written = 0
         yield recording_print_func
+
+
+class HTMLPrintContext(collections.namedtuple("HTMLPrintContext",
+    "target single_page jquery_url css_url our_css_url icon_url")):
+    @property
+    def directory(self):
+        return None if self.single_page else self.target
 
 
 class HTMLSideBySidePresenter(object):
@@ -326,9 +342,9 @@ class HTMLSideBySidePresenter(object):
         # Takes ownership of print_context
         self.spl_print_ctrl = print_context.__exit__, rotation_params
         self.spl_print_func = print_context.__enter__()
-        _, _, css_url = rotation_params
+        ctx, _ = rotation_params
         # Print file and table headers
-        self.spl_print_func(output_header(css_url))
+        self.spl_print_func(output_header(ctx.css_url, ctx.our_css_url, ctx.icon_url))
 
     def spl_had_entered_child(self):
         return self.spl_print_ctrl and self.spl_print_ctrl[1] and self.spl_current_page > 0
@@ -366,7 +382,7 @@ class HTMLSideBySidePresenter(object):
 
     def new_child_page(self):
         _, rotation_params = self.spl_print_ctrl
-        directory, mainname, css_url = rotation_params
+        ctx, mainname = rotation_params
         self.spl_current_page += 1
         filename = "%s-%s.html" % (mainname, self.spl_current_page)
 
@@ -377,7 +393,7 @@ class HTMLSideBySidePresenter(object):
             self.spl_print_exit(None, None, None)
 
         # rotate to the next child page
-        context = spl_file_printer(directory, filename, self)
+        context = spl_file_printer(ctx.directory, filename, self)
         self.spl_print_enter(context, rotation_params)
         self.spl_print_func(templates.UD_TABLE_HEADER)
 
@@ -434,12 +450,12 @@ class HTMLSideBySidePresenter(object):
             self.spl_print_func(u"</table>")
         yield wrote_all
 
-    def output_unified_diff(self, css_url, directory, unified_diff, has_internal_linenos):
+    def output_unified_diff(self, ctx, unified_diff, has_internal_linenos):
         self.new_unified_diff()
         rotation_params = None
-        if directory:
+        if ctx.directory:
             mainname = md5(unified_diff)
-            rotation_params = directory, mainname, css_url
+            rotation_params = ctx, mainname
 
         try:
             udiff = io.StringIO()
@@ -534,10 +550,10 @@ class HTMLPresenter(Presenter):
         else:
             return templates.DIFFNODE_LIMIT
 
-    def output_difference(self, target, difference, css_url, jquery_url, single_page=False):
+    def output_difference(self, ctx, difference):
         outputs = {} # nodes to their partial output
         ancestors = {} # child nodes to ancestor nodes
-        placeholder_len = len(self.output_node_placeholder("XXXXXXXXXXXXXXXX", not single_page))
+        placeholder_len = len(self.output_node_placeholder("XXXXXXXXXXXXXXXX", not ctx.single_page))
         continuations = {} # functions to print unified diff continuations (html-dir only)
         printers = {} # nodes to their printers
 
@@ -553,8 +569,7 @@ class HTMLPresenter(Presenter):
             diff_path = output_diff_path(path)
             pagename = md5(diff_path)
             logger.debug('html output for %s', diff_path)
-            node_output, node_continuation = output_node(
-                node, path, "  ", len(path)-1, css_url, None if single_page else target)
+            node_output, node_continuation = output_node(ctx, node, path, "  ", len(path)-1)
 
             add_to_existing = False
             if ancestor:
@@ -568,7 +583,7 @@ class HTMLPresenter(Presenter):
                 elif page_current + want_to_add < page_limit:
                     add_to_existing = True
                 else:
-                    make_new_subpage = not single_page
+                    make_new_subpage = not ctx.single_page
 
             if add_to_existing:
                 # under limit, add it to an existing page
@@ -592,14 +607,14 @@ class HTMLPresenter(Presenter):
                 else:
                     # unconditionally write the root node regardless of limits
                     assert node is difference
-                    footer = output_footer(jquery_url)
+                    footer = output_footer(ctx.jquery_url)
                     pagename = "index"
 
                 outputs[node] = node_output.frame(
-                    output_header(css_url) + u'<div class="difference">\n',
-                    u'</div>\n' + footer)
-                assert not single_page or node is difference
-                printers[node] = (make_printer, target) if single_page else (file_printer, target, "%s.html" % pagename)
+                    output_header(ctx.css_url, ctx.our_css_url, ctx.icon_url) +
+                    u'<div class="difference">\n', u'</div>\n' + footer)
+                assert not ctx.single_page or node is difference
+                printers[node] = (make_printer, ctx.target) if ctx.single_page else (file_printer, ctx.target, "%s.html" % pagename)
                 stored = node
 
             for child in node.details:
@@ -667,7 +682,12 @@ class HTMLPresenter(Presenter):
             raise ValueError("%s is not a directory" % directory)
 
         jquery_url = self.ensure_jquery(jquery_url, directory, "jquery.js")
-        self.output_difference(directory, difference, css_url, jquery_url)
+        with open(os.path.join(directory, "common.css"), "w") as fp:
+            fp.write(templates.STYLES)
+        with open(os.path.join(directory, "icon.png"), "wb") as fp:
+            fp.write(base64.b64decode(FAVICON_BASE64))
+        ctx = HTMLPrintContext(directory, False, jquery_url, css_url, "common.css", "icon.png")
+        self.output_difference(ctx, difference)
 
 
     def output_html(self, target, difference, css_url=None, jquery_url=None):
@@ -675,7 +695,8 @@ class HTMLPresenter(Presenter):
         Default presenter, all in one HTML file
         """
         jquery_url = self.ensure_jquery(jquery_url, os.getcwd(), None)
-        self.output_difference(target, difference, css_url, jquery_url, single_page=True)
+        ctx = HTMLPrintContext(target, True, jquery_url, css_url, None, None)
+        self.output_difference(ctx, difference)
 
     @classmethod
     def run(cls, data, difference, parsed_args):
