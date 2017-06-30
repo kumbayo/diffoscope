@@ -114,11 +114,11 @@ def compare_meta(path1, path2):
         differences.append(Difference.from_text(
                                lsattr1, lsattr2, path1, path2, source="lsattr"))
     except RequiredToolNotFound:
-        logger.info("Unable to find 'lsattr'.")
+        logger.info("Unable to find 'lsattr', some directory metadata differences might not be noticed.")
     try:
         differences.append(Difference.from_command(Getfacl, path1, path2))
     except RequiredToolNotFound:
-        logger.info("Unable to find 'getfacl'.")
+        logger.warning("Unable to find 'getfacl', some directory metadata differences might not be noticed.")
     return [d for d in differences if d is not None]
 
 
@@ -159,14 +159,11 @@ class FilesystemDirectory(Directory):
 
     def compare(self, other, source=None):
         differences = []
-        try:
-            listing_diff = Difference.from_text('\n'.join(list_files(self.path)),
-                                                '\n'.join(list_files(other.path)),
-                                                self.path, other.path, source='file list')
-            if listing_diff:
-                differences.append(listing_diff)
-        except RequiredToolNotFound:
-            logger.info("Unable to find 'getfacl'.")
+        listing_diff = Difference.from_text('\n'.join(list_files(self.path)),
+                                            '\n'.join(list_files(other.path)),
+                                            self.path, other.path, source='file list')
+        if listing_diff:
+            differences.append(listing_diff)
         differences.extend(compare_meta(self.name, other.name))
 
         my_container = DirectoryContainer(self)
