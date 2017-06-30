@@ -1,6 +1,8 @@
 diffoscope (84) UNRELEASED; urgency=medium
 
   * Add a --exclude-directory-metadata option. (Closes: #866241)
+  * Fix recursive header display in the text output, deeply-nested headers were
+    not getting indented far enough.
 
  -- Ximin Luo <infinity0@debian.org>  Fri, 30 Jun 2017 18:25:03 +0200
 
