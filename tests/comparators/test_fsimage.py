@@ -18,6 +18,7 @@
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
+import os
 
 from diffoscope.config import Config
 from diffoscope.comparators.missing_file import MissingFile
@@ -35,6 +36,9 @@ def guestfs_working():
     except ImportError:
         return False
     g = guestfs.GuestFS (python_return_dict=True)
+    cachedir = os.path.join(os.getcwd(), "cache")
+    os.makedirs(cachedir, exist_ok=True)
+    g.set_cachedir(cachedir)
     g.add_drive_opts("/dev/null", format="raw", readonly=1)
     try:
         g.launch()
