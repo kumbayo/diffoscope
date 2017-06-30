@@ -169,6 +169,17 @@ def create_parser():
                         'the longest time, and differences here are probably '
                         'only secondary differences caused by something that '
                         'is already represented elsewhere in the diff.')
+    group3.add_argument('--exclude-directory-metadata', action='store_true',
+                        help='Exclude directory metadata. Useful if comparing '
+                        'files whose filesystem-level metadata is not intended '
+                        'to be distributed to other systems. For example, this '
+                        'is true for most distros\' package builders, but not '
+                        'true for the output of commands like `make install`. '
+                        'Metadata of archive members remain un-excluded.')
+    group3.add_argument('--no-exclude-directory-metadata', action='store_const',
+                        const=False, dest='exclude_directory_metadata',
+                        help='Don\'t exclude directory metadata, useful to '
+                        'cancel an earlier --exclude-directory-metadata flag.')
     group3.add_argument('--fuzzy-threshold', type=int,
                         help='Threshold for fuzzy-matching '
                         '(0 to disable, %(default)s is default, 400 is high fuzziness)',
@@ -299,6 +310,7 @@ def run_diffoscope(parsed_args):
     Config().new_file = parsed_args.new_file
     Config().excludes = parsed_args.excludes
     Config().exclude_commands = parsed_args.exclude_commands
+    Config().exclude_directory_metadata = parsed_args.exclude_directory_metadata
     Config().compute_visual_diffs = PresenterManager().compute_visual_diffs()
     set_path()
     set_locale()

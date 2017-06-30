@@ -1,3 +1,9 @@
+diffoscope (84) UNRELEASED; urgency=medium
+
+  * Add a --exclude-directory-metadata option. (Closes: #866241)
+
+ -- Ximin Luo <infinity0@debian.org>  Fri, 30 Jun 2017 18:25:03 +0200
+
 diffoscope (83) unstable; urgency=medium
 
   [ Chris Lamb ]

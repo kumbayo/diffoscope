@@ -24,6 +24,7 @@ import logging
 import subprocess
 from collections import OrderedDict
 
+from diffoscope.config import Config
 from diffoscope.exc import RequiredToolNotFound
 from diffoscope.tools import tool_required
 from diffoscope.progress import Progress
@@ -100,6 +101,10 @@ class Getfacl(Command):
 
 
 def compare_meta(path1, path2):
+    if Config().exclude_directory_metadata:
+        logger.debug("Excluding directory metadata for paths (%s, %s)", path1, path2)
+        return []
+
     logger.debug('compare_meta(%s, %s)', path1, path2)
     differences = []
     try:
