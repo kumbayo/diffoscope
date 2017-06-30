@@ -1,0 +1,15 @@
+--- archive1.tar
++++ archive2.tar
+├── file list
+│ @@ -1 +1 @@
+│ --rw-r--r--   0 lamby     (1000) lamby     (1000)       22 2017-03-19 22:26:58.000000 compressed.gz
+│ +-rw-r--r--   0 lamby     (1000) lamby     (1000)       33 2017-03-19 22:27:42.000000 compressed.gz
+├── compressed.gz
+│ ├── metadata
+│ │ @@ -1 +1 @@
+│ │ -gzip compressed data, max compression, from Unix
+│ │ +gzip compressed data, was "compressed", last modified: Sun Mar 19 22:27:42 2017, max compression, from Unix
+│ ├── compressed
+│ │ @@ -1 +1 @@
+│ │ -a
+│ │ +b

@@ -29,9 +29,9 @@ from .utils.data import cwd_data, get_data
 re_html = re.compile(r'.*<body(?P<body>.*)<div class="footer">', re.MULTILINE | re.DOTALL)
 
 
-def run(capsys, *args):
+def run(capsys, *args, pair=('test1.tar', 'test2.tar')):
     with pytest.raises(SystemExit) as exc, cwd_data():
-        main(args + ('test1.tar', 'test2.tar'))
+        main(args + pair)
     out, err = capsys.readouterr()
 
     assert err == ''
@@ -39,13 +39,7 @@ def run(capsys, *args):
     return out
 
 def run_images(capsys, *args):
-    with pytest.raises(SystemExit) as exc, cwd_data():
-        main(args + ('test1.png', 'test2.png'))
-    out, err = capsys.readouterr()
-
-    assert err == ''
-    assert exc.value.code == 1
-    return out
+    return run(capsys, *args, pair=('test1.png', 'test2.png'))
 
 def extract_body(val):
     """
@@ -64,6 +58,11 @@ def test_text_option_is_default(capsys):
     out = run(capsys)
 
     assert out == get_data('output.txt')
+
+def test_text_proper_indentation(capsys):
+    out = run(capsys, pair=('archive1.tar', 'archive2.tar'))
+
+    assert out == get_data('archive12.diff.txt')
 
 def test_text_option_color(capsys):
     out = run(capsys, '--text-color=always')

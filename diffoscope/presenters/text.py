@@ -89,5 +89,5 @@ class TextPresenter(Presenter):
 
     def output(self, val, raw=False):
         self.print_func(
-            self.indent(val, self.PREFIX * (self.depth + 0 if raw else -1)),
+            self.indent(val, self.PREFIX * (self.depth + (0 if raw else -1))),
         )
