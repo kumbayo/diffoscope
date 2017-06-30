@@ -24,7 +24,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-
 class ProgressLoggingHandler(logging.StreamHandler):
 
     def __init__(self, progressbar):
@@ -201,6 +200,11 @@ class ProgressBar(object):
                 return '…{}'.format(msg[-width + 1:])
 
         class OurProgressBar(progressbar.ProgressBar):
+            def __init__(self, *args, **kwargs):
+                # Remove after https://github.com/niltonvolpato/python-progressbar/pull/57 is fixed.
+                kwargs.setdefault("fd", sys.stderr)
+                super().__init__(*args, **kwargs)
+
             def _need_update(self):
                 return True
 

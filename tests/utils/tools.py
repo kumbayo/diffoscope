@@ -69,7 +69,7 @@ def module_is_not_importable(x):
         # modules are not available, e.g. if we are running diffoscope using a
         # non-default version of python, and the module uses extension modules
         # that haven't been compiled for this version
-        __import__(x)
+        importlib.import_module(x)
     except ImportError:
         # Probing for submodules (eg. ``debian.deb822``) will attempt to
         # import ``debian`` so we must handle that failing.
