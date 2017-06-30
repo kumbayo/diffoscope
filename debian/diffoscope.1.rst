@@ -15,7 +15,9 @@ SYNOPSIS
 ========
 
   diffoscope [-h] [--json output] [OPTIONS] file1 file2
+
   diffoscope [-h] [OPTIONS] diff_file
+
   diffoscope [-h] [OPTIONS] < diff_file
 
 DESCRIPTION
