@@ -20,7 +20,7 @@
 
 import pytest
 import functools
-import importlib
+import importlib.util
 import subprocess
 
 from distutils.spawn import find_executable
@@ -61,16 +61,22 @@ def get_supported_elf_formats():
         ('objdump', '--info'),
     ).decode('utf-8').splitlines())
 
-def skip_unless_module_exists(name):
-    def module_does_not_exist(x):
-        try:
-            return importlib.util.find_spec(x) is None
-        except ImportError:
-            # Probing for submodules (eg. ``debian.deb822``) will attempt to
-            # import ``debian`` so we must handle that failing.
+def module_is_not_importable(x):
+    try:
+        if importlib.util.find_spec(x) is None:
             return True
+        # an existent module is not necessarily importable, e.g. if its child
+        # modules are not available, e.g. if we are running diffoscope using a
+        # non-default version of python, and the module uses extension modules
+        # that haven't been compiled for this version
+        __import__(x)
+    except ImportError:
+        # Probing for submodules (eg. ``debian.deb822``) will attempt to
+        # import ``debian`` so we must handle that failing.
+        return True
 
+def skip_unless_module_exists(name):
     return pytest.mark.skipif(
-        module_does_not_exist(name),
+        module_is_not_importable(name),
         reason="requires {} module".format(name),
     )
