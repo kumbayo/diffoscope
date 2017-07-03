@@ -129,7 +129,7 @@ class FormatPlaceholder(object):
 
 
 class PartialString(object):
-    """A format string where the "holes" are indexed by arbitrary python
+    r"""A format string where the "holes" are indexed by arbitrary python
     objects instead of string names or integer indexes. This is useful when you
     need to compose these objects together, but don't want users of the partial
     string to have to deal with artificial "indexes" for the holes.
@@ -175,6 +175,16 @@ class PartialString(object):
     Traceback (most recent call last):
     ...
     IndexError: tuple index out of range
+
+    If you don't have specific objects to index the holes with, and don't want
+    to create artifical indexes as in the above examples, here is a slightly
+    simpler way of doing it:
+
+    >>> tmpl = PartialString.numl("{0} {1} {2}", 2, object())
+    >>> tmpl.holes
+    (0, 1, <object ...>)
+    >>> tmpl.pformatl("(first hole)", "(second hole)", "(object hole)")
+    PartialString('(first hole) (second hole) (object hole)',)
 
     CAVEATS:
 
@@ -245,12 +255,20 @@ class PartialString(object):
         new_fmtstr, new_holes = self._pformat(mapping)
         return self.__class__(new_fmtstr, *new_holes)
 
+    def pformatl(self, *args):
+        """Partially apply a list, implicitly mapped from self.holes."""
+        return self.pformat(dict(zip(self.holes, args)))
+
     def format(self, mapping):
         """Fully apply a mapping, returning a string."""
         new_fmtstr, new_holes = self._pformat(mapping)
         if new_holes:
             raise ValueError("not all holes filled: %r" % new_holes)
         return new_fmtstr
+
+    def formatl(self, *args):
+        """Fully apply a list, implicitly mapped from self.holes."""
+        return self.format(dict(zip(self.holes, args)))
 
     @classmethod
     def of(cls, obj):
@@ -261,6 +279,19 @@ class PartialString(object):
         True
         """
         return cls("{0}", obj)
+
+    @classmethod
+    def numl(cls, fmtstr="", nargs=0, *holes):
+        """Create a partial string with some implicit numeric holes.
+
+        Useful in conjuction with PartialString.pformatl.
+
+        >>> PartialString.numl("{0}{1}{2}{3}", 3, "last object")
+        PartialString('{0}{1}{2}{3}', 0, 1, 2, 'last object')
+        >>> _.pformatl(40, 41, 42, "final")
+        PartialString('404142final',)
+        """
+        return cls(fmtstr, *range(nargs), *holes)
 
     @classmethod
     def cont(cls):
@@ -282,7 +313,10 @@ class PartialString(object):
         27
         """
         def cont(t, fmtstr, *holes):
-            return t.pformat({cont: cls(fmtstr, *(holes + (cont,)))})
+            if isinstance(fmtstr, cls):
+                return t.pformat({cont: fmtstr})
+            else:
+                return t.pformat({cont: cls(fmtstr, *(holes + (cont,)))})
         return cls("{0}", cont), cont
 
 

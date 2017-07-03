@@ -178,3 +178,9 @@ def test_partial_string_cont():
     assert (t.format({key[0]: "line1", key[1]: "line2", key[2]: "line3"})
             == 'x: line1\ny: line2\nz: line3\n')
     assert t.size(hole_size=5) == 27
+
+def test_partial_string_numl():
+    tmpl = PartialString.numl("{0} {1} {2}", 2, object())
+    assert tmpl.holes[:2] == (0, 1)
+    assert tmpl.pformatl("(1)", "(2)", "(o)") == PartialString('(1) (2) (o)')
+
