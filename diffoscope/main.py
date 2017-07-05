@@ -145,6 +145,9 @@ def create_parser():
                         'effect even with --no-default-limits)', default=
                         Config().max_page_size_child).completer=RangeCompleter(
                         Config().max_page_size_child)
+    # TODO: old flag kept for backwards-compat, drop 6 months after v84
+    group2.add_argument('--max-report-size-child', metavar='BYTES', type=int,
+                        help=argparse.SUPPRESS, default=None)
     group2.add_argument('--max-page-diff-block-lines', metavar='LINES', type=int,
                         help='Maximum number of lines output per unified-diff block '
                         'on the top-level (--html-dir) or sole (--html) page, before '
@@ -154,6 +157,9 @@ def create_parser():
                         'effect even with --no-default-limits)', default=
                         Config().max_page_diff_block_lines).completer=RangeCompleter(
                         Config().max_page_diff_block_lines)
+    # TODO: old flag kept for backwards-compat, drop 6 months after v84
+    group2.add_argument("--max-diff-block-lines-parent", metavar='LINES', type=int,
+                        help=argparse.SUPPRESS, default=None)
 
     group3 = parser.add_argument_group('diff calculation')
     group3.add_argument('--new-file', action='store_true',
@@ -311,7 +317,16 @@ def run_diffoscope(parsed_args):
     maybe_set_limit(Config(), parsed_args, "max_text_report_size")
     maybe_set_limit(Config(), parsed_args, "max_diff_block_lines")
     Config().max_page_size = parsed_args.max_page_size
+    # TODO: old flag kept for backwards-compat, drop 6 months after v84
+    if parsed_args.max_report_size_child is not None:
+        logger.warning("Detected deprecated flag --max-report-size-child; use --max-page-size-child instead.")
+        Config().max_page_size_child = parsed_args.max_report_size_child
     Config().max_page_size_child = parsed_args.max_page_size_child
+    # TODO: old flag kept for backwards-compat, drop 6 months after v84
+    if parsed_args.max_diff_block_lines_parent is not None:
+        logger.warning("Detected deprecated flag --max-diff-block-lines-parent; use --max-page-diff-block-lines instead.")
+        logger.warning("Note that the new flag --max-page-diff-block-lines also applies to --html output.")
+        Config().max_page_diff_block_lines = parsed_args.max_diff_block_lines_parent
     Config().max_page_diff_block_lines = parsed_args.max_page_diff_block_lines
 
     maybe_set_limit(Config(), parsed_args, "max_diff_block_lines_saved")
