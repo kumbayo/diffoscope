@@ -22,6 +22,7 @@ import io
 import os
 import errno
 import fcntl
+import hashlib
 import logging
 import threading
 import subprocess
@@ -292,38 +293,62 @@ def color_unified_diff(diff):
 
 DIFFON = "\x01"
 DIFFOFF = "\x02"
+MAX_WF_SIZE = 2048 # hitting this limit uses up 1-2GB
 
 def _linediff_sane(x):
-    r = ""
-    for i in x:
-        j = ord(i)
-        if i not in ['\t', '\n'] and (j < 32):
-            r = r + "."
-        else:
-            r = r + i
-    return r
+    # turn non-printable chars into "."
+    return "." if ord(x) < 32 and x not in '\t\n' else x
+
+def diffinput_truncate(s, sz):
+    # Truncate, preserving uniqueness
+    if len(s) > sz:
+        s = s[:sz] + "[ ... truncated by diffoscope; len: {}, SHA1: {} ... ]".format(
+            len(s[sz:]), hashlib.sha1(s[sz:].encode('utf-8')).hexdigest())
+    return s
 
 def linediff(s, t, diffon, diffoff):
-    '''
-    Original line diff algorithm of diff2html. It's character based.
-    '''
-    if len(s):
-        s = ''.join([ _linediff_sane(c) for c in s ])
-    if len(t):
-        t = ''.join([ _linediff_sane(c) for c in t ])
+    # calculate common prefix/suffix, easy optimisation to WF
+    prefix = os.path.commonprefix((s, t))
+    if prefix:
+        s = s[len(prefix):]
+        t = t[len(prefix):]
+    suffix = os.path.commonprefix((s[::-1], t[::-1]))[::-1]
+    if suffix:
+        s = s[:-len(suffix)]
+        t = t[:-len(suffix)]
 
+    # truncate so WF doesn't blow up RAM
+    s = diffinput_truncate(s, MAX_WF_SIZE)
+    t = diffinput_truncate(t, MAX_WF_SIZE)
+    l1, l2 = zip(*linediff_simplify(linediff_wagnerfischer(s, t)))
+
+    def to_string(k, v):
+        sanev = "".join(_linediff_sane(c) for c in v)
+        return (diffon + sanev + diffoff) if k else sanev
+    s1 = ''.join(to_string(*p) for p in l1)
+    t1 = ''.join(to_string(*p) for p in l2)
+    return prefix + s1 + suffix, prefix + t1 + suffix
+
+def linediff_wagnerfischer(s, t):
+    '''
+    Line diff algorithm, originally from diff2html.
+
+    https://en.wikipedia.org/wiki/Wagner%E2%80%93Fischer_algorithm
+
+    Finds the minimum (levenshtein) edit distance between two strings, but has
+    quadratic performance O(m*n).
+    '''
     m, n = len(s), len(t)
     d = [[(0, 0) for i in range(n+1)] for i in range(m+1)]
 
-
     d[0][0] = (0, (0, 0))
-    for i in range(m+1)[1:]:
-        d[i][0] = (i,(i-1, 0))
-    for j in range(n+1)[1:]:
-        d[0][j] = (j,(0, j-1))
+    for i in range(1, m+1):
+        d[i][0] = (i, (i-1, 0))
+    for j in range(1, n+1):
+        d[0][j] = (j, (0, j-1))
 
-    for i in range(m+1)[1:]:
-        for j in range(n+1)[1:]:
+    for i in range(1, m+1):
+        for j in range(1, n+1):
             if s[i-1] == t[j-1]:
                 cost = 0
             else:
@@ -339,9 +364,6 @@ def linediff(s, t, diffon, diffoff):
         x, y = coord
         coord = d[x][y][1]
 
-    l1 = []
-    l2 = []
-
     for coord in l:
         cx, cy = coord
         child_val = d[cx][cy][0]
@@ -353,20 +375,28 @@ def linediff(s, t, diffon, diffoff):
         diff = (cx-fx, cy-fy)
 
         if diff == (0, 1):
-            l1.append("")
-            l2.append(diffon + t[fy] + diffoff)
+            yield (False, ""), (True, t[fy])
         elif diff == (1, 0):
-            l1.append(diffon + s[fx] + diffoff)
-            l2.append("")
+            yield (True, s[fx]), (False, "")
         elif child_val-father_val == 1:
-            l1.append(diffon + s[fx] + diffoff)
-            l2.append(diffon + t[fy] + diffoff)
+            yield (True, s[fx]), (True, t[fy])
         else:
-            l1.append(s[fx])
-            l2.append(t[fy])
+            assert s[fx] == t[fy]
+            yield (False, s[fx]), (False, t[fy])
 
-    return ''.join(l1).replace(diffoff + diffon, ''), ''.join(l2).replace(diffoff + diffon, '')
-
+def linediff_simplify(g):
+    """Simplify the output of WF."""
+    current = None
+    for l, r in g:
+        if not current:
+            current = l, r
+        elif current[0][0] == l[0] and current[1][0] == r[0]:
+            current = (l[0], current[0][1] + l[1]), (r[0], current[1][1] + r[1])
+        else:
+            yield current
+            current = l, r
+    if current:
+        yield current
 
 class SideBySideDiff(object):
     """Calculates a side-by-side diff from a unified diff."""

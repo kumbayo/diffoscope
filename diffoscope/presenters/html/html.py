@@ -54,7 +54,6 @@ from . import templates
 # minimum line size, we add a zero-sized breakable space every
 # LINESIZE characters
 LINESIZE = 20
-MAX_LINE_SIZE = 1024
 TABSIZE = 8
 
 # Characters we're willing to word wrap on
@@ -187,11 +186,6 @@ class HTMLPresenter(Presenter):
         self.row_was_output()
 
     def output_line(self, has_internal_linenos, type_name, s1, line1, s2, line2):
-        if s1 and len(s1) > MAX_LINE_SIZE:
-            s1 = s1[:MAX_LINE_SIZE] + u" ✂"
-        if s2 and len(s2) > MAX_LINE_SIZE:
-            s2 = s2[:MAX_LINE_SIZE] + u" ✂"
-
         self.spl_print_func(u'<tr class="diff%s">' % type_name)
         try:
             if s1:
