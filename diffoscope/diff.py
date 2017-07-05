@@ -293,7 +293,7 @@ def color_unified_diff(diff):
 
 DIFFON = "\x01"
 DIFFOFF = "\x02"
-MAX_WF_SIZE = 2048 # hitting this limit uses up 1-2GB
+MAX_WF_SIZE = 1024 # any higher, and linediff takes >1 second and >200MB RAM
 
 def _linediff_sane(x):
     # turn non-printable chars into "."
