@@ -149,6 +149,9 @@ STYLES = u"""body.diffoscope {
 .diffoscope .coldiff {
   width: 99%;
 }
+.diffoscope .diffsize {
+  float: right;
+}
 """
 
 SCRIPTS = u"""<script src="%(jquery_url)s"></script>
@@ -208,7 +211,9 @@ $(function() {
 </script>
 """
 
-DIFFNODE_LAZY_LOAD = u"""<div class="ondemand-details">... <a href="%s.html">load details</a> ...</div>
+DIFFNODE_LAZY_LOAD = u"""<div class="ondemand-details" title="the size refers to the raw diff and includes all children;
+only the top %(pagesize)s of the HTML are loaded at a time">... <a
+href="%(pagename)s.html">load details (total %(size)s)</a> ...</div>
 """
 
 DIFFNODE_LIMIT = u"""<div class="error">Max report size reached</div>

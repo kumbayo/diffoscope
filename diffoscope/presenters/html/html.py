@@ -49,7 +49,7 @@ from diffoscope.config import Config
 from diffoscope.diff import SideBySideDiff, DIFFON, DIFFOFF
 
 from ..icon import FAVICON_BASE64
-from ..utils import PrintLimitReached, DiffBlockLimitReached, \
+from ..utils import sizeof_fmt, PrintLimitReached, DiffBlockLimitReached, \
     create_limited_print_func, Presenter, make_printer, PartialString
 
 from . import templates
@@ -166,18 +166,20 @@ def output_node_frame(difference, path, indentstr, indentnum, body):
     dctrl_class, dctrl = ("diffcontrol", u'⊟') if difference.has_visible_children() else ("diffcontrol-nochildren", u'⊡')
     if difference.source1 == difference.source2:
         header = u"""{0[1]}<div class="{1}">{2}</div>
-{0[1]}<div><span class="source">{4}</span>
-{0[2]}<a class="anchor" href="#{3}" name="{3}">\xb6</a>
+{0[1]}<div><span class="diffsize">{3}</span></div>
+{0[1]}<div><span class="source">{5}</span>
+{0[2]}<a class="anchor" href="#{4}" name="{4}">\xb6</a>
 {0[1]}</div>
-""".format(indent, dctrl_class, dctrl, anchor,
+""".format(indent, dctrl_class, dctrl, sizeof_fmt(difference.size()), anchor,
         html.escape(difference.source1))
     else:
         header = u"""{0[1]}<div class="{1} diffcontrol-double">{2}</div>
-{0[1]}<div><span class="source">{4}</span> vs.</div>
-{0[1]}<div><span class="source">{5}</span>
-{0[2]}<a class="anchor" href="#{3}" name="{3}">\xb6</a>
+{0[1]}<div><span class="diffsize">{3}</span></div>
+{0[1]}<div><span class="source">{5}</span> vs.</div>
+{0[1]}<div><span class="source">{6}</span>
+{0[2]}<a class="anchor" href="#{4}" name="{4}">\xb6</a>
 {0[1]}</div>
-""".format(indent, dctrl_class, dctrl, anchor,
+""".format(indent, dctrl_class, dctrl, sizeof_fmt(difference.size()), anchor,
         html.escape(difference.source1),
         html.escape(difference.source2))
 
@@ -544,9 +546,13 @@ class HTMLPresenter(Presenter):
         del printers[node]
         del continuations[node]
 
-    def output_node_placeholder(self, anchor, lazy_load):
+    def output_node_placeholder(self, pagename, lazy_load, size=0):
         if lazy_load:
-            return templates.DIFFNODE_LAZY_LOAD % anchor
+            return templates.DIFFNODE_LAZY_LOAD % {
+                "pagename": pagename,
+                "pagesize": sizeof_fmt(Config().max_page_size_child),
+                "size": sizeof_fmt(size),
+            }
         else:
             return templates.DIFFNODE_LIMIT
 
@@ -593,7 +599,7 @@ class HTMLPresenter(Presenter):
             else:
                 # over limit (or root), new subpage or continue/break
                 if ancestor:
-                    placeholder = self.output_node_placeholder(pagename, make_new_subpage)
+                    placeholder = self.output_node_placeholder(pagename, make_new_subpage, node.size())
                     outputs[ancestor] = outputs[ancestor].pformat({node: placeholder})
                     self.maybe_print(ancestor, printers, outputs, continuations)
                     footer = output_footer()
