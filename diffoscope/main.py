@@ -231,7 +231,17 @@ def create_parser():
         logger.error('Argument completion requested but the "argcomplete" module is not installed. It can be obtained at https://pypi.python.org/pypi/argcomplete')
         sys.exit(1)
 
-    return parser
+    def post_parse(parsed_args):
+        if parsed_args.path2 is None:
+            # warn about unusual flags in this mode
+            ineffective_flags = [f
+                for x in group3._group_actions
+                    if getattr(parsed_args, x.dest) != x.default
+                for f in x.option_strings]
+            if ineffective_flags:
+                logger.warning("Loading diff instead of calculating it, but diff-calculation flags were given; they will be ignored:")
+                logger.warning(ineffective_flags)
+    return parser, post_parse
 
 
 class RangeCompleter(object):
@@ -305,9 +315,10 @@ def maybe_set_limit(config, parsed_args, key):
         setattr(config, key, float("inf"))
 
 
-def run_diffoscope(parsed_args):
+def run_diffoscope(parsed_args, post_parse):
     log_handler = ProgressManager().setup(parsed_args)
     setup_logging(parsed_args.debug, log_handler)
+    post_parse(parsed_args)
     ProfileManager().setup(parsed_args)
     PresenterManager().configure(parsed_args)
     logger.debug("Starting diffoscope %s", VERSION)
@@ -373,9 +384,9 @@ def main(args=None):
     parsed_args = None
     try:
         with profile('main', 'parse_args'):
-            parser = create_parser()
+            parser, post_parse = create_parser()
             parsed_args = parser.parse_args(args)
-        sys.exit(run_diffoscope(parsed_args))
+        sys.exit(run_diffoscope(parsed_args, post_parse))
     except KeyboardInterrupt:
         logger.info('Keyboard Interrupt')
         sys.exit(2)
