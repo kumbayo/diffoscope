@@ -124,32 +124,42 @@ def create_limited_print_func(print_func, max_page_size):
 
 
 class PartialFormatter(string.Formatter):
+
     @staticmethod
     def escape(x):
         return x.replace("}", "}}").replace("{", "{{")
+
     def get_value(self, key, args, kwargs):
         return args[key] if isinstance(key, int) else args[int(key)]
+
     def arg_of_field_name(self, field_name, args):
         x = int(_string.formatter_field_name_split(field_name)[0])
         return x if x >= 0 else len(args) + x
+
     def parse(self, *args, **kwargs):
         # Preserve {{ and }} escapes when formatting
         return map(lambda x: (self.escape(x[0]),) + x[1:], super().parse(*args, **kwargs))
+
     parse_no_escape = string.Formatter.parse
 
 
 class FormatPlaceholder(object):
+
     def __init__(self, ident):
         self.ident = str(ident)
+
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.ident)
+
     def __format__(self, spec):
         result = self.ident
         if spec:
             result += ":" + spec
         return "{" + result + "}"
+
     def __getitem__(self, key):
         return FormatPlaceholder(self.ident + "[" + str(key) + "]")
+
     def __getattr__(self, attr):
         return FormatPlaceholder(self.ident + "." + str(attr))
 
