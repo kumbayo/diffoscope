@@ -25,6 +25,7 @@ from diffoscope.main import main
 from diffoscope.presenters.utils import create_limited_print_func, PrintLimitReached, PartialString
 
 from .utils.data import cwd_data, get_data
+from .utils.tools import skip_unless_tools_exist
 
 re_html = re.compile(r'.*<body(?P<body>.*)<div class="footer">', re.MULTILINE | re.DOTALL)
 
@@ -114,6 +115,7 @@ def test_html_option_with_file(tmpdir, capsys):
         body = extract_body(f.read())
         assert body.count('div class="difference"') == 4
 
+@skip_unless_tools_exist('compare', 'convert')
 def test_html_visuals(tmpdir, capsys):
     report_path = str(tmpdir.join('report.html'))
 
