@@ -58,6 +58,17 @@ except ImportError:
     argcomplete = None
 
 
+class BooleanAction(argparse.Action):
+
+    def __init__(self, option_strings, dest, nargs=None, **kwargs):
+        if nargs is not None:
+            raise ValueError("nargs not allowed for BooleanAction")
+        super(BooleanAction, self).__init__(option_strings, dest, nargs=0, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, not option_string.startswith("--no"))
+
+
 def create_parser():
     parser = argparse.ArgumentParser(
         description='Calculate differences between two files or directories',
@@ -74,10 +85,9 @@ def create_parser():
                         help='Open the Python debugger in case of crashes')
     parser.add_argument('--status-fd', metavar='FD', type=int,
                         help='Send machine-readable status to file descriptor FD')
-    parser.add_argument('--progress', action='store_const',
-                        const=True, help='Show an approximate progress bar')
-    parser.add_argument('--no-progress', dest='progress', action='store_const',
-                        const=False, help='Do not show any progress bar')
+    parser.add_argument('--progress', '--no-progress', action=BooleanAction, default=None,
+                        help='Show an approximate progress bar. Default: yes if '
+                        'stdin is a tty, otherwise no.')
     parser.add_argument('--no-default-limits', action='store_true', default=False,
                         help='Disable most default output limits and diff calculation limits.')
 
@@ -174,17 +184,15 @@ def create_parser():
                         'the longest time, and differences here are probably '
                         'only secondary differences caused by something that '
                         'is already represented elsewhere in the diff.')
-    group3.add_argument('--exclude-directory-metadata', action='store_true',
+    group3.add_argument('--exclude-directory-metadata', '--no-exclude-directory-metadata',
+                        action=BooleanAction, default=False,
                         help='Exclude directory metadata. Useful if comparing '
                         'files whose filesystem-level metadata is not intended '
                         'to be distributed to other systems. For example, this '
                         'is true for most distros\' package builders, but not '
                         'true for the output of commands like `make install`. '
-                        'Metadata of archive members remain un-excluded.')
-    group3.add_argument('--no-exclude-directory-metadata', action='store_const',
-                        const=False, dest='exclude_directory_metadata',
-                        help='Don\'t exclude directory metadata, useful to '
-                        'cancel an earlier --exclude-directory-metadata flag.')
+                        'Metadata of archive members remain un-excluded. '
+                        'Default: %(default)s')
     group3.add_argument('--fuzzy-threshold', type=int,
                         help='Threshold for fuzzy-matching '
                         '(0 to disable, %(default)s is default, 400 is high fuzziness)',
