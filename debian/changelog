@@ -1,10 +1,70 @@
 diffoscope (84) UNRELEASED; urgency=medium
 
-  * Add a --exclude-directory-metadata option. (Closes: #866241)
-  * Fix recursive header display in the text output, deeply-nested headers were
-    not getting indented far enough.
+  [ Ximin Luo ]
+  * comparators:
+    + directory:
+      - raise warning for getfacl and remove a redundant try-clause.
+      - add a --exclude-directory-metadata option.  Closes: #866241
+  * diff:
+    + Restore artificial limit when calculating linediff, to prevent memory
+      blow up.  Closes: #865660
+  * presenters:
+    + text:
+      - fix recursive header display in the text output, deeply-nested headers
+        were not getting indented far enough.
+    + add a PartialString class.
+    + html:
+      - in html-dir mode, put css/icon in separate files to avoid duplication.
+      - split index pages up if they get too big.
+      - add a size-hint to the diff headers and lazy-load buttons.
+      - diffcontrol UI tweaks:
+        * don't toggle buttons for diffs that haven't been loaded yet;
+        * make the diffcontrol headers clickable.
+      - more intuitive "limit" flags, with some backwards-incompatible changes:
+        --max-report-size:
+          Old: in --html-dir this limited only the parent page
+          New: in --html-dir this applies across all pages
+        --max-diff-block-lines:
+          Old: in --html-dir 4 * this number applied across all pages
+          New: in --html-dir this applies across all pages
+        --max-page-size:
+          New flag
+          Applies to the sole --html page, or the top-level --html-dir page
+        --max-report-child-size
+          Renamed to
+        --max-page-size-child:
+          No behavioural changes
+        --max-diff-block-lines-parent
+          Renamed to
+        --max-page-diff-block-lines:
+          Old: Only applied to the top-level --html-dir page
+          New: Applies to the sole --html page or the top-level --html-dir page
+  * main:
+    + temporarily add old flags back for backwards-compatibility.
+    + warn if loading a diff but also giving diff-calculation flags.
+    + implement proper boolean flags to fix test failure in previous commit.
+  * tests:
+    + handle existing but not importable modules.
+      This fixes the tests during the Python 3.6 transition, where some
+      modules (like rpm) exists but are not yet rebuilt for 3.6.
+    + fix progressbar failure that was exposed by the previous importing fixes.
+    + presenters:
+      - skip visual test if tools aren't installed.  Closes: #865625
+    + comparators
+      - sqlite: test for sqlite 3.19.
+      - fsimage: put the 400MB cache in a more obvious place.
 
- -- Ximin Luo <infinity0@debian.org>  Fri, 30 Jun 2017 18:25:03 +0200
+  [ Mattia Rizzolo ]
+  * debian/control: fix Vcs-Git field.
+
+  [ Chris Lamb ]
+  * debian/control: bump Standards-Version to 4.0.0.
+
+  [ Daniel Shahaf ]
+  * Fix markup in the man page synopsis.  Closes: #866577
+   Thanks to Niels Thykier for the report.
+
+ -- Mattia Rizzolo <mattia@debian.org>  Tue, 11 Jul 2017 11:51:46 +0200
 
 diffoscope (83) unstable; urgency=medium
 
