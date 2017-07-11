@@ -19,6 +19,7 @@
 
 import pytest
 import os
+import tempfile
 
 from diffoscope.config import Config
 from diffoscope.comparators.missing_file import MissingFile
@@ -30,29 +31,29 @@ from ..utils.tools import skip_unless_tools_exist, skip_unless_module_exists
 img1 = load_fixture('test1.ext4')
 img2 = load_fixture('test2.ext4')
 
-def guestfs_working():
-    try:
-        import guestfs
-    except ImportError:
-        return False
-    g = guestfs.GuestFS (python_return_dict=True)
-    cachedir = os.path.join(os.getcwd(), "cache")
-    os.makedirs(cachedir, exist_ok=True)
-    g.set_cachedir(cachedir)
-    g.add_drive_opts("/dev/null", format="raw", readonly=1)
-    try:
-        g.launch()
-    except RuntimeError:
-        return False
-    return True
+@pytest.fixture(scope="module")
+def guestfs_tempdir():
+    import guestfs
+    with tempfile.TemporaryDirectory(suffix='_diffoscope') as cachedir:
+        g = guestfs.GuestFS(python_return_dict=True)
+        g.set_cachedir(cachedir)
+        # set cachedir for the diffoscope.comparators.fsimage module as well
+        os.environ["LIBGUESTFS_CACHEDIR"] = cachedir
+        g.add_drive_opts("/dev/null", format="raw", readonly=1)
+        try:
+            g.launch()
+        except RuntimeError:
+            import traceback
+            traceback.print_exc()
+            pytest.skip('guestfs not working on the system')
+        yield cachedir
 
 def test_identification(img1):
     assert isinstance(img1, FsImageFile)
 
-@pytest.mark.skipif(not guestfs_working(), reason='guestfs not working on the system')
 @skip_unless_tools_exist('qemu-img')
 @skip_unless_module_exists('guestfs')
-def test_no_differences(img1):
+def test_no_differences(img1, guestfs_tempdir):
     difference = img1.compare(img1)
     assert difference is None
 
@@ -60,10 +61,9 @@ def test_no_differences(img1):
 def differences(img1, img2):
     return img1.compare(img2).details
 
-@pytest.mark.skipif(not guestfs_working(), reason='guestfs not working on the system')
 @skip_unless_tools_exist('qemu-img')
 @skip_unless_module_exists('guestfs')
-def test_differences(differences):
+def test_differences(differences, guestfs_tempdir):
     assert differences[0].source1 == 'test1.ext4.tar'
     tarinfo = differences[0].details[0]
     tardiff = differences[0].details[1]
@@ -78,10 +78,9 @@ def test_differences(differences):
     found_diff = tarinfo.unified_diff + tardiff.unified_diff + encodingdiff.unified_diff
     assert expected_diff == found_diff
 
-@pytest.mark.skipif(not guestfs_working(), reason='guestfs not working on the system')
 @skip_unless_tools_exist('qemu-img')
 @skip_unless_module_exists('guestfs')
-def test_compare_non_existing(monkeypatch, img1):
+def test_compare_non_existing(monkeypatch, img1, guestfs_tempdir):
     monkeypatch.setattr(Config(), 'new_file', True)
     difference = img1.compare(MissingFile('/nonexisting', img1))
     assert difference.source2 == '/nonexisting'
