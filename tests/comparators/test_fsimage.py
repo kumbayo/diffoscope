@@ -39,16 +39,15 @@ def guestfs_tempdir():
         g.set_cachedir(cachedir)
         # set cachedir for the diffoscope.comparators.fsimage module as well
         os.environ["LIBGUESTFS_CACHEDIR"] = cachedir
-        # see what went wrong in jenkins
-        os.environ["LIBGUESTFS_DEBUG"] = "1"
-        os.environ["LIBGUESTFS_TRACE"] = "1"
         g.add_drive_opts("/dev/null", format="raw", readonly=1)
         try:
             g.launch()
-        except RuntimeError:
-            import traceback
-            traceback.print_exc()
-            pytest.skip('guestfs not working on the system')
+        except RuntimeError as e:
+            # to debug this, set LIBGUESTFS_DEBUG=1 and give -s to pytest.
+            # Unfortunately we can't capture the logs, due to capsys not being
+            # available in a module/session scope, and g.set_event_callback
+            # segfaults on my system.
+            pytest.skip('guestfs not working on the system: %r' % e)
         yield cachedir
 
 def test_identification(img1):
