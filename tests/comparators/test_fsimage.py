@@ -61,7 +61,7 @@ def test_no_differences(img1, guestfs_tempdir):
     assert difference is None
 
 @pytest.fixture
-def differences(img1, img2):
+def differences(img1, img2, guestfs_tempdir):
     return img1.compare(img2).details
 
 @skip_unless_tools_exist('qemu-img')
