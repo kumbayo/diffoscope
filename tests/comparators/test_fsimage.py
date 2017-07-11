@@ -39,6 +39,9 @@ def guestfs_tempdir():
         g.set_cachedir(cachedir)
         # set cachedir for the diffoscope.comparators.fsimage module as well
         os.environ["LIBGUESTFS_CACHEDIR"] = cachedir
+        # see what went wrong in jenkins
+        os.environ["LIBGUESTFS_DEBUG"] = "1"
+        os.environ["LIBGUESTFS_TRACE"] = "1"
         g.add_drive_opts("/dev/null", format="raw", readonly=1)
         try:
             g.launch()

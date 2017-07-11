@@ -40,6 +40,10 @@ class FsImageContainer(Archive):
             return None
 
         self.g = guestfs.GuestFS (python_return_dict=True)
+        if "LIBGUESTFS_CACHEDIR" in os.environ:
+            # force a check that LIBGUESTFS_CACHEDIR exists. otherwise guestfs
+            # will fall back to /var/tmp, which we don't want
+            self.g.set_cachedir(os.getenv("LIBGUESTFS_CACHEDIR"))
         self.g.add_drive_opts (self.source.path, format="raw", readonly=1)
         try:
             self.g.launch()
