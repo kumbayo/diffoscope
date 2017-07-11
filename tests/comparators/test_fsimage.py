@@ -31,7 +31,7 @@ from ..utils.tools import skip_unless_tools_exist, skip_unless_module_exists
 img1 = load_fixture('test1.ext4')
 img2 = load_fixture('test2.ext4')
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def guestfs_tempdir():
     import guestfs
     with tempfile.TemporaryDirectory(suffix='_diffoscope') as cachedir:
