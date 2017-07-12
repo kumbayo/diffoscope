@@ -1,4 +1,4 @@
-diffoscope (84) UNRELEASED; urgency=medium
+diffoscope (84) unstable; urgency=medium
 
   [ Ximin Luo ]
   * comparators:
@@ -52,7 +52,8 @@ diffoscope (84) UNRELEASED; urgency=medium
       - skip visual test if tools aren't installed.  Closes: #865625
     + comparators
       - sqlite: test for sqlite 3.19.
-      - fsimage: put the 400MB cache in a more obvious place.
+      - fsimage: move the guestfs cache out of the default /var/tmp/ into a
+        "more temporary" directory.
 
   [ Mattia Rizzolo ]
   * debian/control: fix Vcs-Git field.
@@ -64,7 +65,7 @@ diffoscope (84) UNRELEASED; urgency=medium
   * Fix markup in the man page synopsis.  Closes: #866577
    Thanks to Niels Thykier for the report.
 
- -- Mattia Rizzolo <mattia@debian.org>  Tue, 11 Jul 2017 11:51:46 +0200
+ -- Mattia Rizzolo <mattia@debian.org>  Wed, 12 Jul 2017 12:28:11 +0200
 
 diffoscope (83) unstable; urgency=medium
 
