@@ -23,8 +23,7 @@ try:
 except ImportError:
     distro = None
 
-from .tools import get_current_os
-from .external_tools import EXTERNAL_TOOLS
+from .tools import get_package_provider
 
 
 class OutputParsingError(Exception):
@@ -37,12 +36,7 @@ class RequiredToolNotFound(Exception):
         self.command = command
 
     def get_package(self):
-        try:
-            providers = EXTERNAL_TOOLS[self.command]
-        except KeyError:  # noqa
-            return None
-
-        return providers.get(get_current_os(), None)
+        return get_package_provider(self.command)
 
 class ContainerExtractionError(Exception):
     def __init__(self, pathname, wrapped_exc):
