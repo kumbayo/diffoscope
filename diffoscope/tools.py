@@ -29,6 +29,7 @@ except ImportError:
 from distutils.spawn import find_executable
 
 from .profiling import profile
+from .external_tools import EXTERNAL_TOOLS
 
 # Memoize calls to ``distutils.spawn.find_executable`` to avoid excessive stat
 # calls
@@ -81,3 +82,27 @@ def get_current_os():
         if distro:
             return distro.id()
     return system  # noqa
+
+def get_current_distro_like():
+    if distro:
+        return distro.like().split()
+    else:
+        return []
+
+def get_package_provider(tool, os=None):
+    try:
+        providers = EXTERNAL_TOOLS[tool]
+    except KeyError:  # noqa
+        return None
+
+    try:
+        return providers[get_current_os()]
+    except KeyError:
+        # lookup failed, try to look for a package for a similar distro
+        for d in get_current_distro_like():
+            try:
+                return providers[d]
+            except KeyError:
+                pass
+
+    return None
