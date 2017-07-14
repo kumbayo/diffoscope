@@ -24,7 +24,7 @@ EXTERNAL_TOOLS = {
     'bsdtar': {
         'debian': 'libarchive-tools',
         'arch': 'libarchive',
-        'Fedora': 'bsdtar',
+        'fedora': 'bsdtar',
         'FreeBSD': 'libarchive',
     },
     'bzip2': {

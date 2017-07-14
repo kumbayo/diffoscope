@@ -18,8 +18,13 @@
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
 import collections
-import platform
 import functools
+import platform
+
+try:
+    import distro
+except ImportError:
+    distro = None
 
 from distutils.spawn import find_executable
 
@@ -73,7 +78,6 @@ def tool_required(command):
 def get_current_os():
     system = platform.system()
     if system == "Linux":
-        # FIXME: Will break under Python 3.7, see:
-        # https://docs.python.org/3/library/platform.html#platform.linux_distribution
-        return platform.linux_distribution()[0]
+        if distro:
+            return distro.id()
     return system  # noqa

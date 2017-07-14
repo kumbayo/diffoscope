@@ -18,6 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
+try:
+    import distro
+except ImportError:
+    distro = None
+
 from .tools import get_current_os
 from .external_tools import EXTERNAL_TOOLS
 

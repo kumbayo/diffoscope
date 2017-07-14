@@ -45,6 +45,9 @@ setup(
         'python-magic',
         'libarchive-c',
     ],
+    extras_require={
+        'distro_detection': ['distro'],
+    },
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',

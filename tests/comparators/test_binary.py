@@ -167,7 +167,7 @@ def test_with_compare_details_and_tool_not_found(monkeypatch):
         {
             'debian': 'some-package',
             'arch': 'some-package',
-            'Fedora': 'some-package',
+            'fedora': 'some-package',
             'FreeBSD': 'some-package'
         }
     )

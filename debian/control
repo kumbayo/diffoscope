@@ -45,6 +45,7 @@ Build-Depends:
  python-argcomplete,
  python3-all,
  python3-debian <!nocheck>,
+ python3-distro <!nocheck>,
  python3-docutils,
  python3-guestfs <!nocheck>,
  python3-libarchive-c,
@@ -77,6 +78,7 @@ Breaks:
 Replaces:
  debbindiff (<< 29),
 Depends:
+ python3-distro,
  python3-pkg-resources,
  ${misc:Depends},
  ${python3:Depends},
