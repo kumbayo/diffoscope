@@ -322,11 +322,7 @@ def maybe_set_limit(config, parsed_args, key):
     elif parsed_args.no_default_limits:
         setattr(config, key, float("inf"))
 
-
-def run_diffoscope(parsed_args, post_parse):
-    log_handler = ProgressManager().setup(parsed_args)
-    setup_logging(parsed_args.debug, log_handler)
-    post_parse(parsed_args)
+def run_diffoscope(parsed_args):
     ProfileManager().setup(parsed_args)
     PresenterManager().configure(parsed_args)
     logger.debug("Starting diffoscope %s", VERSION)
@@ -394,7 +390,10 @@ def main(args=None):
         with profile('main', 'parse_args'):
             parser, post_parse = create_parser()
             parsed_args = parser.parse_args(args)
-        sys.exit(run_diffoscope(parsed_args, post_parse))
+        log_handler = ProgressManager().setup(parsed_args)
+        with setup_logging(parsed_args.debug, log_handler) as logger:
+            post_parse(parsed_args)
+            sys.exit(run_diffoscope(parsed_args))
     except KeyboardInterrupt:
         logger.info('Keyboard Interrupt')
         sys.exit(2)
