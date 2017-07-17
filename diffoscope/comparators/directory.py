@@ -17,16 +17,16 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
-import itertools
 import os
 import re
 import logging
 import subprocess
-from collections import OrderedDict
+import collections
+import itertools
 
-from diffoscope.config import Config
 from diffoscope.exc import RequiredToolNotFound
 from diffoscope.tools import tool_required
+from diffoscope.config import Config
 from diffoscope.progress import Progress
 from diffoscope.difference import Difference
 
@@ -51,7 +51,12 @@ if os.uname()[0] == 'FreeBSD':
     class Stat(Command):
         @tool_required('stat')
         def cmdline(self):
-            return ['stat', '-t', '%Y-%m-%d %H:%M:%S', '-f', '%Sp %l %Su %Sg %z %Sm %k %b %#Xf', self.path]
+            return [
+                'stat',
+                '-t', '%Y-%m-%d %H:%M:%S',
+                '-f', '%Sp %l %Su %Sg %z %Sm %k %b %#Xf',
+                self.path,
+            ]
 else:
     class Stat(Command):
         @tool_required('stat')
@@ -82,7 +87,11 @@ def lsattr(path):
     """
 
     try:
-        output = subprocess.check_output(['lsattr', '-d', path], shell=False, stderr=subprocess.STDOUT).decode('utf-8')
+        output = subprocess.check_output(
+            ['lsattr', '-d', path],
+            shell=False,
+            stderr=subprocess.STDOUT,
+        ).decode('utf-8')
         return output.split()[0]
     except subprocess.CalledProcessError as e:
         if e.returncode == 1:
@@ -96,8 +105,7 @@ class Getfacl(Command):
         osname = os.uname()[0]
         if osname == 'FreeBSD':
             return ['getfacl', '-q', '-h', self.path]
-        else:
-            return ['getfacl', '-p', '-c', self.path]
+        return ['getfacl', '-p', '-c', self.path]
 
 
 def compare_meta(path1, path2):
@@ -107,6 +115,7 @@ def compare_meta(path1, path2):
 
     logger.debug('compare_meta(%s, %s)', path1, path2)
     differences = []
+
     try:
         differences.append(Difference.from_command(Stat, path1, path2))
     except RequiredToolNotFound:
@@ -117,7 +126,12 @@ def compare_meta(path1, path2):
         lsattr1 = lsattr(path1)
         lsattr2 = lsattr(path2)
         differences.append(Difference.from_text(
-                               lsattr1, lsattr2, path1, path2, source="lsattr"))
+            lsattr1,
+            lsattr2,
+            path1,
+            path2,
+            source='lsattr',
+        ))
     except RequiredToolNotFound:
         logger.info("Unable to find 'lsattr', some directory metadata differences might not be noticed.")
     try:
@@ -164,21 +178,29 @@ class FilesystemDirectory(Directory):
 
     def compare(self, other, source=None):
         differences = []
+
         try:
-            listing_diff = Difference.from_text('\n'.join(list_files(self.path)),
-                                                '\n'.join(list_files(other.path)),
-                                                self.path, other.path, source='file list')
+            listing_diff = Difference.from_text(
+                '\n'.join(list_files(self.path)),
+                '\n'.join(list_files(other.path)),
+                self.path,
+                other.path,
+                source='file list',
+            )
             if listing_diff:
                 differences.append(listing_diff)
         except RequiredToolNotFound:
             logger.info("Unable to find 'getfacl'.")
+
         differences.extend(compare_meta(self.name, other.name))
 
         my_container = DirectoryContainer(self)
         other_container = DirectoryContainer(other)
         differences.extend(my_container.compare(other_container))
+
         if not differences:
             return None
+
         difference = Difference(None, self.path, other.path, source)
         difference.add_details(differences)
         return difference
@@ -190,14 +212,18 @@ class DirectoryContainer(Container):
 
     def get_member(self, member_name):
         member_path = os.path.join(self.source.path, member_name)
+
         if not os.path.islink(member_path) and os.path.isdir(member_path):
             return FilesystemDirectory(member_path)
-        else:
-            return FilesystemFile(os.path.join(self.source.path, member_name), container=self)
+
+        return FilesystemFile(
+            os.path.join(self.source.path, member_name),
+            container=self,
+        )
 
     def comparisons(self, other):
-        my_members = OrderedDict(self.get_adjusted_members_sizes())
-        other_members = OrderedDict(other.get_adjusted_members_sizes())
+        my_members = collections.OrderedDict(self.get_adjusted_members_sizes())
+        other_members = collections.OrderedDict(other.get_adjusted_members_sizes())
         total_size = sum(x[1] for x in my_members.values()) + sum(x[1] for x in other_members.values())
 
         to_compare = set(my_members.keys()).intersection(other_members.keys())
@@ -212,8 +238,7 @@ class DirectoryContainer(Container):
         from .utils.compare import compare_files
 
         def compare_pair(file1, file2, source):
-            inner_difference = compare_files(
-                                   file1, file2, source=source)
+            inner_difference = compare_files(file1, file2, source=source)
             meta_differences = compare_meta(file1.name, file2.name)
             if meta_differences and not inner_difference:
                 inner_difference = Difference(None, file1.path, file2.path)
@@ -221,4 +246,7 @@ class DirectoryContainer(Container):
                 inner_difference.add_details(meta_differences)
             return inner_difference
 
-        return filter(None, itertools.starmap(compare_pair, self.comparisons(other)))
+        return filter(
+            None,
+            itertools.starmap(compare_pair, self.comparisons(other)),
+        )
