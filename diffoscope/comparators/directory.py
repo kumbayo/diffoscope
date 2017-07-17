@@ -164,11 +164,14 @@ class FilesystemDirectory(Directory):
 
     def compare(self, other, source=None):
         differences = []
-        listing_diff = Difference.from_text('\n'.join(list_files(self.path)),
-                                            '\n'.join(list_files(other.path)),
-                                            self.path, other.path, source='file list')
-        if listing_diff:
-            differences.append(listing_diff)
+        try:
+            listing_diff = Difference.from_text('\n'.join(list_files(self.path)),
+                                                '\n'.join(list_files(other.path)),
+                                                self.path, other.path, source='file list')
+            if listing_diff:
+                differences.append(listing_diff)
+        except RequiredToolNotFound:
+            logger.info("Unable to find 'getfacl'.")
         differences.extend(compare_meta(self.name, other.name))
 
         my_container = DirectoryContainer(self)
