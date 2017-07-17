@@ -119,9 +119,13 @@ def compare_meta(path1, path2):
     try:
         differences.append(Difference.from_command(Stat, path1, path2))
     except RequiredToolNotFound:
-        logger.warning("'stat' not found! Is PATH wrong?")
+        logger.error("Unable to find 'stat'! Is PATH wrong?")
     if os.path.islink(path1) or os.path.islink(path2):
         return [d for d in differences if d is not None]
+    try:
+        differences.append(Difference.from_command(Getfacl, path1, path2))
+    except RequiredToolNotFound:
+        logger.warning("Unable to find 'getfacl', some directory metadata differences might not be noticed.")
     try:
         lsattr1 = lsattr(path1)
         lsattr2 = lsattr(path2)
@@ -134,10 +138,6 @@ def compare_meta(path1, path2):
         ))
     except RequiredToolNotFound:
         logger.info("Unable to find 'lsattr', some directory metadata differences might not be noticed.")
-    try:
-        differences.append(Difference.from_command(Getfacl, path1, path2))
-    except RequiredToolNotFound:
-        logger.warning("Unable to find 'getfacl', some directory metadata differences might not be noticed.")
     return [d for d in differences if d is not None]
 
 
