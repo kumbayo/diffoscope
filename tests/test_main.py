@@ -114,7 +114,9 @@ def test_no_differences_directories(capsys, tmpdir):
     ret, out, err = run(capsys, create_dir('a'), create_dir('b'))
 
     assert ret == 0
-    assert err == ''
+    # if getfacl is not available there will be a warning message on stderr
+    # if it's available then err should be empty
+    assert err == '' or "getfacl" in err
     assert out == ''
 
 def test_list_tools(capsys):
