@@ -146,7 +146,7 @@ class ApkContainer(Archive):
         return differences
 
 class ApkFile(File):
-    RE_FILE_TYPE = re.compile(r'^(Java|Zip) archive data.*\b')
+    RE_FILE_TYPE = re.compile(r'^((Java|Zip) archive data|DOS/MBR boot sector).*\b')
     RE_FILE_EXTENSION = re.compile(r'\.apk$')
     CONTAINER_CLASS = ApkContainer
 
