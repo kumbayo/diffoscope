@@ -25,6 +25,8 @@ from xml.parsers.expat import ExpatError
 from diffoscope.difference import Difference
 from diffoscope.comparators.utils.file import File
 
+from .missing_file import MissingFile
+
 
 def _format(node):
     """
@@ -103,6 +105,14 @@ class XMLFile(File):
         Returns:
             A diffoscope.difference.Difference object
         """
+        if isinstance(other, MissingFile):
+            return [Difference(
+                None,
+                self.name,
+                other.name,
+                comment="Trying to compare two non-existing files."
+            )]
+
         return [Difference.from_text(
             self.dumps(self),
             self.dumps(other),
