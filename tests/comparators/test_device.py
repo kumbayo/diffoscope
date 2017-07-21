@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
+import os
 import pytest
 
 from diffoscope.comparators.binary import FilesystemFile
@@ -46,10 +47,16 @@ def test_identification(devnull):
 
 @skip_unless_tools_exist('xxd')
 def test_diff(differences):
-    expected_diff = get_data('device_expected_diff')
+    if os.uname()[0] == 'FreeBSD':
+        expected_diff = get_data('device_expected_diff_freebsd')
+    else:
+        expected_diff = get_data('device_expected_diff')
     assert normalize_zeros(differences.unified_diff) == expected_diff
 
 @skip_unless_tools_exist('xxd')
 def test_diff_reverse(differences_reverse):
-    expected_diff = get_data('device_expected_diff_reverse')
+    if os.uname()[0] == 'FreeBSD':
+        expected_diff = get_data('device_expected_diff_reverse_freebsd')
+    else:
+        expected_diff = get_data('device_expected_diff_reverse')
     assert normalize_zeros(differences_reverse.unified_diff) == expected_diff
