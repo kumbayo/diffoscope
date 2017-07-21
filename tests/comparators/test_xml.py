@@ -22,28 +22,30 @@ import pytest
 from diffoscope.comparators.xml import XMLFile
 
 from ..utils.data import load_fixture, get_data
-from ..utils.nonexisting import assert_non_existing
 
 
 xml_a = load_fixture('test1.xml')
 xml_b = load_fixture('test2.xml')
 invalid_xml = load_fixture('test_invalid.xml')
 
+
 def test_identification(xml_a):
     assert isinstance(xml_a, XMLFile)
+
 
 def test_invalid(invalid_xml):
     assert not isinstance(invalid_xml, XMLFile)
 
+
 def test_no_differences(xml_a):
     assert xml_a.compare(xml_a) is None
+
 
 @pytest.fixture
 def differences(xml_a, xml_b):
     return xml_a.compare(xml_b).details
 
+
 def test_diff(differences):
     expected_diff = get_data('test_xml_expected_diff')
     assert differences[0].unified_diff == expected_diff
-
-

@@ -20,9 +20,11 @@
 import re
 
 from xml.dom import minidom
+from xml.parsers.expat import ExpatError
+
 from diffoscope.difference import Difference
 from diffoscope.comparators.utils.file import File
-from xml.parsers.expat import ExpatError
+
 
 def _format(node):
     """
@@ -36,9 +38,11 @@ def _format(node):
     """
     for n in node.childNodes:
         if n.nodeType == minidom.Node.TEXT_NODE:
-            if n.nodeValue: n.nodeValue = n.nodeValue.strip()
+            if n.nodeValue:
+                n.nodeValue = n.nodeValue.strip()
         elif n.nodeType == minidom.Node.ELEMENT_NODE:
             _format(n)
+
 
 def _parse(file):
     """
@@ -53,6 +57,7 @@ def _parse(file):
     xml = minidom.parse(file)
     _format(xml)
     xml.normalize()
+
     return xml.toprettyxml(indent=2*' ')
 
 
@@ -98,8 +103,12 @@ class XMLFile(File):
         Returns:
             A diffoscope.difference.Difference object
         """
-        return [ Difference.from_text(self.dumps(self), self.dumps(other),
-            self.path, other.path)]
+        return [Difference.from_text(
+            self.dumps(self),
+            self.dumps(other),
+            self.path,
+            other.path,
+        )]
 
     def dumps(self, file):
         """
@@ -116,5 +125,3 @@ class XMLFile(File):
 
         with open(file.path) as f:
             return _parse(f)
-
-
