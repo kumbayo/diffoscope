@@ -40,6 +40,7 @@ class ComparatorManager(object):
         ('ps.PsFile',),
         ('javascript.JavaScriptFile',),
         ('json.JSONFile',),
+        ('xml.XMLFile',),
         ('text.TextFile',),
         ('bzip2.Bzip2File',),
         ('cpio.CpioFile',),

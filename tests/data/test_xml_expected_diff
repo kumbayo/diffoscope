@@ -1,0 +1,14 @@
+@@ -1,9 +1,9 @@
+ <?xml version="1.0" ?>
+ <note>
+   <style id="night-mode-pro-style" type="text/css"/>
+   <link id="night-mode-pro-link" rel="stylesheet" type="text/css"/>
+-  <to>Tove</to>
+-  <from>Jani</from>
+-  <heading>Reminder</heading>
+-  <body>Don't forget me this weekend!</body>
++  <to>Jani</to>
++  <from>Toni</from>
++  <heading>Re: Reminder</heading>
++  <body>Pick me up on 5!</body>
+ </note>
