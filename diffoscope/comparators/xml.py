@@ -60,7 +60,7 @@ def _parse(file):
     _format(xml)
     xml.normalize()
 
-    return xml.toprettyxml(indent=2*' ')
+    return xml.toprettyxml(indent=2*' ', encoding='utf-8').decode('utf-8')
 
 
 class XMLFile(File):

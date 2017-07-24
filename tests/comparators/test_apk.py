@@ -20,10 +20,11 @@
 import pytest
 
 from diffoscope.comparators.apk import ApkFile
+from diffoscope.comparators.xml import XMLFile
 
-from ..utils.data import load_fixture, get_data
-from ..utils.tools import skip_unless_tools_exist
-from ..utils.nonexisting import assert_non_existing
+from tests.utils.data import load_fixture, get_data
+from tests.utils.tools import skip_unless_tools_exist
+from tests.utils.nonexisting import assert_non_existing
 
 apk1 = load_fixture('test1.apk')
 apk2 = load_fixture('test2.apk')
@@ -60,7 +61,7 @@ def test_android_manifest(differences):
     assert differences[1].source1 == 'AndroidManifest.xml (decoded)'
     assert differences[1].source2 == 'AndroidManifest.xml (decoded)'
     expected_diff = get_data('apk_manifest_expected_diff')
-    assert differences[1].unified_diff == expected_diff
+    assert differences[1].details[0].unified_diff == expected_diff
 
 @skip_unless_tools_exist('apktool', 'zipinfo')
 def test_apk_metadata_source(differences):
