@@ -43,6 +43,12 @@ debian/diffoscope.bash-completion:
 override_dh_auto_build: debian/diffoscope.bash-completion $(MANPAGES)
 	dh_auto_build -O--buildsystem=pybuild
 
+override_dh_auto_test:
+# Let's avoid plonking everything in the "DOS/MBR" category, this is really not
+# a sustainable filetype testing solution (e.g. c051ba9d and c1442405).
+	! grep 'DOS/MBR' -R diffoscope
+	dh_auto_test
+
 override_dh_installman: $(MANPAGES)
 	dh_installman -O--buildsystem=pybuild
 
