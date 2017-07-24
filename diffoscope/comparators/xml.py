@@ -89,7 +89,7 @@ class XMLFile(File):
         with open(file.path) as f:
             try:
                 file.parsed = _parse(f)
-            except ExpatError:
+            except (ExpatError, UnicodeDecodeError) as e:
                 return False
 
         return True
