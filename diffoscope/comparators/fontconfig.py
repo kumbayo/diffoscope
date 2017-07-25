@@ -27,17 +27,8 @@ from .utils.command import Command
 
 
 class FontconfigCacheFile(File):
-    MAGIC = struct.pack('<H', 0xFC04)
+    RE_FILE_TYPE_FALLBACK_HEADER = struct.pack('<H', 0xFC04)
     RE_FILE_EXTENSION = re.compile(r'\-le64\.cache-4$')
-
-    @staticmethod
-    def recognizes(file):
-        if not FontconfigCacheFile.RE_FILE_EXTENSION.search(file.name):
-            return False
-
-        with open(file.path, 'rb') as f:
-            return f.read(len(FontconfigCacheFile.MAGIC)) == \
-                FontconfigCacheFile.MAGIC
 
     def compare_details(self, other, source=None):
         return [Difference.from_text(

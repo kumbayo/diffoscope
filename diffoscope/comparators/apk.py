@@ -151,13 +151,6 @@ class ApkFile(File):
     RE_FILE_EXTENSION = re.compile(r'\.apk$')
     CONTAINER_CLASS = ApkContainer
 
-    @staticmethod
-    def recognizes(file):
-        if not ApkFile.RE_FILE_EXTENSION.search(file.name):
-            return False
-        return (ApkFile.RE_FILE_TYPE.search(file.magic_file_type) or
-                file.file_header[:4] == ApkFile.RE_FILE_TYPE_FALLBACK_HEADER)
-
     def compare_details(self, other, source=None):
         zipinfo_difference = Difference.from_command(Zipinfo, self.path, other.path) or \
                              Difference.from_command(ZipinfoVerbose, self.path, other.path)

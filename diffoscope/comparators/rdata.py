@@ -70,8 +70,7 @@ class RdsFile(File):
         if check_rds_extension(file) or \
                 file.container and \
                 check_rds_extension(file.container.source):
-            with open(file.path, 'rb') as f:
-                return f.read(8) == HEADER
+            return file.file_header.startswith(HEADER)
         return False
 
     def compare_details(self, other, source=None):

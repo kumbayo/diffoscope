@@ -154,11 +154,7 @@ class MozillaZipFile(File):
         # Mozilla-optimized ZIPs start with a 32-bit little endian integer
         # indicating the amount of data to preload, followed by the ZIP
         # central directory (with a PK\x01\x02 signature)
-        with open(file.path, 'rb') as f:
-            preload = f.read(4)
-            if len(preload) == 4:
-                signature = f.read(4)
-                return signature == b'PK\x01\x02'
+        return file.file_header[4:8] == b'PK\x01\x02'
 
     def compare_details(self, other, source=None):
         zipinfo_difference = Difference.from_command(MozillaZipinfo, self.path, other.path) or \

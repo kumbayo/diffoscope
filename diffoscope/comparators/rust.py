@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
+import re
 import zlib
 import os.path
 import logging
@@ -25,6 +26,7 @@ import logging
 from diffoscope.difference import Difference
 
 from .utils.archive import Archive
+from .utils.file import File
 
 RLIB_BYTECODE_OBJECT_V1_DATASIZE_OFFSET = 15
 RLIB_BYTECODE_OBJECT_V1_DATA_OFFSET = 23
@@ -55,16 +57,10 @@ class RustObjectContainer(Archive):
         return dest_path
 
 
-class RustObjectFile(object):
+class RustObjectFile(File):
     CONTAINER_CLASS = RustObjectContainer
-
-    @staticmethod
-    def recognizes(file):
-        if not file.name.endswith(".deflate"):
-            return False
-        # See librustc_trans/back/link.rs for details of this format
-        with open(file.path, "rb") as fp:
-            return fp.read(RLIB_BYTECODE_OBJECT_V1_DATASIZE_OFFSET) == b'RUST_OBJECT\x01\x00\x00\x00'
+    RE_FILE_TYPE_FALLBACK_HEADER = b'RUST_OBJECT\x01\x00\x00\x00'
+    RE_FILE_EXTENSION = re.compile(r'\.deflate$')
 
     def compare_details(self, other, source=None):
         return [Difference.from_text(self.magic_file_type, other.magic_file_type, self, other, source='metadata')]

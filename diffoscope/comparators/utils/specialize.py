@@ -32,22 +32,9 @@ def specialize(file):
             return file
 
         # Does this file class match?
-        flag = False
-        if hasattr(cls, 'recognizes'):
-            with profile('recognizes', file):
-                flag = cls.recognizes(file)
-        else:
-            re_tests = [(x, y) for x, y in (
-                (cls.RE_FILE_TYPE, file.magic_file_type),
-                (cls.RE_FILE_EXTENSION, file.name),
-            ) if x]
-
-            # If neither are defined, it's *not* a match.
-            if re_tests:
-                flag = all(x.search(y) for x, y in re_tests)
-
-        if not flag:
-            continue
+        with profile('recognizes', file):
+            if not cls.recognizes(file):
+                continue
 
         # Found a match; perform type magic
         logger.debug("Using %s for %s", cls.__name__, file.name)

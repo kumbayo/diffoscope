@@ -58,9 +58,6 @@ def path_apparent_size(path=".", visited=None):
 
 
 class File(object, metaclass=abc.ABCMeta):
-    RE_FILE_TYPE = None
-    RE_FILE_EXTENSION = None
-
     if hasattr(magic, 'open'): # use Magic-file-extensions from file
         @classmethod
         def guess_file_type(self, path):
@@ -108,6 +105,39 @@ class File(object, metaclass=abc.ABCMeta):
 
     def __del__(self):
         self.cleanup()
+
+    RE_FILE_TYPE = None
+    RE_FILE_EXTENSION = None
+    RE_FILE_TYPE_FALLBACK_HEADER = None
+    RE_CLASS = re.compile("").__class__
+
+    @classmethod
+    def recognizes(cls, file):
+        # The structure below allows us to construct a boolean tree of tests
+        # that can be combined with all() and any(). Tests that are not defined
+        # for a class are filtered out, so that we don't get into a "vacuous
+        # truth" situation like a naive all([]) invocation would give.
+
+        def run_tests(tests, fold):
+            return fold(t(x, y) for x, t, y in tests)
+
+        file_type_tests = [test for test in (
+            (cls.RE_FILE_TYPE,
+             cls.RE_CLASS.search, file.magic_file_type),
+            (cls.RE_FILE_TYPE_FALLBACK_HEADER,
+             lambda m, h: h.startswith(m), file.file_header),
+        ) if test[0]] # filter out undefined tests
+
+        all_tests = [test for test in (
+            (cls.RE_FILE_EXTENSION,
+             cls.RE_CLASS.search, file.name),
+            (file_type_tests,
+             run_tests, any),
+        ) if test[0]] # filter out undefined tests, inc. file_type_tests if it's empty
+
+        if all_tests:
+            return run_tests(all_tests, all)
+        return False
 
     # This might be different from path and is used to do file extension matching
     @property

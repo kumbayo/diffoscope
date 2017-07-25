@@ -540,11 +540,6 @@ class StaticLibFile(File):
     RE_FILE_TYPE = re.compile(r'\bar archive\b')
     RE_FILE_EXTENSION = re.compile(r'\.a$')
 
-    @staticmethod
-    def recognizes(file):
-        return StaticLibFile.RE_FILE_TYPE.search(file.magic_file_type) and \
-            StaticLibFile.RE_FILE_EXTENSION.search(file.name)
-
     def compare_details(self, other, source=None):
         differences = [Difference.from_text_readers(
             list_libarchive(self.path),
