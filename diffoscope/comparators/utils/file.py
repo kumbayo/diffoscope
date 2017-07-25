@@ -150,6 +150,13 @@ class File(object, metaclass=abc.ABCMeta):
         return self._magic_file_type
 
     @property
+    def file_header(self):
+        if not hasattr(self, '_file_header'):
+            with open(self.path, 'rb') as f:
+                self._file_header = f.read(16)
+        return self._file_header
+
+    @property
     def file_type(self):
         for x, y in (
             (self.is_device, "device"),
