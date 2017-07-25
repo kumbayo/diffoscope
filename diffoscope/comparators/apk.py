@@ -146,9 +146,9 @@ class ApkContainer(Archive):
         return differences
 
 class ApkFile(File):
-    RE_FILE_TYPE_FALLBACK_HEADER = b"PK\x03\x04"
-    RE_FILE_TYPE = re.compile(r'^(Java|Zip) archive data.*\b')
-    RE_FILE_EXTENSION = re.compile(r'\.apk$')
+    FILE_TYPE_HEADER_PREFIX = b"PK\x03\x04"
+    FILE_TYPE_RE = re.compile(r'^(Java|Zip) archive data.*\b')
+    FILE_EXTENSION_SUFFIX = '.apk'
     CONTAINER_CLASS = ApkContainer
 
     def compare_details(self, other, source=None):

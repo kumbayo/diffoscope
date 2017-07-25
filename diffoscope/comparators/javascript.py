@@ -17,8 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
-import re
-
 from diffoscope.tools import tool_required
 from diffoscope.difference import Difference
 
@@ -32,7 +30,7 @@ class JavaScriptBeautify(Command):
         return ['js-beautify', self.path]
 
 class JavaScriptFile(File):
-    RE_FILE_EXTENSION = re.compile(r'\.js$')
+    FILE_EXTENSION_SUFFIX = '.js'
 
     def compare_details(self, other, source=None):
         return [Difference.from_command(JavaScriptBeautify, self.path, other.path)]

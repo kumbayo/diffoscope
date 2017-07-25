@@ -69,12 +69,12 @@ class ISO9660Listing(Command):
 
 class Iso9660File(File):
     CONTAINER_CLASS = LibarchiveContainer
-    RE_FILE_TYPE = re.compile(r'\bISO 9660\b')
+    FILE_TYPE_RE = re.compile(r'\bISO 9660\b')
 
     @classmethod
     def recognizes(cls, file):
         if file.magic_file_type and \
-                cls.RE_FILE_TYPE.search(file.magic_file_type):
+                cls.FILE_TYPE_RE.search(file.magic_file_type):
             return True
 
         # Sometimes CDs put things like MBRs at the front which is an expected

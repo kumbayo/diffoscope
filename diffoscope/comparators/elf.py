@@ -530,15 +530,15 @@ class ElfContainer(Container):
 
 class ElfFile(File):
     CONTAINER_CLASS = ElfContainer
-    RE_FILE_TYPE = re.compile(r'^ELF ')
+    FILE_TYPE_RE = re.compile(r'^ELF ')
 
     def compare_details(self, other, source=None):
         return _compare_elf_data(self.path, other.path)
 
 class StaticLibFile(File):
     CONTAINER_CLASS = ElfContainer
-    RE_FILE_TYPE = re.compile(r'\bar archive\b')
-    RE_FILE_EXTENSION = re.compile(r'\.a$')
+    FILE_TYPE_RE = re.compile(r'\bar archive\b')
+    FILE_EXTENSION_SUFFIX = '.a'
 
     def compare_details(self, other, source=None):
         differences = [Difference.from_text_readers(

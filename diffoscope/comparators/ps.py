@@ -37,7 +37,7 @@ class Pstotext(Command):
 
 
 class PsFile(TextFile):
-    RE_FILE_TYPE = re.compile(r'^PostScript document\b')
+    FILE_TYPE_RE = re.compile(r'^PostScript document\b')
 
     def compare(self, other, *args, **kwargs):
         differences = super().compare(other, *args, **kwargs)

@@ -55,7 +55,7 @@ class GzipContainer(Archive):
 
 class GzipFile(File):
     CONTAINER_CLASS = GzipContainer
-    RE_FILE_TYPE = re.compile(r'^gzip compressed data\b')
+    FILE_TYPE_RE = re.compile(r'^gzip compressed data\b')
 
     def compare_details(self, other, source=None):
         return [Difference.from_text(self.magic_file_type, other.magic_file_type, self, other, source='metadata')]

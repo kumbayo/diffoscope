@@ -53,4 +53,4 @@ class Bzip2Container(Archive):
 
 class Bzip2File(File):
     CONTAINER_CLASS = Bzip2Container
-    RE_FILE_TYPE = re.compile(r'^bzip2 compressed data\b')
+    FILE_TYPE_RE = re.compile(r'^bzip2 compressed data\b')

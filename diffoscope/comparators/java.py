@@ -44,7 +44,7 @@ class Javap(Command):
 
 
 class ClassFile(File):
-    RE_FILE_TYPE = re.compile(r'^compiled Java class data\b')
+    FILE_TYPE_RE = re.compile(r'^compiled Java class data\b')
 
     def compare_details(self, other, source=None):
         return [Difference.from_command(Javap, self.path, other.path)]

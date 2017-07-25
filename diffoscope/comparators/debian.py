@@ -160,11 +160,11 @@ class DebControlFile(File):
         return differences
 
 class DotChangesFile(DebControlFile):
-    RE_FILE_EXTENSION = re.compile(r'\.changes$')
+    FILE_EXTENSION_SUFFIX = '.changes'
 
-    @staticmethod
-    def recognizes(file):
-        if not DotChangesFile.RE_FILE_EXTENSION.search(file.name):
+    @classmethod
+    def recognizes(cls, file):
+        if not super().recognizes(file):
             return False
 
         changes = Changes(filename=file.path)
@@ -201,11 +201,11 @@ class DotChangesFile(DebControlFile):
 
 
 class DotDscFile(DebControlFile):
-    RE_FILE_EXTENSION = re.compile(r'\.dsc$')
+    FILE_EXTENSION_SUFFIX = '.dsc'
 
-    @staticmethod
-    def recognizes(file):
-        if not DotDscFile.RE_FILE_EXTENSION.search(file.name):
+    @classmethod
+    def recognizes(cls, file):
+        if not super().recognizes(file):
             return False
 
         with open(file.path, 'rb') as f:
@@ -252,11 +252,11 @@ class DotBuildinfoContainer(DebControlContainer):
 
 class DotBuildinfoFile(DebControlFile):
     CONTAINER_CLASS = DotBuildinfoContainer
-    RE_FILE_EXTENSION = re.compile(r'\.buildinfo$')
+    FILE_EXTENSION_SUFFIX = '.buildinfo'
 
-    @staticmethod
-    def recognizes(file):
-        if not DotBuildinfoFile.RE_FILE_EXTENSION.search(file.name):
+    @classmethod
+    def recognizes(cls, file):
+        if not super().recognizes(file):
             return False
 
         with open(file.path, 'rb') as f:

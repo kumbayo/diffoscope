@@ -36,7 +36,7 @@ def order_only_difference(unified_diff):
 
 
 class TextFile(File):
-    RE_FILE_TYPE = re.compile(r'\btext\b')
+    FILE_TYPE_RE = re.compile(r'\btext\b')
 
     @property
     def encoding(self):

@@ -74,7 +74,7 @@ class FsImageContainer(Archive):
 
 class FsImageFile(File):
     CONTAINER_CLASS = FsImageContainer
-    RE_FILE_TYPE = re.compile(r'^(Linux.*filesystem data|BTRFS Filesystem).*')
+    FILE_TYPE_RE = re.compile(r'^(Linux.*filesystem data|BTRFS Filesystem).*')
 
     def compare_details(self, other, source=None):
         differences = []

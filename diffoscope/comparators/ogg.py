@@ -33,7 +33,7 @@ class OggDump(Command):
 
 
 class OggFile(File):
-    RE_FILE_TYPE = re.compile(r'^Ogg data')
+    FILE_TYPE_RE = re.compile(r'^Ogg data')
 
     def compare_details(self, other, source=None):
         return [Difference.from_command(

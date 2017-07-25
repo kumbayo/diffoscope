@@ -106,10 +106,9 @@ class File(object, metaclass=abc.ABCMeta):
     def __del__(self):
         self.cleanup()
 
-    RE_FILE_TYPE = None
-    RE_FILE_EXTENSION = None
-    RE_FILE_TYPE_FALLBACK_HEADER = None
-    RE_CLASS = re.compile("").__class__
+    FILE_EXTENSION_SUFFIX = None
+    FILE_TYPE_RE = None
+    FILE_TYPE_HEADER_PREFIX = None
 
     @classmethod
     def recognizes(cls, file):
@@ -118,26 +117,24 @@ class File(object, metaclass=abc.ABCMeta):
         # for a class are filtered out, so that we don't get into a "vacuous
         # truth" situation like a naive all([]) invocation would give.
 
-        def run_tests(tests, fold):
-            return fold(t(x, y) for x, t, y in tests)
+        def run_tests(fold, tests):
+            return fold(t(y, x) for x, t, y in tests)
 
         file_type_tests = [test for test in (
-            (cls.RE_FILE_TYPE,
-             cls.RE_CLASS.search, file.magic_file_type),
-            (cls.RE_FILE_TYPE_FALLBACK_HEADER,
-             lambda m, h: h.startswith(m), file.file_header),
+            (cls.FILE_TYPE_RE,
+             lambda m, t: t.search(m), file.magic_file_type),
+            (cls.FILE_TYPE_HEADER_PREFIX,
+             bytes.startswith, file.file_header),
         ) if test[0]] # filter out undefined tests
 
         all_tests = [test for test in (
-            (cls.RE_FILE_EXTENSION,
-             cls.RE_CLASS.search, file.name),
+            (cls.FILE_EXTENSION_SUFFIX,
+             str.endswith, file.name),
             (file_type_tests,
              run_tests, any),
         ) if test[0]] # filter out undefined tests, inc. file_type_tests if it's empty
 
-        if all_tests:
-            return run_tests(all_tests, all)
-        return False
+        return run_tests(all, all_tests) if all_tests else False
 
     # This might be different from path and is used to do file extension matching
     @property

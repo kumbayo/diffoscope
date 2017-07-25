@@ -30,7 +30,7 @@ class TarContainer(LibarchiveContainer):
 
 class TarFile(File):
     CONTAINER_CLASS = TarContainer
-    RE_FILE_TYPE = re.compile(r'\btar archive\b')
+    FILE_TYPE_RE = re.compile(r'\btar archive\b')
 
     def compare_details(self, other, source=None):
         return [Difference.from_text_readers(list_libarchive(self.path),

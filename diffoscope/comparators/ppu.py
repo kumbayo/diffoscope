@@ -58,11 +58,11 @@ class Ppudump(Command):
 
 
 class PpuFile(File):
-    RE_FILE_EXTENSION = re.compile(r'\.ppu$')
+    FILE_EXTENSION_SUFFIX = '.ppu'
 
-    @staticmethod
-    def recognizes(file):
-        if not PpuFile.RE_FILE_EXTENSION.search(file.name):
+    @classmethod
+    def recognizes(cls, file):
+        if not super().recognizes(file):
             return False
         with open(file.path, 'rb') as f:
             magic = f.read(3)

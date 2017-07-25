@@ -61,7 +61,7 @@ class Msgunfmt(Command):
 
 
 class MoFile(File):
-    RE_FILE_TYPE = re.compile(r'^GNU message catalog\b')
+    FILE_TYPE_RE = re.compile(r'^GNU message catalog\b')
 
     def compare_details(self, other, source=None):
         return [Difference.from_command(Msgunfmt, self.path, other.path)]

@@ -80,7 +80,7 @@ class DebContainer(LibarchiveContainer):
 
 class DebFile(File):
     CONTAINER_CLASS = DebContainer
-    RE_FILE_TYPE = re.compile(r'^Debian binary package')
+    FILE_TYPE_RE = re.compile(r'^Debian binary package')
 
     @property
     def md5sums(self):

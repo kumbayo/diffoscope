@@ -18,7 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
-import re
 import zlib
 import os.path
 import logging
@@ -59,8 +58,8 @@ class RustObjectContainer(Archive):
 
 class RustObjectFile(File):
     CONTAINER_CLASS = RustObjectContainer
-    RE_FILE_TYPE_FALLBACK_HEADER = b'RUST_OBJECT\x01\x00\x00\x00'
-    RE_FILE_EXTENSION = re.compile(r'\.deflate$')
+    FILE_TYPE_HEADER_PREFIX = b'RUST_OBJECT\x01\x00\x00\x00'
+    FILE_EXTENSION_SUFFIX = '.deflate'
 
     def compare_details(self, other, source=None):
         return [Difference.from_text(self.magic_file_type, other.magic_file_type, self, other, source='metadata')]

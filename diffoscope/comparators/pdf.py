@@ -42,7 +42,7 @@ class Pdftk(Command):
 
 
 class PdfFile(File):
-    RE_FILE_TYPE = re.compile(r'^PDF document\b')
+    FILE_TYPE_RE = re.compile(r'^PDF document\b')
 
     def compare_details(self, other, source=None):
         return [Difference.from_command(Pdftotext, self.path, other.path),

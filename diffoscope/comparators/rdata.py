@@ -82,10 +82,7 @@ class RdbReader(Command):
         return ['Rscript', '-e', DUMP_RDB, self.path[:-4]]
 
 class RdbFile(File):
-    @staticmethod
-    def recognizes(file):
-        if file.name.endswith(".rdb"):
-            return True
+    FILE_EXTENSION_SUFFIX = '.rdb'
 
     def compare_details(self, other, source=None):
         self_path = ensure_archive_rdx(self)

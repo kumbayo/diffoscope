@@ -53,5 +53,5 @@ class DexContainer(Archive):
         return dest_path
 
 class DexFile(File):
-    RE_FILE_TYPE = re.compile(r'^Dalvik dex file .*\b')
+    FILE_TYPE_RE = re.compile(r'^Dalvik dex file .*\b')
     CONTAINER_CLASS = DexContainer

@@ -68,7 +68,7 @@ class OtoolDisassemble(Otool):
 
 
 class MachoFile(File):
-    RE_FILE_TYPE = re.compile(r'^Mach-O ')
+    FILE_TYPE_RE = re.compile(r'^Mach-O ')
     RE_EXTRACT_ARCHS = re.compile(r'^(?:Architectures in the fat file: .* are|Non-fat file: .* is architecture): (.*)$')
 
     @staticmethod

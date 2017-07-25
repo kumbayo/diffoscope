@@ -56,7 +56,7 @@ class ArSymbolTableDumper(Command):
 
 class ArFile(File):
     CONTAINER_CLASS = ArContainer
-    RE_FILE_TYPE = re.compile(r'\bar archive\b')
+    FILE_TYPE_RE = re.compile(r'\bar archive\b')
 
     def compare_details(self, other, source=None):
         return [Difference.from_command(ArSymbolTableDumper, self.path, other.path),

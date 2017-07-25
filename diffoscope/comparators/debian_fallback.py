@@ -17,13 +17,11 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
-import re
-
 from .text import TextFile
 
 
 class DotChangesFile(TextFile):
-    RE_FILE_EXTENSION = re.compile(r'\.changes$')
+    FILE_EXTENSION_SUFFIX = '.changes'
 
     def compare(self, other, *args, **kwargs):
         difference = super().compare(other, *args, **kwargs)
@@ -33,7 +31,7 @@ class DotChangesFile(TextFile):
         return difference
 
 class DotDscFile(TextFile):
-    RE_FILE_EXTENSION = re.compile(r'\.dsc$')
+    FILE_EXTENSION_SUFFIX = '.dsc'
 
     def compare(self, other, *args, **kwargs):
         difference = super().compare(other, *args, **kwargs)
@@ -43,7 +41,7 @@ class DotDscFile(TextFile):
         return difference
 
 class DotBuildinfoFile(TextFile):
-    RE_FILE_EXTENSION = re.compile(r'\.buildinfo$')
+    FILE_EXTENSION_SUFFIX = '.buildinfo'
 
     def compare(self, other, *args, **kwargs):
         difference = super().compare(other, *args, **kwargs)

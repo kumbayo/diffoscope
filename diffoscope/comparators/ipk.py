@@ -24,4 +24,4 @@ from .gzip import GzipFile
 
 
 class IpkFile(GzipFile):
-    RE_FILE_EXTENSION = re.compile('\.ipk$')
+    FILE_EXTENSION_SUFFIX = '.ipk'

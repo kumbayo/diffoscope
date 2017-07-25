@@ -32,7 +32,7 @@ class SSHKeyList(Command):
         return ['ssh-keygen', '-l', '-f', self.path]
 
 class PublicKeyFile(File):
-    RE_FILE_TYPE = re.compile(r'^OpenSSH \S+ public key')
+    FILE_TYPE_RE = re.compile(r'^OpenSSH \S+ public key')
 
     def compare_details(self, other, source=None):
         return [Difference.from_command(SSHKeyList, self.path, other.path)]

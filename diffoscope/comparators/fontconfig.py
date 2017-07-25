@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
-import re
 import struct
 
 from diffoscope.difference import Difference
@@ -27,8 +26,8 @@ from .utils.command import Command
 
 
 class FontconfigCacheFile(File):
-    RE_FILE_TYPE_FALLBACK_HEADER = struct.pack('<H', 0xFC04)
-    RE_FILE_EXTENSION = re.compile(r'\-le64\.cache-4$')
+    FILE_TYPE_HEADER_PREFIX = struct.pack('<H', 0xFC04)
+    FILE_EXTENSION_SUFFIX = '-le64.cache-4'
 
     def compare_details(self, other, source=None):
         return [Difference.from_text(

@@ -36,7 +36,7 @@ class Showttf(Command):
 
 
 class TtfFile(File):
-    RE_FILE_TYPE = re.compile(r'^(TrueType|OpenType) font data$')
+    FILE_TYPE_RE = re.compile(r'^(TrueType|OpenType) font data$')
 
     def compare_details(self, other, source=None):
         return [Difference.from_command(Showttf, self.path, other.path)]

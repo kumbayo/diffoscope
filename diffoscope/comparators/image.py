@@ -144,7 +144,7 @@ def same_size(image1, image2):
 
 
 class JPEGImageFile(File):
-    RE_FILE_TYPE = re.compile(r'\bJPEG image data\b')
+    FILE_TYPE_RE = re.compile(r'\bJPEG image data\b')
 
     def compare_details(self, other, source=None):
         content_diff = Difference.from_command(
@@ -179,7 +179,7 @@ class JPEGImageFile(File):
 
 
 class ICOImageFile(File):
-    RE_FILE_TYPE = re.compile(r'\bMS Windows icon resource\b')
+    FILE_TYPE_RE = re.compile(r'\bMS Windows icon resource\b')
 
     def compare_details(self, other, source=None):
         differences = []

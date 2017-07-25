@@ -27,11 +27,11 @@ from .utils.file import File
 
 
 class JSONFile(File):
-    RE_FILE_EXTENSION = re.compile(r'\.json$')
+    FILE_EXTENSION_SUFFIX = '.json'
 
-    @staticmethod
-    def recognizes(file):
-        if JSONFile.RE_FILE_EXTENSION.search(file.name) is None:
+    @classmethod
+    def recognizes(cls, file):
+        if not super().recognizes(file):
             return False
 
         with open(file.path) as f:

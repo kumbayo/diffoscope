@@ -106,7 +106,7 @@ class ZipContainer(Archive):
 
 class ZipFile(File):
     CONTAINER_CLASS = ZipContainer
-    RE_FILE_TYPE = re.compile(r'^(Zip archive|Java archive|EPUB document|OpenDocument (Text|Spreadsheet|Presentation|Drawing|Formula|Template|Text Template))\b')
+    FILE_TYPE_RE = re.compile(r'^(Zip archive|Java archive|EPUB document|OpenDocument (Text|Spreadsheet|Presentation|Drawing|Formula|Template|Text Template))\b')
 
     def compare_details(self, other, source=None):
         zipinfo_difference = Difference.from_command(Zipinfo, self.path, other.path) or \

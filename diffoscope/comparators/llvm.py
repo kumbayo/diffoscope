@@ -18,6 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
+import re
+
 from diffoscope.tools import tool_required
 from diffoscope.difference import Difference
 
@@ -39,9 +41,7 @@ class LlvmBcDisassembler(Command):
         return ['find', self.path, '-execdir', 'llvm-dis', '-o', '-', '{}', ';']
 
 class LlvmBitCodeFile(File):
-    @staticmethod
-    def recognizes(file):
-        return file.magic_file_type and file.magic_file_type.startswith('LLVM IR bitcode')
+    FILE_TYPE_RE = re.compile(r'^LLVM IR bitcode')
 
     def compare_details(self, other, source=None):
         return [Difference.from_command(LlvmBcAnalyzer,   self.path, other.path),

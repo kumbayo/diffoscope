@@ -28,7 +28,7 @@ from .utils.file import File
 
 
 class GitIndexFile(File):
-    RE_FILE_TYPE = re.compile(r'^Git index')
+    FILE_TYPE_RE = re.compile(r'^Git index')
 
     def compare_details(self, other, source=None):
         return [Difference.from_text(
