@@ -212,15 +212,15 @@ class File(object, metaclass=abc.ABCMeta):
             return self._fuzzy_hash
 
     @abc.abstractmethod
-    def is_directory():
+    def is_directory(self):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def is_symlink():
+    def is_symlink(self):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def is_device():
+    def is_device(self):
         raise NotImplementedError()
 
     def compare_bytes(self, other, source=None):
