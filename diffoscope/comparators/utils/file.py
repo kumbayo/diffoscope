@@ -53,7 +53,7 @@ def path_apparent_size(path=".", visited=None):
                 continue
             visited[inode] = entry.stat(follow_symlinks=False).st_size
             if entry.is_dir(follow_symlinks=False):
-                folder_size(entry.path, visited)
+                path_apparent_size(entry.path, visited)
     return sum(visited.values())
 
 
