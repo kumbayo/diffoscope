@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 def perform_fuzzy_matching(members1, members2):
-    if tlsh == None or Config().fuzzy_threshold == 0:
+    if tlsh is None or Config().fuzzy_threshold == 0:
         return
     already_compared = set()
     # Perform local copies because they will be modified by consumer

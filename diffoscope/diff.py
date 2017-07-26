@@ -431,9 +431,9 @@ class SideBySideDiff(object):
         elif self.del_cpt != 0 and self.add_cpt != 0:
             l0, l1 = [], []
             for l in self.buf:
-                if l[0] != None:
+                if l[0] is not None:
                     l0.append(l[0])
-                if l[1] != None:
+                if l[1] is not None:
                     l1.append(l[1])
             max_len = (len(l0) > len(l1)) and len(l0) or len(l1)
             for i in range(max_len):
@@ -448,13 +448,13 @@ class SideBySideDiff(object):
         orig1 = s1
         orig2 = s2
 
-        if s1 == None and s2 == None:
+        if s1 is None and s2 is None:
             type_name = "unmodified"
         elif s1 == "" and s2 == "":
             type_name = "unmodified"
-        elif s1 == None or s1 == "":
+        elif s1 is None or s1 == "":
             type_name = "added"
-        elif s2 == None or s2 == "":
+        elif s2 is None or s2 == "":
             type_name = "deleted"
         elif orig1 == orig2 and not s1.endswith('lines removed ]') and not s2.endswith('lines removed ]'):
             type_name = "unmodified"
