@@ -46,6 +46,28 @@ def skip_unless_tool_is_at_least(tool, actual_ver, min_ver, vcls=LooseVersion):
         reason="requires {} >= {} ({} detected)".format(tool, min_ver, actual_ver)
     )
 
+def skip_unless_tool_is_at_most(tool, actual_ver, max_ver, vcls=LooseVersion):
+    if tools_missing(tool):
+        return pytest.mark.skipif(True, reason="requires {}".format(tool))
+    if callable(actual_ver):
+        actual_ver = actual_ver()
+    return pytest.mark.skipif(
+        vcls(str(actual_ver)) > vcls(str(max_ver)),
+        reason="requires {} <= {} ({} detected)".format(tool, max_ver, actual_ver)
+    )
+
+def skip_unless_tool_is_between(tool, actual_ver, min_ver, max_ver, vcls=LooseVersion):
+    if tools_missing(tool):
+        return pytest.mark.skipif(True, reason="requires {}".format(tool))
+    if callable(actual_ver):
+        actual_ver = actual_ver()
+    return pytest.mark.skipif(
+        ( vcls(str(actual_ver)) < vcls(str(min_ver)))
+                  or (vcls(str(actual_ver)) > vcls(str(max_ver))),
+        reason="requires {} >= {} >= {} ({} detected)".format(min_ver, tool,
+                                                            max_ver, actual_ver)
+    )
+
 def skip_if_binutils_does_not_support_x86():
     if tools_missing('objdump'):
         return skip_unless_tools_exist('objdump')
