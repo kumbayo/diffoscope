@@ -17,8 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
-import re
-
 from xml.dom import minidom
 from xml.parsers.expat import ExpatError
 
@@ -68,12 +66,12 @@ class XMLFile(File):
     XML Files Comparison class
 
     Attributes:
-        RE_FILE_EXTENSION (SRE_Pattern): xml file extension pattern
+        FILE_EXTENSION_SUFFIX (str): xml file extension suffix
     """
-    RE_FILE_EXTENSION = re.compile(r'\.xml$')
+    FILE_EXTENSION_SUFFIX = '.xml'
 
-    @staticmethod
-    def recognizes(file):
+    @classmethod
+    def recognizes(cls, file):
         """
         Identifies if a given file has XML extension
 
@@ -83,8 +81,8 @@ class XMLFile(File):
         Returns:
             False if file is not a XML File, True otherwise
         """
-        if XMLFile.RE_FILE_EXTENSION.search(file.name) is None:
-            return False
+        if not super().recognizes(file):
+          return False
 
         with open(file.path) as f:
             try:
