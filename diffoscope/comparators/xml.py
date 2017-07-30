@@ -17,14 +17,16 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
-from xml.dom import minidom
-from xml.parsers.expat import ExpatError
 
+from xml.parsers.expat import ExpatError
 from diffoscope.difference import Difference
 from diffoscope.comparators.utils.file import File
-
 from .missing_file import MissingFile
 
+try:
+  from defusedxml import minidom
+except ImportError:
+  from xml.dom import minidom
 
 def _format(node):
     """
@@ -37,10 +39,10 @@ def _format(node):
         void
     """
     for n in node.childNodes:
-        if n.nodeType == minidom.Node.TEXT_NODE:
+        if n.nodeType == n.TEXT_NODE:
             if n.nodeValue:
                 n.nodeValue = n.nodeValue.strip()
-        elif n.nodeType == minidom.Node.ELEMENT_NODE:
+        elif n.nodeType == n.ELEMENT_NODE:
             _format(n)
 
 
