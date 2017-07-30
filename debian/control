@@ -78,7 +78,6 @@ Breaks:
 Replaces:
  debbindiff (<< 29),
 Depends:
- python3-distro,
  python3-pkg-resources,
  ${misc:Depends},
  ${python3:Depends},

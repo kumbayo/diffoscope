@@ -54,6 +54,8 @@ override_dh_installman: $(MANPAGES)
 
 override_dh_python3:
 	dh_python3 -p diffoscope \
+		--depends=distro \
+		--recommends=defusedxml \
 		--recommends=python-debian \
 		--recommends=rpm-python \
 		--recommends=tlsh \
