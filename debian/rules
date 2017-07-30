@@ -55,13 +55,13 @@ override_dh_installman: $(MANPAGES)
 override_dh_python3:
 	dh_python3 -p diffoscope \
 		--depends=distro \
+		--recommends=argcomplete \
 		--recommends=defusedxml \
+		--recommends=guestfs \
+		--recommends=progressbar \
 		--recommends=python-debian \
 		--recommends=rpm-python \
 		--recommends=tlsh \
-		--recommends=guestfs \
-		--recommends=argcomplete \
-		--recommends=progressbar
 
 override_dh_gencontrol:
 	bin/diffoscope --list-debian-substvars >> debian/diffoscope.substvars
