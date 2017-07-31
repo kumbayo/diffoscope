@@ -1,4 +1,4 @@
-diffoscope (85) UNRELEASED; urgency=medium
+diffoscope (85) unstable; urgency=medium
 
   [ Mattia Rizzolo ]
   * tools:
@@ -61,7 +61,7 @@ diffoscope (85) UNRELEASED; urgency=medium
     + device:
       - fix 2 cases for FreeBSD.
 
- -- Mattia Rizzolo <mattia@debian.org>  Mon, 31 Jul 2017 18:06:49 +0200
+ -- Mattia Rizzolo <mattia@debian.org>  Mon, 31 Jul 2017 22:27:45 +0200
 
 diffoscope (84) unstable; urgency=medium
 
