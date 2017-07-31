@@ -51,6 +51,9 @@ def from_raw_reader(in_file, filter=lambda buf: buf):
 
             if line_count < max_lines:
                 out_file.write(out)
+                # very long lines can sometimes interact negatively with python
+                # buffering; force a flush here to avoid this, see #870049
+                out_file.flush()
             end_nl = buf[-1] == '\n'
 
         if h is not None and line_count >= max_lines:
