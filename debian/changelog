@@ -1,3 +1,68 @@
+diffoscope (85) UNRELEASED; urgency=medium
+
+  [ Mattia Rizzolo ]
+  * tools:
+    + move from the deprecated platform.linux_distribution() to the external
+      python package "distro".  Add it as an optioanl dependency, as without it
+      distribution detection (i.e. `diffoscope --list-tools`) won't work.
+      Also add it as a Debian (hard) dependency, as it's a very lightway
+      package, and the usefulness it brings are great.
+    + add a get_package_provider() function, returning the package name
+      that best matches the system.
+  * exc:
+    + in RequiredToolNotFound.get_package(), just call the new
+      get_package_provider()
+  * debian/rules:
+    + recommends the defusedxml python package, to avoid using the python3's
+      standard xml library and its security holes.
+
+  [ Chris Lamb ]
+  * comparators:
+    + sqlite:
+      - Simplify file detection by rewriting manual `recognizes` call
+        with a `Sqlite3Database.RE_FILE_TYPE` definition.
+    + xml:
+      - Fix EPUB "missing file" tests; they ship a META-INF/container.xml file.
+
+  [ Ximin Luo ]
+  * comparators:
+    + factor common logic from various comparators into File.recognizes.
+    + more tidying up and making names consistent.
+    + directory:
+      - make stat(1) warning textually like the other warnings.
+      - bump stat(1) warning into an error.
+      - use getfacl(1) before lsattr(1) as it's more general.
+    + apk:
+      - less kludgy way of detecting APKs.  Closes: #868486
+  * main, logging:
+    + restore old logger settings to avoid pytest fail in certain situations.
+  * debian/rules:
+    + add a check to prevent additions of "DOS/MBR" file type.
+  * feeder:
+    + force a flush when writing output to diff.  Closes: #870049
+  * tests/comparators:
+    + directory:
+      - be less strict about the expected test output, to cope with a missing
+        `getfacl`.  Closes: #868534
+
+  [ Juliana Oliveira Rodrigues ]
+  * comparators:
+    + Add new XML comparator.  Closes: #866120
+      The comparator will use defusedxml if this is installed, to avoid
+      falling in known security holes coming from the XML specification.
+  * tests/comparators:
+    + apk:
+      - fix the tests after the addition of the XML comparator.
+    + image:
+      - fix test_ico_image for identify >= 6.9.8.
+
+  [ Guangyuan Yang ]
+  * tests/comparators:
+    + device:
+      - fix 2 cases for FreeBSD.
+
+ -- Mattia Rizzolo <mattia@debian.org>  Mon, 31 Jul 2017 18:06:49 +0200
+
 diffoscope (84) unstable; urgency=medium
 
   [ Ximin Luo ]
