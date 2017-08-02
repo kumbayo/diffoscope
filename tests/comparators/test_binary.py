@@ -33,7 +33,7 @@ from diffoscope.comparators.missing_file import MissingFile
 from diffoscope.comparators.utils.compare import Xxd
 
 from ..utils.data import data, init_fixture, get_data, normalize_zeros
-from ..utils.tools import skip_unless_tools_exist
+from ..utils.tools import skip_unless_tools_exist, skip_unless_module_exists
 
 
 TEST_FILE1_PATH = data('binary1')
