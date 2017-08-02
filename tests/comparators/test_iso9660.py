@@ -18,6 +18,7 @@
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
+import subprocess
 
 from diffoscope.config import Config
 from diffoscope.comparators.missing_file import MissingFile
@@ -29,6 +30,15 @@ from ..utils.tools import skip_unless_tools_exist
 
 iso1 = load_fixture('test1.iso')
 iso2 = load_fixture('test2.iso')
+
+def is_cdrtools():
+    try:
+        if b"Schilling" in subprocess.check_output(['isoinfo', '--version']):
+            return True
+        else:
+            return False
+    except:
+        return None
 
 def test_identification(iso1):
     assert isinstance(iso1, Iso9660File)
@@ -43,12 +53,18 @@ def differences(iso1, iso2):
 
 @skip_unless_tools_exist('isoinfo')
 def test_iso9660_content(differences):
-    expected_diff = get_data('iso9660_content_expected_diff')
+    if is_cdrtools():
+        expected_diff = get_data('iso9660_content_expected_diff_cdrtools')
+    else:
+        expected_diff = get_data('iso9660_content_expected_diff')
     assert differences[0].unified_diff == expected_diff
 
 @skip_unless_tools_exist('isoinfo')
 def test_iso9660_rockridge(differences):
-    expected_diff = get_data('iso9660_rockridge_expected_diff')
+    if is_cdrtools():
+        expected_diff = get_data('iso9660_rockridge_expected_diff_cdrtools')
+    else:
+        expected_diff = get_data('iso9660_rockridge_expected_diff')
     assert differences[1].unified_diff == expected_diff
 
 @skip_unless_tools_exist('isoinfo')

@@ -1,0 +1,10 @@
+@@ -1,7 +1,7 @@
+ 
+ Directory listing of /
+ drwxr-xr-x   2 1000 1000       2048 Jun 24 2015 [     23 02] . 
+ drwxr-xr-x   2 1000 1000       2048 Jun 24 2015 [     23 02] .. 
+-lrwxrwxrwx   1 1000 1000          0 Jun 24 2015 [     25 00] link -> broken
++lrwxrwxrwx   1 1000 1000          0 Jun 24 2015 [     25 00] link -> really-broken
+ crw-r--r--   1    0    0          0 Jun 24 2015 [     25 00] null 
+--rw-r--r--   1 1000 1000        446 Jun 24 2015 [     25 00] text 
++-rw-r--r--   1 1000 1000        671 Jun 24 2015 [     25 00] text 

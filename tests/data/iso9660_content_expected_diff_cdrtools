@@ -1,0 +1,9 @@
+@@ -1,7 +1,7 @@
+ 
+ Directory listing of /
+ dr-xr-xr-x   1    0    0       2048 Jun 24 2015 [     23 02] . 
+ dr-xr-xr-x   1    0    0       2048 Jun 24 2015 [     23 02] .. 
+ -r-xr-xr-x   1    0    0          0 Jun 24 2015 [     25 00] LINK.;1 
+ -r-xr-xr-x   1    0    0          0 Jun 24 2015 [     25 00] NULL.;1 
+--r-xr-xr-x   1    0    0        446 Jun 24 2015 [     25 00] TEXT.;1 
++-r-xr-xr-x   1    0    0        671 Jun 24 2015 [     25 00] TEXT.;1 
