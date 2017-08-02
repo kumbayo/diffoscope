@@ -32,13 +32,10 @@ iso1 = load_fixture('test1.iso')
 iso2 = load_fixture('test2.iso')
 
 def is_cdrtools():
-    try:
-        if b"Schilling" in subprocess.check_output(['isoinfo', '--version']):
-            return True
-        else:
-            return False
-    except:
-        return None
+    if b"Schilling" in subprocess.check_output(['isoinfo', '--version']):
+        return True
+    else:
+        return False
 
 def test_identification(iso1):
     assert isinstance(iso1, Iso9660File)
