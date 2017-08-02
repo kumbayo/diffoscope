@@ -159,6 +159,7 @@ def test_with_compare_details_and_extraction_error():
     assert normalize_zeros(difference.unified_diff) == expected_diff
 
 @skip_unless_tools_exist('xxd')
+@skip_unless_module_exists('distro')
 def test_with_compare_details_and_tool_not_found(monkeypatch):
     from diffoscope.external_tools import EXTERNAL_TOOLS
     monkeypatch.setitem(
