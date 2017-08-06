@@ -1,9 +1,17 @@
-Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: diffoscope
-Source: https://anonscm.debian.org/cgit/reproducible/diffoscope.git/
+Source: https://anonscm.debian.org/git/reproducible/diffoscope.git
 
 Files: *
-Copyright: 2014-2015 Jérémy Bobbio <lunar@debian.org>
+Copyright: 2012-2013 Olivier Matz <zer0@droids-corp.org>
+                2012 Alan De Smet <adesmet@cs.wisc.edu>
+                2012 Sergey Satskiy <sergey.satskiy@gmail.com>
+                2012 scito <info@scito.ch>
+           2014-2015 Jérémy Bobbio <lunar@debian.org>
+                2015 Helmut Grohne <helmut@subdivi.de>
+           2015-2017 Chris Lamb <lamby@debian.org>
+           2015-2016 Reiner Herrmann <reiner@reiner-h.de>
+           2016-2017 Mattia Rizzolo <mattia@debian.org>
 License: GPL-3+
 
 Files: diffoscope/changes.py
@@ -14,55 +22,26 @@ Copyright:      2008 Jonny Lamb <jonny@debian.org>
            2014-2015 Jérémy Bobbio <lunar@debian.org>
 License: Expat
 
-Files: diffoscope/comparators/__init__.py
-Copyright: 2014-2015 Jérémy Bobbio <lunar@debian.org>
-                2015 Helmut Grohne <helmut@subdivi.de>
-                2015 Chris Lamb <lamby@debian.org>
-                2015 Reiner Herrmann <reiner@reiner-h.de>
-License: GPL-3+
-
-Files: diffoscope/comparators/bzip2.py
-       diffoscope/comparators/elf.py
-       diffoscope/comparators/fonts.py
-       diffoscope/comparators/gettext.py
-       diffoscope/comparators/gzip.py
-       diffoscope/comparators/haskell.py
-       diffoscope/comparators/pdf.py
-       diffoscope/comparators/png.py
-       diffoscope/comparators/utils/*.py
-       diffoscope/comparators/xz.py
-       diffoscope/comparators/zip.py
-Copyright: 2014-2015 Jérémy Bobbio <lunar@debian.org>
-                2015 Reiner Herrmann <reiner@reiner-h.de>
-License: GPL-3+
-
-Files: diffoscope/comparators/cpio.py
-       diffoscope/comparators/directory.py
-       diffoscope/comparators/rpm.py
-       diffoscope/comparators/squashfs.py
-Copyright: 2015 Reiner Herrmann <reiner@reiner-h.de>
-           2015 Jérémy Bobbio <lunar@debian.org>
-License: GPL-3+
-
-Files: diffoscope/presenters/html/*.py
-Copyright: 2014-2015 Jérémy Bobbio <lunar@debian.org>
-                2015 Reiner Herrmann <reiner@reiner-h.de>
-           2012-2013 Olivier Matz <zer0@droids-corp.org>
-                2012 Alan De Smet <adesmet@cs.wisc.edu>
-                2012 Sergey Satskiy <sergey.satskiy@gmail.com>
-                2012 scito <info@scito.ch>
-License: GPL-3+
-
-Files: diffoscope/presenters/text.py
-Copyright: 2015 Jérémy Bobbio <lunar@debian.org>
-           2015 Helmut Grohne <helmut@subdivi.de>
-License: GPL-3+
-
 Files: tests/data/Samyak-Malayalam*.ttf
-Copyright: 2005-2006, Rahul Bhalerao <b.rahul.pm@gmail.com>
-           2005-2006, Bageshri Salvi <sbageshri@gmail.com>
-           2005-2006, Pravin Satpute <pravin.d.s@gmail.com>
-           2005-2006, Sandeep Shedmake <Sandeep.shedmake@gmail.com>
+Copyright: 2005-2006 Rahul Bhalerao <b.rahul.pm@gmail.com>
+           2005-2006 Bageshri Salvi <sbageshri@gmail.com>
+           2005-2006 Pravin Satpute <pravin.d.s@gmail.com>
+           2005-2006 Sandeep Shedmake <Sandeep.shedmake@gmail.com>
+License: GPL-3.0+ with font exception
+
+Files: tests/data/base-files_157-*_ar71xx.ipk
+Copyright: 2007-2014 OpenWrt.org
+                2010 Vertical Communications
+License: GPL-2
+
+Files: tests/data/devicetree*.dtb
+Copyright:      2009 Nokia
+           2011-2017 Texas Instruments Incorporated - http:www.ti.com/
+                2013 Linaro, Ltd.
+                2015 Nikolaus Schaller <hns@goldelico.com>
+                2015 Sakari Ailus
+License: GPL-2
+
 License: GPL-3.0+ with font exception
  This program is free software: you can redistribute it and/or modify it under
  the terms of the GNU General Public License as published by the Free Software
@@ -87,27 +66,6 @@ License: GPL-3.0+ with font exception
  If you modify this font, you may extend this exception to your version of the
  font, but you are not obligated to do so. If you do not wish to do so, delete
  this exception statement from your version."
-
-Files: tests/data/base-files_157-*_ar71xx.ipk
-Copyright: 2007-2014 OpenWrt.org
-           2010 Vertical Communications
-License: GPL-2
-
-Files: tests/data/devicetree*.dtb
-Copyright:
-	2015 Nikolaus Schaller <hns@goldelico.com>
-	2012 Texas Instruments Incorporated - http:www.ti.com/
-	2011 Texas Instruments Incorporated - http:www.ti.com/
-	2013 Linaro, Ltd.
-	2015 Sakari Ailus
-	2011 Texas Instruments Incorporated - http:www.ti.com/
-	2017 Texas Instruments Incorporated - http:www.ti.com/
-	2009-2010 Texas Instruments / 2009 Nokia
-License: GPL-2
-
-Files: debian/*
-Copyright: 2014-2015 Jérémy Bobbio <lunar@debian.org>
-License: GPL-3+
 
 License: GPL-3+
  This program is free software: you can redistribute it and/or modify
