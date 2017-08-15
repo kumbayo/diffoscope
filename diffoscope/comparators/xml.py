@@ -84,7 +84,7 @@ class XMLFile(File):
             False if file is not a XML File, True otherwise
         """
         if not super().recognizes(file):
-          return False
+            return False
 
         with open(file.path) as f:
             try:
