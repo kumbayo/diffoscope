@@ -116,8 +116,8 @@ class XMLFile(File):
         return [Difference.from_text(
             self.dumps(self),
             self.dumps(other),
-            self.path,
-            other.path,
+            self.name,
+            other.name,
         )]
 
     def dumps(self, file):
