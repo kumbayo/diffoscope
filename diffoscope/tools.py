@@ -75,7 +75,7 @@ def tool_required(command):
             This ensures that any os.environ['PATH'] modifications are
             performed prior to the `find_executable` tests.
             """
-            if not os_is_gnu():
+            if command == get_tool_name(command) and not os_is_gnu():
                 # try "g" + command for each tool, if we're on a non-GNU system
                 if find_executable("g" + command):
                     tool_prepend_prefix("g", command)
