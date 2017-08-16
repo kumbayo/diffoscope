@@ -47,13 +47,11 @@ OS_NAMES = collections.OrderedDict([
 def get_tool_name(tool):
     return REMAPPED_TOOL_NAMES.get(tool, tool)
 
-
 def tool_prepend_prefix(prefix, *tools):
     if not prefix:
         return
     for tool in tools:
         REMAPPED_TOOL_NAMES[tool] = prefix + tool
-
 
 def tool_required(command):
     """
@@ -77,6 +75,10 @@ def tool_required(command):
             This ensures that any os.environ['PATH'] modifications are
             performed prior to the `find_executable` tests.
             """
+            if not os_is_gnu():
+                # try "g" + command for each tool, if we're on a non-GNU system
+                if find_executable("g" + command):
+                    tool_prepend_prefix("g", command)
 
             if not find_executable(get_tool_name(command)):
                 raise RequiredToolNotFound(command)
@@ -86,6 +88,9 @@ def tool_required(command):
         return tool_check
     return wrapper
 
+def os_is_gnu():
+    system = platform.system()
+    return system in ("Linux", "GNU") or system.startswith("GNU/")
 
 def get_current_os():
     system = platform.system()

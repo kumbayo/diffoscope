@@ -31,7 +31,7 @@ from multiprocessing.dummy import Queue
 
 from diffoscope.tempfiles import get_temporary_directory
 
-from .tools import tool_required
+from .tools import get_tool_name, tool_required
 from .config import Config
 
 DIFF_CHUNK = 4096
@@ -161,7 +161,7 @@ class DiffParser(object):
 
 @tool_required('diff')
 def run_diff(fifo1, fifo2, end_nl_q1, end_nl_q2):
-    cmd = ['diff', '-aU7', fifo1, fifo2]
+    cmd = [get_tool_name('diff'), '-aU7', fifo1, fifo2]
 
     logger.debug("Running %s", ' '.join(cmd))
 
