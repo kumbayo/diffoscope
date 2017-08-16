@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with diffoscope.  If not, see <https://www.gnu.org/licenses/>.
 
-from .tools import get_package_provider
+from .tools import get_tool_name, get_package_provider
 
 
 class OutputParsingError(Exception):
@@ -28,7 +28,7 @@ class OutputParsingError(Exception):
 
 class RequiredToolNotFound(Exception):
     def __init__(self, command):
-        self.command = command
+        self.command = get_tool_name(command)
 
     def get_package(self):
         return get_package_provider(self.command)

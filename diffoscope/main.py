@@ -29,7 +29,7 @@ import traceback
 
 from . import VERSION
 from .path import set_path
-from .tools import tool_required, OS_NAMES, get_current_os
+from .tools import tool_prepend_prefix, tool_required, OS_NAMES, get_current_os
 from .config import Config
 from .locale import set_locale
 from .logging import setup_logging
@@ -197,6 +197,10 @@ def create_parser():
                         help='Threshold for fuzzy-matching '
                         '(0 to disable, %(default)s is default, 400 is high fuzziness)',
                         default=Config().fuzzy_threshold).completer=RangeCompleter(400)
+    group3.add_argument('--tool-prefix-binutils', metavar='PREFIX',
+                        help='Prefix for binutils program names, e.g. '
+                        '"aarch64-linux-gnu-" for a foreign-arch binary or "g" '
+                        'if you\'re on a non-GNU system.')
     group3.add_argument('--max-diff-input-lines', metavar='LINES', type=int,
                         help='Maximum number of lines fed to diff(1) '
                         '(0 to disable, default: %d)' %
@@ -354,6 +358,7 @@ def run_diffoscope(parsed_args):
     Config().exclude_directory_metadata = parsed_args.exclude_directory_metadata
     Config().compute_visual_diffs = PresenterManager().compute_visual_diffs()
     Config().check_constraints()
+    tool_prepend_prefix(parsed_args.tool_prefix_binutils, *"ar as ld ld.bfd nm objcopy objdump ranlib readelf strip".split())
     set_path()
     set_locale()
     path1, path2 = parsed_args.path1, parsed_args.path2

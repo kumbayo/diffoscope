@@ -251,3 +251,8 @@ EXTERNAL_TOOLS = {
         'FreeBSD': 'unzip',
     },
 }
+
+# May be populated at runtime by remapped names like
+# readelf -> arm-none-eabi-readelf, etc
+# diff -> gdiff, etc
+REMAPPED_TOOL_NAMES = {}

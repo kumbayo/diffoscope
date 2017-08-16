@@ -29,7 +29,7 @@ except ImportError:
 from distutils.spawn import find_executable
 
 from .profiling import profile
-from .external_tools import EXTERNAL_TOOLS
+from .external_tools import EXTERNAL_TOOLS, REMAPPED_TOOL_NAMES
 
 # Memoize calls to ``distutils.spawn.find_executable`` to avoid excessive stat
 # calls
@@ -42,6 +42,17 @@ OS_NAMES = collections.OrderedDict([
     ('debian', 'Debian'),
     ('FreeBSD', 'FreeBSD'),
 ])
+
+
+def get_tool_name(tool):
+    return REMAPPED_TOOL_NAMES.get(tool, tool)
+
+
+def tool_prepend_prefix(prefix, *tools):
+    if not prefix:
+        return
+    for tool in tools:
+        REMAPPED_TOOL_NAMES[tool] = prefix + tool
 
 
 def tool_required(command):
@@ -67,7 +78,7 @@ def tool_required(command):
             performed prior to the `find_executable` tests.
             """
 
-            if not find_executable(command):
+            if not find_executable(get_tool_name(command)):
                 raise RequiredToolNotFound(command)
 
             with profile('command', command):

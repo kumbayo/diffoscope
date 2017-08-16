@@ -24,7 +24,7 @@ import subprocess
 import collections
 
 from diffoscope.exc import OutputParsingError
-from diffoscope.tools import tool_required
+from diffoscope.tools import get_tool_name, tool_required
 from diffoscope.tempfiles import get_named_temporary_file
 from diffoscope.difference import Difference
 
@@ -62,7 +62,7 @@ class Readelf(Command):
 
     @tool_required('readelf')
     def cmdline(self):
-        return ['readelf', '--wide'] + self.readelf_options() + [self.path]
+        return [get_tool_name('readelf'), '--wide'] + self.readelf_options() + [self.path]
 
     def readelf_options(self):
         return []  # noqa
@@ -168,7 +168,7 @@ class ReadElfSection(Readelf):
     def base_options():
         if not hasattr(ReadElfSection, '_base_options'):
             output = subprocess.check_output(
-                ['readelf', '--help'],
+                [get_tool_name('readelf'), '--help'],
                 shell=False,
                 stderr=subprocess.DEVNULL,
             ).decode('us-ascii', errors='replace')
@@ -208,7 +208,7 @@ class ObjdumpSection(Command):
     @tool_required('objdump')
     def cmdline(self):
         return [
-            'objdump',
+            get_tool_name('objdump'),
         ] + self.objdump_options() + [
             '--section={}'.format(self._section_name),
             self.path,
@@ -344,7 +344,7 @@ class ElfStringSection(ElfSection):
 def get_build_id(path):
     try:
         output = subprocess.check_output(
-            ['readelf', '--notes', path],
+            [get_tool_name('readelf'), '--notes', path],
             stderr=subprocess.DEVNULL,
         )
     except subprocess.CalledProcessError as e:
@@ -362,7 +362,7 @@ def get_build_id(path):
 def get_debug_link(path):
     try:
         output = subprocess.check_output(
-            ['readelf', '--string-dump=.gnu_debuglink', path],
+            [get_tool_name('readelf'), '--string-dump=.gnu_debuglink', path],
             stderr=subprocess.DEVNULL,
         )
     except subprocess.CalledProcessError as e:
@@ -388,7 +388,7 @@ class ElfContainer(Container):
         super().__init__(*args, **kwargs)
         logger.debug("Creating ElfContainer for %s", self.source.path)
 
-        cmd = ['readelf', '--wide', '--section-headers', self.source.path]
+        cmd = [get_tool_name('readelf'), '--wide', '--section-headers', self.source.path]
         output = subprocess.check_output(cmd, shell=False, stderr=subprocess.DEVNULL)
         has_debug_symbols = False
 
@@ -489,7 +489,7 @@ class ElfContainer(Container):
 
         def objcopy(*args):
             subprocess.check_call(
-                ('objcopy',) + args,
+                (get_tool_name('objcopy'),) + args,
                 shell=False,
                 stderr=subprocess.DEVNULL,
         )
