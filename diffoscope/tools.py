@@ -29,7 +29,7 @@ except ImportError:
 from distutils.spawn import find_executable
 
 from .profiling import profile
-from .external_tools import EXTERNAL_TOOLS, REMAPPED_TOOL_NAMES
+from .external_tools import EXTERNAL_TOOLS, REMAPPED_TOOL_NAMES, GNU_TOOL_NAMES
 
 # Memoize calls to ``distutils.spawn.find_executable`` to avoid excessive stat
 # calls
@@ -75,7 +75,7 @@ def tool_required(command):
             This ensures that any os.environ['PATH'] modifications are
             performed prior to the `find_executable` tests.
             """
-            if command == get_tool_name(command) and not os_is_gnu():
+            if command == get_tool_name(command) and not os_is_gnu() and tool_is_gnu(command):
                 # try "g" + command for each tool, if we're on a non-GNU system
                 if find_executable("g" + command):
                     tool_prepend_prefix("g", command)
@@ -87,6 +87,9 @@ def tool_required(command):
                 return fn(*args, **kwargs)
         return tool_check
     return wrapper
+
+def tool_is_gnu(command):
+    return command in GNU_TOOL_NAMES
 
 def os_is_gnu():
     system = platform.system()

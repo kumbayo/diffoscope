@@ -152,6 +152,10 @@ EXTERNAL_TOOLS = {
         'debian': 'binutils-multiarch',
         'arch': 'binutils',
     },
+    'objcopy': {
+        'debian': 'binutils-multiarch',
+        'arch': 'binutils',
+    },
     'objdump': {
         'debian': 'binutils-multiarch',
         'arch': 'binutils',
@@ -256,3 +260,17 @@ EXTERNAL_TOOLS = {
 # readelf -> arm-none-eabi-readelf, etc
 # diff -> gdiff, etc
 REMAPPED_TOOL_NAMES = {}
+
+# GNU programs whose names differ on some non-GNU systems such as FreeBSD etc
+# AND where the CLI or output of the programs differ from the non-GNU system
+# versions. In these cases, add them here and make sure you wrap uses of them
+# in get_tool_name() to pick up the alternate names.
+#
+# If we only use POSIX CLI options and the output is identical to the system
+# version (so that our tests don't break) then it's unnecessary to add it here.
+GNU_TOOL_NAMES = {
+    'diff',
+    'readelf',
+    'objcopy',
+    'objdump',
+}
