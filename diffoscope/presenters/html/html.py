@@ -569,7 +569,11 @@ class HTMLPresenter(Presenter):
             # Difference is not comparable so use memory address in event of a tie
             return depth, node.size_self(), id(node), parents + [node]
 
+        pruned = set() # children
         for node, score in difference.traverse_heapq(smallest_first, yield_score=True):
+            if node in pruned:
+                continue
+
             ancestor = ancestors.pop(node, None)
             path = score[3]
             diff_path = output_diff_path(path)
@@ -605,10 +609,13 @@ class HTMLPresenter(Presenter):
                     footer = output_footer()
                     if not make_new_subpage: # we hit a limit, either max-report-size or single-page
                         if not outputs:
-                            # no more holes, don't iterate through any more children
+                            # no more holes, don't traverse any more nodes
                             break
                         else:
-                            # more holes to fill up with "limit reached" placeholders
+                            # don't traverse this node's children, they won't be output
+                            # however there are holes in other pages, so don't break just yet
+                            for child in node.details:
+                                pruned.add(child)
                             continue
                 else:
                     # unconditionally write the root node regardless of limits
