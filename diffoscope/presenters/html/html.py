@@ -556,7 +556,7 @@ class HTMLPresenter(Presenter):
         else:
             return templates.DIFFNODE_LIMIT
 
-    def output_difference(self, ctx, difference):
+    def output_difference(self, ctx, root_difference):
         outputs = {} # nodes to their partial output
         ancestors = {} # child nodes to ancestor nodes
         placeholder_len = len(self.output_node_placeholder("XXXXXXXXXXXXXXXX", not ctx.single_page))
@@ -570,7 +570,7 @@ class HTMLPresenter(Presenter):
             return depth, node.size_self(), id(node), parents + [node]
 
         pruned = set() # children
-        for node, score in difference.traverse_heapq(smallest_first, yield_score=True):
+        for node, score in root_difference.traverse_heapq(smallest_first, yield_score=True):
             if node in pruned:
                 continue
 
@@ -583,11 +583,12 @@ class HTMLPresenter(Presenter):
 
             add_to_existing = False
             if ancestor:
-                page_limit = Config().max_page_size if ancestor is difference else Config().max_page_size_child
+                page_limit = Config().max_page_size if ancestor is root_difference else Config().max_page_size_child
                 page_current = outputs[ancestor].size(placeholder_len)
                 report_current = self.report_printed + sum(p.size(placeholder_len) for p in outputs.values())
                 want_to_add = node_output.size(placeholder_len)
-                logger.debug("report size: %s/%s, page size: %s/%s, want to add %s)", report_current, self.report_limit, page_current, page_limit, want_to_add)
+                logger.debug("report size: %s/%s, page size: %s/%s, want to add %s)",
+                    report_current, self.report_limit, page_current, page_limit, want_to_add)
                 if report_current + want_to_add > self.report_limit:
                     make_new_subpage = False
                 elif page_current + want_to_add < page_limit:
@@ -619,14 +620,14 @@ class HTMLPresenter(Presenter):
                             continue
                 else:
                     # unconditionally write the root node regardless of limits
-                    assert node is difference
+                    assert node is root_difference
                     footer = output_footer(ctx.jquery_url)
                     pagename = "index"
 
                 outputs[node] = node_output.frame(
                     output_header(ctx.css_url, ctx.our_css_url, ctx.icon_url) +
                     u'<div class="difference">\n', u'</div>\n' + footer)
-                assert not ctx.single_page or node is difference
+                assert not ctx.single_page or node is root_difference
                 printers[node] = (make_printer, ctx.target) if ctx.single_page else (file_printer, ctx.target, "%s.html" % pagename)
                 stored = node
 
